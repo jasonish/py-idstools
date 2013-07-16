@@ -6,6 +6,7 @@ setup(name="idstools",
       author="Jason Ish",
       author_email="ish@unx.ca",
       packages=["idstools"],
+      url="https://github.com/jasonish/idstools.py",
       classifiers=[
         'License :: OSI Approved :: BSD License',
         ],
