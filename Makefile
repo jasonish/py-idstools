@@ -7,5 +7,3 @@ clean:
 
 # setup.py artifacts..
 	rm -rf build dist MANIFEST
-
-

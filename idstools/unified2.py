@@ -47,8 +47,9 @@ EXTRA_DATA   = 110
 # in a stream of records).
 EVENT_TYPES = [EVENT, EVENT_IP6, EVENT_V2, EVENT_IP6_V2]
 
-# A record field descriptor.
 class Field(object):
+    """ A class to represent a field in a unified2 record. Used for
+    building the decoders. """
 
     def __init__(self, name, len, fmt=None):
         self.name = name
