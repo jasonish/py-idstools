@@ -36,7 +36,8 @@ class SpoolDirectoryReaderIterator(object):
     """ An iterator that can be used for the spool directory readers.
 
     It basically just implements an infinite loop with a timeout, much
-    like a user of a reader might. """
+    like a user of a reader might.
+    """
 
     def __init__(self, reader):
         self.reader = reader
@@ -50,9 +51,20 @@ class SpoolDirectoryReaderIterator(object):
                 time.sleep(0.1)
 
 class BaseSpoolDirectoryReader(object):
-    """ A base class for classes implementing spool readers. """
+    """ A base class for classes implementing spool readers.
+    """
 
     def __init__(self, directory, prefix, **kwargs):
+        """
+        :param directory: Spool directory to read from.
+        :param prefix: Prefix of filenames to read
+        :param delete_on_close: Delete file after processing and a new one 
+          has been opened. Default: False
+        :param bookmarking: Enable bookmarking. Default: True
+        :param open_hook: Function to be called after a file is opened.
+        :param close_hook: Function to be called after a file is closed.
+        """
+
         self.directory = directory
         self.prefix = prefix
 
@@ -196,6 +208,14 @@ class LineSpoolReader(BaseSpoolDirectoryReader):
     files. """
 
     def __init__(self, directory, prefix, strip_newline=True, **kwargs):
+        """ In addition to the parameters provided by
+        :py:class:`.BaseSpoolDirectoryReader`, the
+        `LineSpoolReader` also accepts the following
+        parameters.
+
+        :param strip_newline: Strip the trailing new line characters
+          from the line returned. Default: True.
+        """
         super(LineSpoolReader, self).__init__(directory, prefix, **kwargs)
         self.strip_newline = strip_newline
 
@@ -232,6 +252,7 @@ class Unified2RecordSpoolReader(BaseSpoolDirectoryReader):
     files. """
 
     def __init__(self, directory, prefix, **kwargs):
+        """ See :py:class:`.BaseSpoolDirectoryReader`. """
         super(Unified2RecordSpoolReader, self).__init__(
             directory, prefix, **kwargs)
 
@@ -255,9 +276,18 @@ class Unified2RecordSpoolReader(BaseSpoolDirectoryReader):
 
 class Unified2EventSpoolReader(BaseSpoolDirectoryReader):
     """ An event based reader for directories containing unified2
-    spool files. """
+    spool files.
+    """
 
     def __init__(self, directory, prefix, timeout=1, **kwargs):
+        """ In addition to the parameters provided by
+        :py:class:`.BaseSpoolDirectoryReader`, the
+        `Unified2EventSpoolReader` also accepts the following
+        parameters.
+
+        :param timeout: Timeout in seconds before the records in the
+          aggregator will be flushed as an event.
+        """
         super(Unified2EventSpoolReader, self).__init__(
             directory, prefix, **kwargs)
         self.aggregator = unified2.EventAggregator()

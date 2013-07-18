@@ -7,3 +7,5 @@ clean:
 
 # setup.py artifacts..
 	rm -rf build dist MANIFEST
+
+	cd doc && $(MAKE) clean
