@@ -154,6 +154,7 @@ class ShortReadError(Exception):
     pass
 
 class Event(dict):
+    """ Class representing a unified2 event. """
 
     def __init__(self, fields):
 
@@ -228,9 +229,19 @@ decoders = {
     EXTRA_DATA:   ExtraDataDecoder(EXTRA_DATA_FIELDS),
 }
 
-# A holder for a record where type is the type of record, and the
-# value is the decoded record object.
-Record = collections.namedtuple("Record", ["type", "value"])
+class Record(object):
+    """ Class representing a unified2 record.
+
+    :param type: Record type.
+    :param value: Object (decoded) representation of the record.
+
+    This class is just a container for the above parameters.  They are
+    intended to be accessed as object fields.
+    """
+    
+    def __init__(self, type, value):
+        self.type = type
+        self.value = value
 
 class EventAggregator(object):
     """ A class implementing something like the aggregator pattern to
@@ -242,6 +253,11 @@ class EventAggregator(object):
 
     def add(self, record):
         """ Add a new record to aggregator.
+
+        :param record: The :py:class:`.Record` to add.
+
+        :return: If adding a new record allows an event to be
+          completed, an :py:class:`.Event` will be returned.
 
         If adding the new record allows an event to be completed, the
         completed event will be returned. """
