@@ -61,8 +61,11 @@ class BaseSpoolDirectoryReader(object):
         :param delete_on_close: Delete file after processing and a new one 
           has been opened. Default: False
         :param bookmarking: Enable bookmarking. Default: True
-        :param open_hook: Function to be called after a file is opened.
-        :param close_hook: Function to be called after a file is closed.
+        :param open_hook: Optional function to be called after a file is opened.
+        :param close_hook: Optional function to be called after a file
+          is closed.  This function will be called before the file is
+          deleted allowing the close hook to make a copy of the file
+          for archiving.
         """
 
         self.directory = directory

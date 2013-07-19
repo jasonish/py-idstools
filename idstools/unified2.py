@@ -151,6 +151,8 @@ EXTRA_DATA_FIELDS = (
 )
 
 class ShortReadError(Exception):
+    """ Exception raised when there is not enough data to read a
+    complete unified2 record. """
     pass
 
 class Event(dict):
@@ -296,8 +298,12 @@ class EventAggregator(object):
         return event
 
 class FileRecordReader(object):
-    """ A class to read records from one or more files. """
-    
+    """ A class to read records from one or more unified2 log files.
+
+    :param files: A variable number of arguments, specifying the
+      unified2 files to read.
+    """
+
     def __init__(self, *files):
         self.files = list(files)
         self.fileobj = open(self.files.pop(0), "rb")
@@ -315,7 +321,10 @@ class FileRecordReader(object):
         return iter(self.next, None)
 
 class FileEventReader(object):
-    """ A class to read events from one or more files.
+    """ A class to read events from one or more unified2 log files.
+
+    :param files: A variable number of arguments, specifying the
+      unified2 files to read.
     """
 
     def __init__(self, *files):
@@ -355,13 +364,16 @@ class FileEventReader(object):
 def read_record(fileobj):
     """ Read a unified2 record from the provided file object.
 
-    If a whole record is read, the record will be returned.
+    :param fileobj: The file like object to read from.  Currently this
+      object needs to support read, seek and tell.
 
-    If no data is read, None will be returned.
+    :returns: If a complete record is read a :py:class:`.Record` will
+      be returned, otherwise None will be returned.
 
     If some data is read, but not enough for a whole record, the
-    location of the file object will be reset and a ShortReadError
-    exception will be raised.
+    location of the file object will be reset and a
+    :py:exc:`.ShortReadError` exception will be raised.
+
     """
 
     offset = fileobj.tell()

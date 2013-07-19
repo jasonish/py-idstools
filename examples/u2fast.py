@@ -43,7 +43,7 @@ def print_event(event, msgmap, classmap):
     else:
         msg = "Snort Event"
 
-    class_entry = classmap.get_by_id(event["classification-id"])
+    class_entry = classmap.get(event["classification-id"])
     if class_entry:
         class_description = class_entry.description
     else:

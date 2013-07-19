@@ -28,7 +28,15 @@ from __future__ import print_function
 import sys
 
 class MsgMapEntry(object):
-    """ This class represents an entry in the MsgMap. """
+    """ This class represents an entry in the MsgMap.
+
+    :param gid: Generator ID of this map entry.
+    :param sid: Signature ID of this map entry.
+    :param sid: The message/description for this rule.
+    :param refs: List of references for this rule.
+
+    The parameters above are intended to be accessed directly.
+    """
 
     def __init__(self, gid, sid, msg, refs=[]):
         self.gid = gid
@@ -50,6 +58,13 @@ class MsgMap(object):
 
     def get(self, gid, sid):
         """ Get a MsgMapEntry by gid and sid.
+
+        :param gid: The generator ID of the event rule to lookup.
+        :param sid: The signature ID of the event rule to looiup.
+
+        :returns: A :py:class:`.MsgMapEntry` will be returned if an
+          entry for the provided gid, sid was found otherwise None will
+          be returned.
 
         A special case is made for gid 3, if an entry is found it will
         be checked for again with gid 1.
@@ -95,7 +110,14 @@ class MsgMap(object):
                 self.add_entry(entry)
 
 class Classification(object):
-    """ A class to represent a Snort rule classification. """
+    """ A class to represent a Snort rule classification.
+
+    :param name: The classification short name.
+    :param description: The classification description (or long name).
+    :param priority: The priority of this classification.
+
+    The parameters above are intended to be directly accessed.
+    """
 
     def __init__(self, name, description, priority):
         self.name = name
@@ -113,10 +135,17 @@ class ClassificationMap(object):
     def __init__(self):
         self.map = []
 
-    def get_by_id(self, id):
-        """ Get a classification by ID. """
+    def get(self, id, default=None):
+        """ Get a classification by ID.
+
+        :param id: The classification ID to get.
+
+        :returns: If the classification ID is found a
+          :py:class:`.Classification` will be returned otherwise None
+          will be returned.
+        """
         try:
-            return self.map[id-1]
+            return self.map[id - 1]
         except:
             return None
 
