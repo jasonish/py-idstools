@@ -37,11 +37,11 @@ def print_raw(raw):
     bytes_per_line = 16
     parts = struct.unpack("B" * len(raw), raw)
     lines = []
-    for i in range((len(parts) / bytes_per_line) + 1):
+    for i in range(int((len(parts) / bytes_per_line)) + 1):
         prefix = "[%5d]" % (i * 16)
         as_hex = " ".join(["%02x" % p for p in parts[i*16:(i*16)+16]])
         printable = "".join([print_char(p) for p in parts[i*16:(i*16)+16]])
-        lines.append("%s %s  %s" % (prefix, as_hex, printable))
+        lines.append("%s %-48s  %s" % (prefix, as_hex, printable))
     return "\n".join(lines)
 
 def print_event(event):
@@ -130,7 +130,7 @@ def main():
         print("usage: %s <file>..." % (sys.argv[0]))
         return 1
 
-    reader = unified2.FileRecordReader(sys.argv[1:])
+    reader = unified2.FileRecordReader(*sys.argv[1:])
     for record in reader:
         print_record(record)
 

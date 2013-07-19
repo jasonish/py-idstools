@@ -54,7 +54,7 @@ class BaseSpoolDirectoryReader(object):
     """ A base class for classes implementing spool readers.
     """
 
-    def __init__(self, directory, prefix, **kwargs):
+    def __init__(self, directory, prefix, open_mode="r", **kwargs):
         """
         :param directory: Spool directory to read from.
         :param prefix: Prefix of filenames to read
@@ -67,6 +67,7 @@ class BaseSpoolDirectoryReader(object):
 
         self.directory = directory
         self.prefix = prefix
+        self.open_mode = open_mode
 
         # Delete on close.  While I think this should be default, it
         # may be unexpected.
@@ -155,7 +156,8 @@ class BaseSpoolDirectoryReader(object):
         If a path is provided, it will be stripped and replaced with
         the spool directory. """
         filename = os.path.basename(filename)
-        self.fileobj = open("%s/%s" % (self.directory, filename))
+        self.fileobj = open(
+            "%s/%s" % (self.directory, filename), self.open_mode)
         LOG.debug("Opened file %s" % filename)
         if self.open_hook:
             self.open_hook(self, filename)
@@ -254,7 +256,7 @@ class Unified2RecordSpoolReader(BaseSpoolDirectoryReader):
     def __init__(self, directory, prefix, **kwargs):
         """ See :py:class:`.BaseSpoolDirectoryReader`. """
         super(Unified2RecordSpoolReader, self).__init__(
-            directory, prefix, **kwargs)
+            directory, prefix, open_mode="rb", **kwargs)
 
     def set_to_offset(self, offset):
         self.fileobj.seek(offset)
@@ -289,7 +291,7 @@ class Unified2EventSpoolReader(BaseSpoolDirectoryReader):
           aggregator will be flushed as an event.
         """
         super(Unified2EventSpoolReader, self).__init__(
-            directory, prefix, **kwargs)
+            directory, prefix, open_mode="rb", **kwargs)
         self.aggregator = unified2.EventAggregator()
         self.timeout = 1
         self.last_record_read_ts = None

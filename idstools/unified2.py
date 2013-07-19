@@ -282,14 +282,9 @@ class EventAggregator(object):
 class FileRecordReader(object):
     """ A class to read records from one or more files. """
     
-    def __init__(self, files):
-        if isinstance(files, types.StringTypes):
-            self.files = [files]
-        else:
-            # Make a copy of the list, so we don't modify the list
-            # that is passed in as we'll be using pop.
-            self.files = list(files)
-        self.fileobj = open(self.files.pop(0))
+    def __init__(self, *files):
+        self.files = list(files)
+        self.fileobj = open(self.files.pop(0), "rb")
         
     def next(self):
         while 1:
@@ -298,7 +293,7 @@ class FileRecordReader(object):
                 return record
             if not self.files:
                 return
-            self.fileobj = open(self.files.pop(0))
+            self.fileobj = open(self.files.pop(0), "rb")
 
     def __iter__(self):
         return iter(self.next, None)
@@ -307,17 +302,12 @@ class FileEventReader(object):
     """ A class to read events from one or more files.
     """
 
-    def __init__(self, files):
+    def __init__(self, *files):
         """ Create a new FileEventReader.  Events will be read from
         the specified file, or list of files. """
-        if isinstance(files, types.StringTypes):
-            self.files = [files]
-        else:
-            # Make a copy of the list, so we don't modify the list
-            # that is passed in as we'll be using pop.
-            self.files = list(files)
+        self.files = list(files)
         self.aggregator = EventAggregator()
-        self.fileobj = open(self.files.pop(0))
+        self.fileobj = open(self.files.pop(0), "rb")
 
     def next(self):
         """ Get the next event. None will be returned when there are
@@ -338,7 +328,7 @@ class FileEventReader(object):
                 if not self.files:
                     return
                 else:
-                    self.fileobj = open(self.files.pop(0))
+                    self.fileobj = open(self.files.pop(0), "rb")
             else:
                 return record
 

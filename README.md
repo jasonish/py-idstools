@@ -13,7 +13,7 @@ systems (typically Snort and Suricata).
 
 ## Requirements
 
-- Python 2.6 or 2.7; Python 3 not yet supported.
+- Python 2.6 or 2.7; Python 3.3 works but not as well tested.
 - Currently only tested on Linux.
 
 ## Example Programs

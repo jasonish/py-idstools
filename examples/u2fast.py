@@ -100,7 +100,7 @@ def main():
         usage()
         return 1
 
-    reader = unified2.FileEventReader(args)
+    reader = unified2.FileEventReader(*args)
     for event in reader:
         print_event(event, msgmap, classmap)
 
