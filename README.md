@@ -3,7 +3,18 @@
 idstools.py is a collection of Python libraries for working with IDS
 systems (typically Snort and Suricata).
 
-Currently only Python 2.6 and 2.7 are supported.
+## Features
+
+- Snort/Suricata unified2 log file reading.
+- Continuous unified2 directory spool reading with bookmarking (a'la
+  Barnyard2).
+- Parser and mapping for classification.config.
+- Parser and mapping for gen-msg.map and sid-msg.map.
+
+## Requirements
+
+- Python 2.6 or 2.7; Python 3 not yet supported.
+- Currently only tested on Linux.
 
 ## Example Programs
 
