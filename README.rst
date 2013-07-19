@@ -1,9 +1,11 @@
-# idstools.py
+idstools.py
+===========
 
 idstools.py is a collection of Python libraries for working with IDS
 systems (typically Snort and Suricata).
 
-## Features
+Features
+--------
 
 - Snort/Suricata unified2 log file reading.
 - Continuous unified2 directory spool reading with bookmarking (a'la
@@ -11,17 +13,20 @@ systems (typically Snort and Suricata).
 - Parser and mapping for classification.config.
 - Parser and mapping for gen-msg.map and sid-msg.map.
 
-## Requirements
+Requirements
+------------
 
 - Python 2.6 or 2.7; Python 3.3 works but not as well tested.
 - Currently only tested on Linux.
 
-## Example Programs
+Example Programs
+----------------
 
 Example programs are found in the examples/ directory and demonstrate
 basic usage of the idstools libraries.
 
-### u2spewfoo.py
+u2spewfoo.py
+^^^^^^^^^^^^
 
 u2spewfoo.py is a Python program similar to u2spewfoo provided by
 Snort. It reads and prints records from one or more unified2 log
@@ -29,7 +34,8 @@ files.
 
 usage: python ./examples/u2spewfoo.py <file1> [file2 ...]
 
-### u2fast.py
+u2fast.py
+^^^^^^^^^
 
 u2fast.py reads unified2 log files and prints out events in the "fast"
 format.
@@ -39,7 +45,8 @@ usage: python ./examples/u2fast.py \
 	      -S /path/to/sid-msg.map \
 	      -G /path/to/gen-msg.map
 
-### stail.py
+stail.py
+^^^^^^^^
 
 While not really IDS related, stail.py shows an example of how one
 might do a "tail -f" on a spool directory of line oriented text files.
@@ -61,7 +68,8 @@ Bookmarking and delete on close give you basic barnyard2 like
 behaviour where files are removed when they have been processed, and
 the current processing location is remembered.
 
-### u2tail.py
+u2tail.py
+^^^^^^^^^
 
 A "tail -f" like program for reading unified2 spool directories as
 created by Snort and Suricata.

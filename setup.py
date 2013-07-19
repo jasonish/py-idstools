@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name="idstools",
-      version="0.1.0",
+      version="0.1.1",
       description="IDS Utility Library",
       author="Jason Ish",
       author_email="ish@unx.ca",
