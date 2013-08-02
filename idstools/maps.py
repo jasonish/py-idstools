@@ -38,11 +38,14 @@ class MsgMapEntry(object):
     The parameters above are intended to be accessed directly.
     """
 
-    def __init__(self, gid, sid, msg, refs=[]):
+    def __init__(self, gid, sid, msg, refs=None):
         self.gid = gid
         self.sid = sid
         self.msg = msg
-        self.refs = refs
+        if refs:
+            self.refs = refs
+        else:
+            self.refs = []
 
     def __repr__(self):
         return "%d || %d || %s || %s" % (
@@ -135,17 +138,17 @@ class ClassificationMap(object):
     def __init__(self):
         self.map = []
 
-    def get(self, id, default=None):
+    def get(self, class_id):
         """ Get a classification by ID.
 
-        :param id: The classification ID to get.
+        :param class_id: The classification ID to get.
 
         :returns: If the classification ID is found a
           :py:class:`.Classification` will be returned otherwise None
           will be returned.
         """
         try:
-            return self.map[id - 1]
+            return self.map[class_id - 1]
         except:
             return None
 

@@ -30,14 +30,9 @@ import sys
 import shutil
 import tempfile
 import time
-import logging
 import os
 
 from idstools import spool
-
-logging.basicConfig(level=logging.DEBUG)
-
-LOG = logging.getLogger(__name__)
 
 class SpoolTestCase(unittest.TestCase):
 

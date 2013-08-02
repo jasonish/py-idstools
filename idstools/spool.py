@@ -23,6 +23,8 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+""" Module for spool directory reading. """
+
 import os
 import fnmatch
 import logging
@@ -273,7 +275,7 @@ class Unified2RecordSpoolReader(BaseSpoolDirectoryReader):
             record = unified2.read_record(self.fileobj)
             if record:
                 self.set_bookmark(self.fileobj.tell())
-        except unified2.ShortReadError as err:
+        except unified2.ShortReadError:
             # We can ignore this, read_record would have reset the
             # pointer already.
             pass
@@ -296,7 +298,7 @@ class Unified2EventSpoolReader(BaseSpoolDirectoryReader):
         super(Unified2EventSpoolReader, self).__init__(
             directory, prefix, open_mode="rb", **kwargs)
         self.aggregator = unified2.EventAggregator()
-        self.timeout = 1
+        self.timeout = timeout
         self.last_record_read_ts = None
 
     def set_to_offset(self, offset):

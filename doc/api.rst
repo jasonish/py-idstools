@@ -9,6 +9,9 @@ Contents:
    api-unified2
    api-spool
    api-maps
+   api-net
+   api-util
+   api-rule
 
 Indices and tables
 ==================
