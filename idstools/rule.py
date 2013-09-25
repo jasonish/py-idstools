@@ -82,6 +82,7 @@ option_patterns = (
     re.compile("(rev)\s*:\s*(\d+);"),
     re.compile("(metadata)\s*:\s*(.*?);"),
     re.compile("(flowbits)\s*:\s*(.*?);"),
+    re.compile("(reference)\s*:\s*(.*?);"),
 )
 
 class Rule(dict):
@@ -109,6 +110,8 @@ class Rule(dict):
 
     - **metadata**: Metadata values as a list
 
+    - **references**: References as a list
+
     - **raw**: The raw rule as read from the file or buffer
 
     :param enabled: Optional parameter to set the enabled state of the rule
@@ -125,6 +128,7 @@ class Rule(dict):
         self["msg"] = None,
         self["flowbits"] = []
         self["metadata"] = []
+        self["references"] = []
         self["raw"] = None
 
     def __getattr__(self, name):
@@ -181,6 +185,8 @@ def parse(buf):
                 rule[opt] = [v.strip() for v in val.split(",")]
             elif opt == "flowbits":
                 rule.flowbits.append(val)
+            elif opt == "reference":
+                rule.references.append(val)
             else:
                 rule[opt] = val
 
