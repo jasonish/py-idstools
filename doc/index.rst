@@ -6,17 +6,21 @@
 idstools
 ========
 
-Contents:
+`idstools` is a Python library for working with SNORT(R) and Suricata
+logs and rules.
+
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
 
    api
-   
-Indices and tables
-==================
+   example-programs
+
+Indices and Tables
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

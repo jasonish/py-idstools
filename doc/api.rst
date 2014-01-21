@@ -1,22 +1,40 @@
 API
 ===
 
-Contents:
+.. contents::
 
-.. toctree::
-   :maxdepth: 2
+idstools.unified2
+-----------------
 
-   api-unified2
-   api-spool
-   api-maps
-   api-net
-   api-util
-   api-rule
+.. automodule:: idstools.unified2
+   :members:
 
-Indices and tables
-==================
+idstools.spool
+--------------
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. automodule:: idstools.spool
+   :members:
 
+idstools.maps
+-------------
+
+.. automodule:: idstools.maps
+   :members:
+
+idstools.rule
+-------------
+
+.. automodule:: idstools.rule
+   :members:
+
+idstools.net
+------------
+
+.. automodule:: idstools.net
+   :members:
+
+idstools.util
+-------------
+
+.. automodule:: idstools.util
+   :members:
