@@ -49,6 +49,7 @@ class RuleTestCase(unittest.TestCase):
         self.assertEqual(len(rule.flowbits), 2)
         self.assertEquals(rule.flowbits[0], "isset,somebit")
         self.assertEquals(rule.flowbits[1], "unset,otherbit")
+        self.assertEquals(rule.classtype, "trojan-activity")
 
     def test_disable_rule(self):
         rule_buf = """# alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)"""
@@ -83,3 +84,4 @@ class RuleTestCase(unittest.TestCase):
         tmp.flush()
         rules = idstools.rule.parse_file(tmp.name)
         self.assertEquals(2, len(rules))
+

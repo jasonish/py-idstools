@@ -25,6 +25,13 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""sid-msg.map generator
+
+Use idstools to generate a Snort style sid-msg.map file from a rule
+tarball, list of rule files or directories containing Snort-style
+rules.
+"""
+
 from __future__ import print_function
 
 import sys
@@ -39,7 +46,6 @@ sys.path.insert(
 import idstools.rule
 
 def file_iterator(files):
-    print(files)
 
     for filename in files:
 
@@ -59,12 +65,30 @@ def file_iterator(files):
         elif filename.endswith(".rules"):
             yield filename, open(filename)
 
-def render(rule):
+def render_v1(rule):
+    """ Render an original style sid-msg.map entry. """
     return " || ".join([str(rule.sid), rule.msg] + rule.references)
+
+def render_v2(rule):
+    """ Render a v2 style sid-msg.map entry.
+
+    gid || sid || rev || classification || priority || msg || ref0 || refN
+    """
+    return " || ".join([
+        str(rule.gid),
+        str(rule.sid),
+        str(rule.rev),
+        "NOCLASS" if rule.classtype is None else rule.classtype,
+        str(rule.priority),
+        rule.msg] + rule.references)
 
 def usage(file=sys.stderr):
     print("""
-usage: %s <file>...
+usage: %s [options] <file>...
+
+options:
+
+    -2, --v2      Output a new (v2) style sid-msg.map file.
 
 The files passed on the command line can be a list of a filenames, a
 tarball, a directory name (containing rule files) or any combination
@@ -73,8 +97,10 @@ of the above.
 
 def main():
 
+    opt_v2 = False
+
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "h", ["help"])
+        opts, args = getopt.getopt(sys.argv[1:], "h2", ["help", "v2"])
     except getopt.GetoptError as err:
         print("bad command line: %s" % (err), file=sys.stderr)
         usage()
@@ -83,11 +109,18 @@ def main():
         if o in ["-h", "--help"]:
             usage(sys.stdout)
             return 0
+        elif o in ["-2", "--v2"]:
+            opt_v2 = True
+
+    if not args:
+        print("error: no files specified")
+        usage()
+        return 1
 
     rules = {}
 
     # First load all the rules, warn on duplicate or missing sids.
-    for filename, fileobj in file_iterator(sys.argv[1:]):
+    for filename, fileobj in file_iterator(args):
 
         # For a legacy style sid-msg.map we only handle gid 1 and 3 rules.
         if re.search(".*\.rules$", filename):
@@ -96,24 +129,26 @@ def main():
 
             for rule in idstools.rule.parse_fileobj(fileobj):
 
-                # Old style sid-msg.map.
-                if rule.gid not in [1, 3]:
+                if not opt_v2 and rule.gid not in [1, 3]:
                     continue
 
                 if rule.sid is None:
                     print("WARNING: Rule found without sid: %s" % (rule.raw),
                           file=sys.stderr)
-                elif rule.sid in rules:
+                elif (rule.gid, rule.sid) in rules:
                     print("WARNING: Duplicate sid %d: "
                           "rule will be ignored: %s" % (rule.sid, rule.raw),
                           file=sys.stderr)
                 else:
-                    rules[rule.sid] = rule
+                    rules[(rule.gid, rule.sid)] = rule
 
     print("Loaded %d rules." % (len(rules)), file=sys.stderr)
 
-    for sid in sorted(rules):
-        print(render(rules[sid]))
+    for rule_id in sorted(rules):
+        if opt_v2:
+            print(render_v2(rules[rule_id]))
+        else:
+            print(render_v1(rules[rule_id]))
 
     return 0
 

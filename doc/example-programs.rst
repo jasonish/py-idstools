@@ -21,7 +21,15 @@ command line.
 
 ::
 
-   usage ./examples/gen-sidmsgmap.py <file>...
+    usage: ./examples/gen-sidmsgmap.py [options] <file>...
+
+    options:
+
+        -2, --v2      Output a new (v2) style sid-msg.map file.
+
+    The files passed on the command line can be a list of a filenames, a
+    tarball, a directory name (containing rule files) or any combination
+    of the above.
 
 The files support by gen-sidmsgmap.py are:
    * Individual rule files

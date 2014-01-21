@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2013 Jason Ish
+# Copyright (c) 2011 Jason Ish
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-""" Module for parsing Snort-like rules. 
+""" Module for parsing Snort-like rules.
 
 Parsing is done using regular expressions and the job of this module
 is to do its best at parsing out fields of interest from the rule
@@ -37,7 +37,6 @@ duplicate signature IDs.
 
 from __future__ import print_function
 
-import sys
 import re
 import logging
 
@@ -83,6 +82,8 @@ option_patterns = (
     re.compile("(metadata)\s*:\s*(.*?);"),
     re.compile("(flowbits)\s*:\s*(.*?);"),
     re.compile("(reference)\s*:\s*(.*?);"),
+    re.compile("(classtype)\s*:\s*(.*?);"),
+    re.compile("(priority)\s*:\s*(.*?);"),
 )
 
 class Rule(dict):
@@ -112,6 +113,10 @@ class Rule(dict):
 
     - **references**: References as a list
 
+    - **classtype**: The classification type
+
+    - **priority**: The rule priority, 0 if not provided
+
     - **raw**: The raw rule as read from the file or buffer
 
     :param enabled: Optional parameter to set the enabled state of the rule
@@ -129,6 +134,8 @@ class Rule(dict):
         self["flowbits"] = []
         self["metadata"] = []
         self["references"] = []
+        self["classtype"] = None
+        self["priority"] = 0
         self["raw"] = None
 
     def __getattr__(self, name):
@@ -145,7 +152,7 @@ class Rule(dict):
 
     def brief(self):
         """ A brief description of the rule.
-        
+
         :returns: A brief description of the rule
         :rtype: string
         """
@@ -153,7 +160,7 @@ class Rule(dict):
             "" if self.enabled else "# ", self.gid, self.sid, self.msg)
 
     def __hash__(self):
-        return  self["raw"].__hash__()
+        return self["raw"].__hash__()
 
     def __str__(self):
         """ The string representation of the rule.
@@ -163,7 +170,7 @@ class Rule(dict):
         return "%s%s" % ("" if self.enabled else "# ", self.raw)
 
 def parse(buf):
-    """ Parse a single rule for a string buffer. 
+    """ Parse a single rule for a string buffer.
 
     :param buf: A string buffer containing a single Snort-like rule
 
@@ -223,7 +230,3 @@ def parse_file(filename):
     """
     with open(filename) as fileobj:
         return parse_fileobj(fileobj)
-
-# NOTE: This file isn't completely autodocumented.  Update
-# api-rule.rst when adding new methods are classes that should have
-# their documentation exposed.

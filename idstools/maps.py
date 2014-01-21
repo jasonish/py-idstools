@@ -23,11 +23,18 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Provide mappings from ID's to a description.
+
+Includes mapping classes for event ID messages and classification
+information.
+"""
+
 from __future__ import print_function
 
 import sys
 
 class MsgMapEntry(object):
+
     """ This class represents an entry in the MsgMap.
 
     :param gid: Generator ID of this map entry.
@@ -76,7 +83,7 @@ class MsgMap(object):
         entry_id = (gid, sid)
         if entry_id in self.map:
             return self.map[entry_id]
-        
+
         # Try to do the best thing.  If the gid is 3, try again with
         # gid 1.
         if gid == 3:
@@ -147,9 +154,10 @@ class ClassificationMap(object):
           :py:class:`.Classification` will be returned otherwise None
           will be returned.
         """
-        try:
-            return self.map[class_id - 1]
-        except:
+        real_id = class_id - 1
+        if real_id in self.map:
+            return self.map[real_id]
+        else:
             return None
 
     def load_classification_file(self, filename):
