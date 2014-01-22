@@ -2,3 +2,4 @@
 *.pyc
 _build
 build
+.DS_Store

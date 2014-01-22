@@ -29,6 +29,24 @@
 This program is an example of how one might "tail" a directory
 containing unified2 spool files using the spool directory readers
 provided by idstools.
+
+::
+
+    usage: u2tail.py [options] <directory> <prefix>
+
+    options:
+
+        --delete        delete files on close (when a new one is opened)
+        --bookmark      enable spool bookmarking
+        --records       read records instead of events
+
+Example::
+
+    ./examples/u2tail.py --delete --bookmark /var/log/snort merged.log
+
+will read events from the unified2 log files in /var/log/snort
+bookmarking its progress and deleting the files when they have been
+completely processed.
 """
 
 from __future__ import print_function
@@ -36,12 +54,12 @@ from __future__ import print_function
 import sys
 import os
 import getopt
-import time
 import logging
 import pprint
 
-sys.path.insert(
-    0, os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))))
+if sys.argv[0] == __file__:
+    sys.path.insert(
+        0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
 from idstools import spool
 from idstools import unified2

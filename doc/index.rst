@@ -15,8 +15,15 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   api
    example-programs
+
+API
+---
+
+.. toctree::
+   :maxdepth: 5
+
+   apidoc/modules
 
 Indices and Tables
 ------------------

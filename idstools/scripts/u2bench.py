@@ -25,9 +25,6 @@ options:
 
 def main():
 
-    # Decode records.  By default this is false.
-    opt_decode = False
-
     try:
         opts, args = getopt.getopt(
             sys.argv[1:], "h", 
@@ -40,6 +37,11 @@ def main():
         if o in ["-h", "--help"]:
             usage(sys.stdout)
             return 0
+
+    if not args:
+        print("error: nothing to do", file=sys.stderr)
+        usage()
+        return 1
 
     record_count = 0
     start_time = time.time()

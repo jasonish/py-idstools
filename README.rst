@@ -18,3 +18,9 @@ Requirements
 
 - Python 2.6 or 2.7; Python 3.3 works but is not as well tested.
 - Currently only tested on Linux.
+
+Documentation
+-------------
+
+Further documentation is located at
+`<http://idstools.readthedocs.org>`_.

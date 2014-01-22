@@ -25,9 +25,19 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
-This example program reads events from unified2 log files and prints
-them in the "fast" style.
+"""Read unified2 log files and output events in "fast" style.
+
+::
+
+    usage: u2fast.py [options] <filename>...
+
+    options:
+	-C <classification.config>
+	-G <gen-msg.map>
+	-S <sid-msg.map>
+
+Providing classification and map files are optional and will be used
+to resolve event ID's to event descriptions.
 """
 
 from __future__ import print_function
@@ -38,8 +48,9 @@ import getopt
 import socket
 import time
 
-sys.path.insert(
-    0, os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))))
+if sys.argv[0] == __file__:
+    sys.path.insert(
+        0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
 from idstools import unified2
 from idstools import maps
