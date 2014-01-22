@@ -20,3 +20,6 @@ clean:
 doc:
 	cd doc && $(MAKE) clean html
 
+dist:
+	python setup.py sdist
+

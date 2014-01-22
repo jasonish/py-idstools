@@ -7,20 +7,24 @@ except:
 
 import idstools
 
-setup(name="idstools",
-      version=idstools.version,
-      description="IDS Utility Library",
-      author="Jason Ish",
-      author_email="ish@unx.ca",
-      packages=["idstools", "idstools.scripts"],
-      url="https://github.com/jasonish/idstools.py",
-      classifiers=[
+setup(
+    name="idstools",
+    version=idstools.version,
+    description="IDS Utility Library",
+    author="Jason Ish",
+    author_email="ish@unx.ca",
+    packages=[
+        "idstools",
+        "idstools.scripts"
+    ],
+    url="https://github.com/jasonish/idstools.py",
+    classifiers=[
         'License :: OSI Approved :: BSD License',
-        ],
-      entry_points = {
-          'console_scripts': [
-              'idstools-gensidmsgmap = idstools.scripts.gensidmsgmap:main',
-              'idstools-u2fast = idstools.scripts.u2fast:main',
-          ]
-      },
-      )
+    ],
+    entry_points = {
+        'console_scripts': [
+            'idstools-gensidmsgmap = idstools.scripts.gensidmsgmap:main',
+            'idstools-u2fast = idstools.scripts.u2fast:main',
+    ]
+    },
+)
