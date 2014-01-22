@@ -5,8 +5,10 @@ except:
     print("- Script entry points will not be installed.")
     from distutils import setup
 
+import idstools
+
 setup(name="idstools",
-      version="0.1.1",
+      version=idstools.version,
       description="IDS Utility Library",
       author="Jason Ish",
       author_email="ish@unx.ca",
@@ -18,6 +20,7 @@ setup(name="idstools",
       entry_points = {
           'console_scripts': [
               'idstools-gensidmsgmap = idstools.scripts.gensidmsgmap:main',
+              'idstools-u2fast = idstools.scripts.u2fast:main',
           ]
       },
       )

@@ -1,6 +1,14 @@
 idstools Package
 ================
 
+:mod:`idstools` Package
+-----------------------
+
+.. automodule:: idstools.__init__
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`maps` Module
 ------------------
 
