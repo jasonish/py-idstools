@@ -1,11 +1,9 @@
-idstools.py
-===========
+# py-idstools [![Build Status](https://travis-ci.org/jasonish/py-idstools.png?branch=master)](https://travis-ci.org/jasonish/py-idstools)
 
-idstools.py is a collection of Python libraries for working with IDS
+py-idstools is a collection of Python libraries for working with IDS
 systems (typically Snort and Suricata).
 
-Features
---------
+## Features
 
 - Snort/Suricata unified2 log file reading.
 - Continuous unified2 directory spool reading with bookmarking (a'la
@@ -13,14 +11,11 @@ Features
 - Parser and mapping for classification.config.
 - Parser and mapping for gen-msg.map and sid-msg.map.
 
-Requirements
-------------
+## Requirements
 
 - Python 2.6 or 2.7; Python 3.3 works but is not as well tested.
 - Currently only tested on Linux.
 
-Documentation
--------------
+## Documentation
 
-Further documentation is located at
-`<http://idstools.readthedocs.org>`_.
+Further documentation is located at http://idstools.readthedocs.org.
