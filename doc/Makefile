@@ -45,6 +45,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 html:
+	-rm -rf apidoc
 	$(SPHINXAPIDOC) -f -o ./apidoc ../idstools
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo

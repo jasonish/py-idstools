@@ -32,7 +32,7 @@ import tempfile
 import time
 import os
 
-from idstools import spool
+from idstools.unified2 import spool
 
 class SpoolTestCase(unittest.TestCase):
 

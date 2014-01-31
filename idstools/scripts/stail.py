@@ -15,7 +15,7 @@ import getopt
 sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))))
 
-from idstools import spool
+from idstools.unified2 import spool
 
 logging.basicConfig(level=logging.DEBUG, format="<%(msg)s>")
 

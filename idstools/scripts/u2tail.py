@@ -61,8 +61,8 @@ if sys.argv[0] == __file__:
     sys.path.insert(
         0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
-from idstools import spool
 from idstools import unified2
+from idstools.unified2 import spool
 
 logging.basicConfig(level=logging.DEBUG, format="<%(msg)s>")
 

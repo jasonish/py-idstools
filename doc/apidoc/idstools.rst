@@ -1,61 +1,5 @@
-idstools Package
+idstools package
 ================
-
-:mod:`idstools` Package
------------------------
-
-.. automodule:: idstools.__init__
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`maps` Module
-------------------
-
-.. automodule:: idstools.maps
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`net` Module
------------------
-
-.. automodule:: idstools.net
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`rule` Module
-------------------
-
-.. automodule:: idstools.rule
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`spool` Module
--------------------
-
-.. automodule:: idstools.spool
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`unified2` Module
-----------------------
-
-.. automodule:: idstools.unified2
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`util` Module
-------------------
-
-.. automodule:: idstools.util
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 Subpackages
 -----------
@@ -64,4 +8,48 @@ Subpackages
 
     idstools.apps
     idstools.scripts
+    idstools.unified2
 
+Submodules
+----------
+
+idstools.maps module
+--------------------
+
+.. automodule:: idstools.maps
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+idstools.net module
+-------------------
+
+.. automodule:: idstools.net
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+idstools.rule module
+--------------------
+
+.. automodule:: idstools.rule
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+idstools.util module
+--------------------
+
+.. automodule:: idstools.util
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: idstools
+    :members:
+    :undoc-members:
+    :show-inheritance:
