@@ -210,50 +210,6 @@ class BaseSpoolDirectoryReader(object):
     def set_to_offset(self, offset):
         raise NotImplementedError()
 
-class LineSpoolReader(BaseSpoolDirectoryReader):
-    """ A spool reader for directories containing line based
-    files. """
-
-    def __init__(self, directory, prefix, strip_newline=True, **kwargs):
-        """ In addition to the parameters provided by
-        :py:class:`.BaseSpoolDirectoryReader`, the
-        `LineSpoolReader` also accepts the following
-        parameters.
-
-        :param strip_newline: Strip the trailing new line characters
-          from the line returned. Default: True.
-        """
-        super(LineSpoolReader, self).__init__(directory, prefix, **kwargs)
-        self.strip_newline = strip_newline
-
-    def set_to_offset(self, offset):
-        self.fileobj.seek(offset)
-
-    def next(self):
-        if not self.fileobj and not self.open_next():
-            return None
-
-        while 1:
-            offset = self.fileobj.tell()
-            record = self.fileobj.readline()
-            if record:
-                # If there is no \n in the record, only return it if
-                # there are newer spool files.  Otherwise, seek back
-                # and return None.
-                if "\n" not in record and not self.get_next_files():
-                    self.fileobj.seek(offset)
-                    return None
-
-                self.set_bookmark(self.fileobj.tell())
-
-                if self.strip_newline:
-                    return record.strip("\r\n")
-                else:
-                    return record
-
-            elif not self.open_next():
-                return None
-
 class Unified2RecordSpoolReader(BaseSpoolDirectoryReader):
     """ A record based spool reader for directories of unified2 spool
     files. """
