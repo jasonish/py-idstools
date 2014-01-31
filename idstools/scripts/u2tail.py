@@ -37,8 +37,8 @@ provided by idstools.
     options:
 
         --delete        delete files on close (when a new one is opened)
-        --bookmark      enable spool bookmarking
         --records       read records instead of events
+        --bookmark      filename to store bookmark in
 
 Example::
 
@@ -56,13 +56,13 @@ import os
 import getopt
 import logging
 import pprint
+import json
 
 if sys.argv[0] == __file__:
     sys.path.insert(
         0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
 from idstools import unified2
-from idstools.unified2 import spool
 
 logging.basicConfig(level=logging.DEBUG, format="<%(msg)s>")
 
@@ -75,22 +75,29 @@ def usage(fileobj=sys.stderr):
 options:
 
     --delete        delete files on close (when a new one is opened)
-    --bookmark      enable spool bookmarking
     --records       read records instead of events
 """)
 
+def rollover_hook(closed_filename, opened_filename):
+    LOG.info("Closed %s; opened %s" % (closed_filename, opened_filename))
+    if opt_delete_on_close and closed_filename:
+        os.unlink(closed_filename)
+        LOG.info("Deleted %s." % (closed_filename))
+
 def main():
+
+    global opt_delete_on_close
     
-    opt_bookmarking = False
     opt_delete_on_close = False
     opt_records = False
+    opt_bookmark = None
 
     try:
         opts, args = getopt.getopt(
             sys.argv[1:], "h", [
-                "bookmarking",
                 "delete",
                 "records",
+                "bookmark=",
                 ])
     except getopt.GetoptError as err:
         print("error: %s" % err, file=sys.stderr)
@@ -101,12 +108,12 @@ def main():
         usage(sys.stdout)
         return 1
     for o, a in opts:
-        if o == "--bookmarking":
-            opt_bookmarking = True
-        elif o == "--delete":
+        if o == "--delete":
             opt_delete_on_close = True
         elif o == "--records":
             opt_records = True
+        elif o == "--bookmark":
+            opt_bookmark = a
 
     try:
         directory, prefix = args
@@ -119,20 +126,32 @@ def main():
               file=sys.stderr)
         return 1
 
+    bookmark_filename = bookmark_offset = None
+    try:
+        if opt_bookmark:
+            if os.path.exists(opt_bookmark):
+                bookmark_filename, bookmark_offset = json.load(open(opt_bookmark))
+    except Exception as err:
+        LOG.error("Error caught reading bookmark:", err)
+
+    if bookmark_offset:
+        LOG.info("Opening spool reader with file %s at offset %d." % (
+            bookmark_filename, bookmark_offset))
+
     # Create a spool reader.  If --records was used we'll open the
     # reader that reads one record at a time.  Otherwise the more
     # useful reader will be used that aggregates records into events
     # for us.
     if opt_records:
-        reader = spool.Unified2RecordSpoolReader(
-            directory, prefix,
-            bookmarking=opt_bookmarking,
-            delete_on_close=opt_delete_on_close)
+        reader = unified2.SpoolRecordReader(
+            directory, prefix, tail=True, rollover_hook=rollover_hook,
+            init_filename = bookmark_filename,
+            init_offset = bookmark_offset)
     else:
-        reader = spool.Unified2EventSpoolReader(
-            directory, prefix,
-            bookmarking=opt_bookmarking,
-            delete_on_close=opt_delete_on_close)
+        reader = unified2.SpoolEventReader(
+            directory, prefix, tail=True, rollover_hook=rollover_hook,
+            init_filename = bookmark_filename,
+            init_offset = bookmark_offset)
 
     # This example uses an iterator to read events which might be OK
     # if running in its own thread.  You may also want to call
@@ -142,6 +161,10 @@ def main():
     # form of event loop.
     for record in reader:
         pprint.pprint(record)
+
+        # Update bookmark.  We'll just dump json for now.
+        if opt_bookmark:
+            json.dump(reader.tell(), open(opt_bookmark, "w"))
 
 if __name__ == "__main__":
     sys.exit(main())

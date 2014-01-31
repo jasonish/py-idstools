@@ -150,21 +150,21 @@ def print_extra(extra):
     print(extra["data"])
 
 def print_record(record):
-    if record.type in unified2.EVENT_TYPES:
-        print_event(record.value)
-    elif record.type == unified2.PACKET:
-        print_packet(record.value)
-    elif record.type == unified2.EXTRA_DATA:
-        print_extra(record.value)
+    if isinstance(record, unified2.Event):
+        print_event(record)
+    elif isinstance(record, unified2.Packet):
+        print_packet(record)
+    elif isinstance(record, unified2.ExtraData):
+        print_extra(record)
 
 def main():
 
-    files = sys.argv[1:]
-    if not files:
+    filenames = sys.argv[1:]
+    if not filenames:
         print("usage: %s <file>..." % (sys.argv[0]))
         return 1
-
-    reader = unified2.FileRecordReader(*sys.argv[1:])
+    
+    reader = unified2.FileRecordReader(*filenames)
     for record in reader:
         print_record(record)
 
