@@ -33,6 +33,7 @@
 
 from __future__ import print_function
 
+import sys
 import os
 import os.path
 import struct
@@ -368,9 +369,23 @@ class RecordReader(object):
     def __init__(self, fileobj):
         self.fileobj = fileobj
 
+        if sys.platform == "darwin" and sys.version_info[0] < 3:
+            self.next = self._darwin_next
+        else:
+            self.next = self._default_next
+
     def next(self):
         """Return the next record or None if EOF."""
+        return self.default_next()
+
+    def _default_next(self):
         return read_record(self.fileobj)
+
+    def _darwin_next(self):
+        record = self._default_next()
+        if record is None:
+            self.fileobj.seek(self.fileobj.tell())
+        return record
 
     def __iter__(self):
         return iter(self.next, None)
@@ -469,6 +484,7 @@ class SpoolRecordReader(object):
         self.tail = tail
         self.rollover_hook = rollover_hook
         self.fileobj = None
+        self.reader = None
         self.fnfilter = "%s*" % (self.prefix)
 
         if init_filename:
@@ -476,6 +492,7 @@ class SpoolRecordReader(object):
                     self.directory, os.path.basename(init_filename))):
                 self.open_file(init_filename)
                 self.fileobj.seek(init_offset)
+                self.reader = RecordReader(self.fileobj)
 
     def get_filenames(self):
         """Return the filenames (sorted) from the spool directory."""
@@ -489,6 +506,7 @@ class SpoolRecordReader(object):
             closed_filename = None
         self.fileobj = open("%s/%s" % (
             self.directory, os.path.basename(filename)), "rb")
+        self.reader = RecordReader(self.fileobj)
         if self.rollover_hook:
             self.rollover_hook(closed_filename, self.fileobj.name)
 
@@ -540,7 +558,7 @@ class SpoolRecordReader(object):
         # Now try to get a record.  If we can't see if there is a new
         # file and try again.
         try:
-            record = read_record(self.fileobj)
+            record = self.reader.next()
         except EOFError:
             return
         if record:
@@ -549,7 +567,7 @@ class SpoolRecordReader(object):
             while True:
                 if self.open_next():
                     try:
-                        record = read_record(self.fileobj)
+                        record = self.reader.next()
                     except EOFError:
                         return
                     if record:
@@ -605,43 +623,24 @@ class SpoolEventReader(object):
         # Make some methods from the SpoolRecordReader available.
         self.tell = self.reader.tell
 
-    def _next(self):
-        """Return the next :class:`.Event` from the spool
-        directory.
-        """
-        while True:
-            record = self.reader.next()
-            if not record:
-                return self.aggregator.flush()
-            else:
-                event = self.aggregator.add(record)
-                if event:
-                    return event
-
     def next(self):
         """Return the next decoded unified2 record from the spool
         directory.  If tail is True, this method will block waiting
         for the next record to become available.
         """
-        retries = 0
         while True:
-            record = self._next()
+            record = self.reader.next()
             if record:
-                return record
-
-            if not self.tail:
-                return
-
-            # Sleep for a moment and try again.
-            time.sleep(0.01)
-
-            # If retries == 1, flush the aggregator.
-            if retries == 1:
-                event = self.aggregator.flush()
+                event = self.aggregator.add(record)
                 if event:
                     return event
+            else:
+                event = self.aggregator.flush()
+                if event or not self.tail:
+                    return event
 
-            retries += 1
+                # Sleep for a moment and try again.
+                time.sleep(0.01)
 
     def __iter__(self):
         return iter(self.next, None)

@@ -35,6 +35,43 @@ import io
 
 from idstools import unified2
 
+class Test_read_record(unittest.TestCase):
+
+    # A unified2 test file containing 1 event consisting of 17 records.
+    test_filename = "tests/multi-record-event.log"
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp(prefix="idstools-test.")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    @unittest.skipIf(sys.platform == "darwin" and sys.version_info[0] < 3,
+                     "known failure on mac")
+    def test_growing_file(self):
+
+        write_fileobj = open("%s/unified2.log" % self.tmpdir, "ab").write(
+            open(self.test_filename, "rb").read())
+        read_fileobj = open("%s/unified2.log" % self.tmpdir, "rb")
+
+        for i in range(17):
+            record = unified2.read_record(read_fileobj)
+            self.assertTrue(record is not None, "record None at i=%d" % (i))
+        self.assertTrue(unified2.read_record(read_fileobj) is None)
+
+        # Grow the file by 17 more records.
+        write_fileobj = open("%s/unified2.log" % self.tmpdir, "ab").write(
+            open(self.test_filename, "rb").read())
+
+        for i in range(17):
+            record = unified2.read_record(read_fileobj)
+            self.assertTrue(
+                record is not None, 
+                "record None at i=%d; expected on OSX w/Py2" % (i))
+        self.assertTrue(unified2.read_record(read_fileobj) is None)
+
+        read_fileobj.close()
+
 class TestRecordReader(unittest.TestCase):
 
     # A unified2 test file containing 1 event consisting of 17 records.
@@ -86,6 +123,13 @@ class FileRecordReaderTest(unittest.TestCase):
     # A unified2 test file containing 1 event consisting of 17 records.
     test_filename = "tests/multi-record-event.log"
 
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp(prefix="idstools-test.")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+
     def test_single_file_iteration(self):
         reader = unified2.FileRecordReader(self.test_filename)
         records = list(reader)
@@ -98,6 +142,26 @@ class FileRecordReaderTest(unittest.TestCase):
         records = list(reader)
         self.assertEquals(34, len(records))
         self.assertEquals(None, reader.next())
+
+    def test_growing_file(self):
+
+        log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
+        log_file.write(open(self.test_filename, "rb").read())
+        log_file.close()
+
+        reader = unified2.FileRecordReader("%s/unified2.log.0001" % self.tmpdir)
+
+        for i in range(17):
+            self.assertTrue(reader.next() is not None)
+        self.assertTrue(reader.next() is None)
+
+        log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
+        log_file.write(open(self.test_filename, "rb").read())
+        log_file.close()
+
+        for i in range(17):
+            self.assertTrue(reader.next() is not None)
+        self.assertTrue(reader.next() is None)
 
 class AggregatorTestCase(unittest.TestCase):
 
@@ -155,7 +219,7 @@ class FileEventReaderTestCase(unittest.TestCase):
         """ Iteration test. """
         reader = unified2.FileEventReader(
             self.test_filename, self.test_filename)
-        assert len(list(reader)) == 2
+        self.assertEquals(len(list(reader)), 2)
 
 class SpoolRecordReaderTestCase(unittest.TestCase):
 
@@ -202,7 +266,7 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
 
         next_filename = reader.open_next()
         self.assertEquals(None, next_filename)
-        assert reader.fileobj != None
+        self.assertTrue(reader.fileobj is not None)
 
     def test_next(self):
 
@@ -253,10 +317,19 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
 
         reader = unified2.SpoolRecordReader(self.tmpdir, "unified2")
 
-        for _ in range(2):
-            open("%s/unified2.log.0001" % self.tmpdir, "ab").write(
-                open(self.test_filename, "rb").read())
-            assert len(list(reader)) == 17
+        log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
+        log_file.write(open(self.test_filename, "rb").read())
+        log_file.close()
+        for i in range(17):
+            self.assertTrue(reader.next() is not None)
+        self.assertTrue(reader.next() is None)
+
+        log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
+        log_file.write(open(self.test_filename, "rb").read())
+        log_file.close()
+        for i in range(17):
+            self.assertTrue(reader.next() is not None)
+        self.assertTrue(reader.next() is None)
 
     def test_iteration(self):
 
@@ -264,7 +337,7 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
 
         reader = unified2.SpoolRecordReader(self.tmpdir, "unified2")
         shutil.copy(test_filename, "%s/unified2.log.1382627902" % self.tmpdir)
-        assert len(list(reader)) == 17
+        self.assertEquals(len(list(reader)), 17)
 
     def test_open_at_bookmark(self):
 
@@ -283,7 +356,7 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
             self.tmpdir, "unified2.log", "unified2.log.0003", 38950)
 
         # Now we should only read 17 records.
-        assert len(list(reader)) == 17
+        self.assertEquals(len(list(reader)), 17)
 
 class SpoolEventReaderTestCase(unittest.TestCase):
 
@@ -301,19 +374,28 @@ class SpoolEventReaderTestCase(unittest.TestCase):
         reader = unified2.SpoolEventReader(self.tmpdir, "unified2")
         shutil.copy(
             self.test_filename, "%s/unified2.log.1382627900" % self.tmpdir)
-        assert isinstance(reader.next(), unified2.Event)
-        assert reader.next() is None
+        self.assertTrue(isinstance(reader.next(), unified2.Event))
+        self.assertTrue(reader.next() is None)
+
+    def rollover_hook(self, closed, opened):
+        print("Closed: %s; Opened: %s." % (closed, opened))
 
     def test_with_growing_file(self):
 
-        reader = unified2.SpoolEventReader(self.tmpdir, "unified2")
+        reader = unified2.SpoolEventReader(
+            self.tmpdir, "unified2", rollover_hook = self.rollover_hook)
 
-        for _ in range(2):
-            open("%s/unified2.log.0001" % self.tmpdir, "ab").write(
-                open(self.test_filename, "rb").read())
-            assert isinstance(reader.next(), unified2.Event)
+        log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
+        log_file.write(open(self.test_filename, "rb").read())
+        log_file.close()
+        self.assertTrue(isinstance(reader.next(), unified2.Event))
+        self.assertTrue(reader.next() is None)
 
-        assert reader.next() is None
+        log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
+        log_file.write(open(self.test_filename, "rb").read())
+        log_file.close()
+        self.assertTrue(isinstance(reader.next(), unified2.Event))
+        self.assertTrue(reader.next() is None)
 
     def test_with_file_rotation(self):
 
@@ -322,6 +404,6 @@ class SpoolEventReaderTestCase(unittest.TestCase):
         for i in range(2):
             open("%s/unified2.log.%04d" % (self.tmpdir, i), "ab").write(
                 open(self.test_filename, "rb").read())
-            assert isinstance(reader.next(), unified2.Event)
+            self.assertTrue(isinstance(reader.next(), unified2.Event))
 
-        assert reader.next() is None
+        self.assertTrue(reader.next() is None)
