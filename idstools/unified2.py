@@ -377,6 +377,12 @@ class RecordReader(object):
 
     :param fileobj: The file-like object to read from.
 
+    Example::
+
+        fileobj = open("/var/log/snort/merged.log.1382627987", "rb")
+        reader = RecordReader(fileobj):
+        for record in reader:
+            print(record)
 
     """
 
