@@ -25,13 +25,17 @@
 
 from __future__ import print_function
 
-import unittest
 import sys
 import shutil
 import tempfile
 import time
 import os
 import io
+
+try:
+    import unittest2 as unittest
+except:
+    import unittest
 
 from idstools import unified2
 
