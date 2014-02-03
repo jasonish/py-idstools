@@ -177,7 +177,20 @@ class Event(dict):
             self[field.name] = value
 
 class Packet(dict):
-    """ Class to represent a PACKET with a dict-like interface. """
+    """Packet represents a unified2 packet record with a dict-like interface.
+
+    Packet fields:
+
+        - sensor-id
+        - event-id
+        - event-second
+        - packet-second
+        - packet-microsecond
+        - linktype
+        - length
+        - data
+
+    """
 
     def __init__(self, *fields, **kwargs):
         for field, value in zip(PACKET_FIELDS, fields):
@@ -364,6 +377,7 @@ class RecordReader(object):
 
     :param fileobj: The file-like object to read from.
 
+
     """
 
     def __init__(self, fileobj):
@@ -375,7 +389,12 @@ class RecordReader(object):
             self.next = self._default_next
 
     def next(self):
-        """Return the next record or None if EOF."""
+        """Return the next record or None if EOF.
+
+        Records returned will be one of the types :class:`.Event`,
+        :class:`.Packet`, :class:`.ExtraData` or :class:`.Unknown` if
+        the record is of an unknown type.
+        """
         return self.default_next()
 
     def _default_next(self):
@@ -387,15 +406,26 @@ class RecordReader(object):
             self.fileobj.seek(self.fileobj.tell())
         return record
 
+    def tell(self):
+        """Get the current offset in the underlying file object."""
+        return self.fileobj.tell()
+
     def __iter__(self):
         return iter(self.next, None)
 
 class FileRecordReader(object):
-    """FileRecordReader reads and decoder unified2 records from one
-    or files supplied by filename.
+    """FileRecordReader reads and decodes unified2 records from one or
+    more files supplied by filename.
 
-    :param files: A variable number of arguments, specifying the
-      unified2 files to read.
+    :param files...: One or more filenames to read records from.
+
+    Example::
+
+        reader = unified2.RecordReader("unified2.log.1382627941",
+                                       "unified2.log.1382627966)
+        for record in reader:
+            print(record)
+
     """
 
     def __init__(self, *files):
@@ -420,15 +450,26 @@ class FileRecordReader(object):
             self.fileobj = open(self.files.pop(0), "rb")
             self.reader = RecordReader(self.fileobj)
 
+    def tell(self):
+        """ Returns the current filename and offset. """
+        return self.fileobj.name, self.fileobj.tell()
+
     def __iter__(self):
         return iter(self.next, None)
 
 class FileEventReader(object):
-    """FileEventReader reads events (aggregated records) from one or
-    more unified2 files.
+    """FileEventReader reads records from one or more filenames and
+    aggregates them into events.
 
-    :param files: A variable number of arguments, specifying the
-      unified2 files to read.
+    :param files...: One or more files to read events from.
+
+    Example::
+
+        reader = unified2.FileEventReader("unified2.log.1382627941",
+                                          "unified2.log.1382627966)
+        for event in reader:
+            print("Event with %d packets." % (len(event["packets"])))
+
     """
 
     def __init__(self, *files):
@@ -576,9 +617,15 @@ class SpoolRecordReader(object):
                     return None
 
     def next(self):
-        """Return the next decoded unified2 record from the spool
-        directory.  If tail is True, this method will block waiting
-        for the next record to become available.
+        """Return the next record or None if EOF.
+
+        If in tail mode and EOF, this method will sleep and
+        and try again.
+
+        :returns: A record of type :class:`.Event`, :class:`.Packet`,
+          :class:`.ExtraData` or :class:`.Unknown` if the record is of
+          an unknown type.
+
         """
         while True:
             record = self._next()
@@ -594,10 +641,10 @@ class SpoolRecordReader(object):
         return iter(self.next, None)
 
 class SpoolEventReader(object):
-    """SpoolEventReader reads events (aggregated decoded records) from
-    a unified2 spool directory.
+    """SpoolEventReader reads records from a unified2 spool directory
+    and aggregates them into events.
 
-    See :class:`.SpoolRecordReader` for constructor parameters.
+
     """
 
     def __init__(self,
@@ -624,9 +671,11 @@ class SpoolEventReader(object):
         self.tell = self.reader.tell
 
     def next(self):
-        """Return the next decoded unified2 record from the spool
-        directory.  If tail is True, this method will block waiting
-        for the next record to become available.
+        """Return the next :class:`.Event`.
+
+        If in tail mode and EOF is head, this method will sleep and
+        and try again.
+
         """
         while True:
             record = self.reader.next()

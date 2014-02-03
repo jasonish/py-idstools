@@ -15,6 +15,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   unified2
    example-programs
 
 API
