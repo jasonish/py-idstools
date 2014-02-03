@@ -160,7 +160,32 @@ EXTRA_DATA_FIELDS = (
 )
 
 class Event(dict):
-    """ Class representing a unified2 event. """
+    """Event represents a unified2 event record with a dict-like
+    interface.
+
+    Fields:
+
+    * sensor-id
+    * event-id
+    * event-second
+    * event-microsecond
+    * signature-id
+    * generator-id
+    * signature-revision
+    * classification-id
+    * priority
+    * ip-source
+    * ip-destination
+    * sport-itype
+    * dport-icode
+    * protocol
+    * impact-flag
+    * impact
+    * blocked
+    * mpls-label
+    * vlan-id
+
+    """
 
     def __init__(self, fields):
 
@@ -179,16 +204,16 @@ class Event(dict):
 class Packet(dict):
     """Packet represents a unified2 packet record with a dict-like interface.
 
-    Packet fields:
+    Fields:
 
-        - sensor-id
-        - event-id
-        - event-second
-        - packet-second
-        - packet-microsecond
-        - linktype
-        - length
-        - data
+    * sensor-id
+    * event-id
+    * event-second
+    * packet-second
+    * packet-microsecond
+    * linktype
+    * length
+    * data
 
     """
 
@@ -198,7 +223,22 @@ class Packet(dict):
         self.update(kwargs)
 
 class ExtraData(dict):
-    """ Class to represent EXTRA_DATA with a dict-like interface. """
+    """ExtraData represents a unified2 extra-data record with a dict
+    like interface.
+
+    Fields:
+
+    * event-type
+    * event-length
+    * sensor-id
+    * event-id
+    * event-second
+    * type
+    * data-type
+    * data-length
+    * data
+
+    """
 
     def __init__(self, *fields, **kwargs):
         for field, value in zip(EXTRA_DATA_FIELDS, fields):
@@ -474,7 +514,7 @@ class FileEventReader(object):
         reader = unified2.FileEventReader("unified2.log.1382627941",
                                           "unified2.log.1382627966)
         for event in reader:
-            print("Event with %d packets." % (len(event["packets"])))
+            print(event)
 
     """
 
@@ -504,7 +544,7 @@ class SpoolRecordReader(object):
 
     :param directory: Path to unified2 spool directory.
     :param prefix: Filename prefixes for unified2 log files.
-    
+
     Optional parameters:
 
     :param init_filename: Filename open on initialization.
@@ -516,6 +556,17 @@ class SpoolRecordReader(object):
     :param rollover_hook: Function to call on rollover of log file,
       the first parameter being the filename being closed, the second
       being the filename being opened.
+
+    Example with tailing and rollover deletion::
+
+        def rollover_hook(closed, opened):
+            os.unlink(closed)
+
+        reader = unified2.SpoolRecordReader("/var/log/snort",
+            "unified2.log", rollover_hook = rollover_hook,
+            tail = True)
+        for record in reader:
+            print(record)
 
     """
 
@@ -650,6 +701,13 @@ class SpoolEventReader(object):
     """SpoolEventReader reads records from a unified2 spool directory
     and aggregates them into events.
 
+    See class:`.SpoolRecordReader` for constructor arguments.
+
+    Example::
+
+        reader = unified2.SpoolEventReader("/var/log/snort", "unified2.log")
+        for event in reader:
+            print(event)
 
     """
 
