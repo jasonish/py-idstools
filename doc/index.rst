@@ -17,14 +17,7 @@ Contents
 
    unified2
    example-programs
-
-API
----
-
-.. toctree::
-   :maxdepth: 5
-
-   apidoc/modules
+   api
 
 Indices and Tables
 ------------------
