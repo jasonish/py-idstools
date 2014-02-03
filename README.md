@@ -16,6 +16,22 @@ systems (typically Snort and Suricata).
 - Python 2.6 or 2.7; Python 3.3 works but is not as well tested.
 - Currently only tested on Linux.
 
+## Examples
+
+### Reading a Unified2 Spool Directory
+
+The following code snippet will "tail" a unified log directory
+aggregating records into events:
+
+```
+from idstools import unified2
+
+reader = unified2.SpoolEventReader("/var/log/snort",
+    "unified2.log", tail=True)
+for event in reader:
+    print(event)
+```
+
 ## Documentation
 
 Further documentation is located at http://idstools.readthedocs.org.
