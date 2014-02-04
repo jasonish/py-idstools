@@ -23,7 +23,14 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-""" Provides the core of unified2 reading functionality.
+"""Unified2 record and event reading.
+
+Unified2 is a file format used by the Snort and Suricata IDS engines
+for logging events.
+
+For more information on the unified2 file format see:
+
+    http://manual.snort.org/node44.html
 
 ::
 
@@ -185,14 +192,19 @@ class Event(dict):
     * mpls-label
     * vlan-id
 
+    Methods that return events rather than single records will also
+    populate the fields *packets* and *extra-data*.  These fields are
+    lists of the :class:`.Packet` and :class:`.ExtraData` records
+    associated with the event.
+
     """
 
     def __init__(self, fields):
 
         # Create fields to hold extra data and packets associated with
         # this event.
-        self["extra-data"] = []
         self["packets"] = []
+        self["extra-data"] = []
 
         # Only v2 events have MPLS and VLAN ids.
         self["mpls-label"] = None
@@ -731,9 +743,6 @@ class SpoolEventReader(object):
 
         self.aggregator = Aggregator()
  
-        # Make some methods from the SpoolRecordReader available.
-        self.tell = self.reader.tell
-
     def next(self):
         """Return the next :class:`.Event`.
 
@@ -754,6 +763,10 @@ class SpoolEventReader(object):
 
                 # Sleep for a moment and try again.
                 time.sleep(0.01)
+
+    def tell(self):
+        """ See :func:`.SpoolRecordReader.tell`. """
+        return self.reader.tell()
 
     def __iter__(self):
         return iter(self.next, None)
