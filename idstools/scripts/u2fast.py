@@ -125,7 +125,7 @@ def main():
         return 1
     for o, a in opts:
         if o == "-C":
-            classmap.load_classification_file(a)
+            classmap.load_from_file(open(a))
         elif o == "-G":
             msgmap.load_genmsg_file(a)
         elif o == "-S":
