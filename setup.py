@@ -17,7 +17,7 @@ setup(
         "idstools",
         "idstools.scripts"
     ],
-    url="https://github.com/jasonish/idstools.py",
+    url="https://github.com/jasonish/py-idstools",
     classifiers=[
         'License :: OSI Approved :: BSD License',
     ],
