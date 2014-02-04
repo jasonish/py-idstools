@@ -13,12 +13,18 @@ class ClassificationMapTestCase(unittest.TestCase):
         self.assertEquals(None, m.get(0))
         
         c = m.get(1)
-        self.assertEquals("not-suspicious", c.name)
-        self.assertEquals("Not Suspicious Traffic", c.description)
-        self.assertEquals(3, c.priority)
+        self.assertEquals("not-suspicious", c["name"])
+        self.assertEquals("Not Suspicious Traffic", c["description"])
+        self.assertEquals(3, c["priority"])
 
         c = m.get(34)
-        self.assertEquals("default-login-attempt", c.name)
+        self.assertEquals("default-login-attempt", c["name"])
         self.assertEquals("Attempt to Login By a Default Username and Password",
-                          c.description)
-        self.assertEquals(2, c.priority)
+                          c["description"])
+        self.assertEquals(2, c["priority"])
+
+        c = m.get_by_name("unknown")
+        self.assertTrue(c is not None)
+        self.assertEquals("unknown", c["name"])
+        self.assertEquals("Unknown Traffic", c["description"])
+        self.assertEquals(3, c["priority"])

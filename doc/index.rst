@@ -16,6 +16,7 @@ Contents
    :maxdepth: 2
 
    unified2
+   maps
    example-programs
    api
 

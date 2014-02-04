@@ -77,13 +77,13 @@ def print_time(sec, usec):
 def print_event(event, msgmap, classmap):
     msg_entry = msgmap.get(event["generator-id"], event["signature-id"])
     if msg_entry:
-        msg = msg_entry.msg
+        msg = msg_entry["msg"]
     else:
         msg = "Snort Event"
 
     class_entry = classmap.get(event["classification-id"])
     if class_entry:
-        class_description = class_entry.description
+        class_description = class_entry["description"]
     else:
         class_description = str(event["classification-id"])
 
@@ -114,7 +114,7 @@ def usage(fileobj=sys.stderr):
 
 def main():
 
-    msgmap = maps.MsgMap()
+    msgmap = maps.SignatureMap()
     classmap = maps.ClassificationMap()
 
     try:
@@ -127,9 +127,9 @@ def main():
         if o == "-C":
             classmap.load_from_file(open(a))
         elif o == "-G":
-            msgmap.load_genmsg_file(a)
+            msgmap.load_generator_map(open(a))
         elif o == "-S":
-            msgmap.load_sidmsg_file(a)
+            msgmap.load_signature_map(open(a))
         elif o == "-h":
             usage(sys.stdout)
             return 0

@@ -1,22 +1,11 @@
-idstools.apps package
-=====================
+apps Package
+============
 
-Submodules
-----------
-
-idstools.apps.ruleman module
-----------------------------
+:mod:`ruleman` Module
+---------------------
 
 .. automodule:: idstools.apps.ruleman
     :members:
     :undoc-members:
     :show-inheritance:
 
-
-Module contents
----------------
-
-.. automodule:: idstools.apps
-    :members:
-    :undoc-members:
-    :show-inheritance:

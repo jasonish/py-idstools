@@ -31,8 +31,7 @@ Description:
 
 *u2fast.py* also serves as an example of how to read events with the
 :doc:`unified2 <unified2>` and retrieve event descriptions using the
-facilities provided by the `maps
-<apidoc/idstools.html#module-idstools.maps>`_ module.
+facilities provided by the :doc:`maps <maps>` module.
 
 Source:
     `idstools/scripts/u2fast.py <_modules/idstools/scripts/u2fast.html>`_

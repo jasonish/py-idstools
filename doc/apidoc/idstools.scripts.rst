@@ -1,54 +1,43 @@
-idstools.scripts package
-========================
+scripts Package
+===============
 
-Submodules
-----------
-
-idstools.scripts.gensidmsgmap module
-------------------------------------
+:mod:`gensidmsgmap` Module
+--------------------------
 
 .. automodule:: idstools.scripts.gensidmsgmap
     :members:
     :undoc-members:
     :show-inheritance:
 
-idstools.scripts.u2bench module
--------------------------------
+:mod:`u2bench` Module
+---------------------
 
 .. automodule:: idstools.scripts.u2bench
     :members:
     :undoc-members:
     :show-inheritance:
 
-idstools.scripts.u2fast module
-------------------------------
+:mod:`u2fast` Module
+--------------------
 
 .. automodule:: idstools.scripts.u2fast
     :members:
     :undoc-members:
     :show-inheritance:
 
-idstools.scripts.u2spewfoo module
----------------------------------
+:mod:`u2spewfoo` Module
+-----------------------
 
 .. automodule:: idstools.scripts.u2spewfoo
     :members:
     :undoc-members:
     :show-inheritance:
 
-idstools.scripts.u2tail module
-------------------------------
+:mod:`u2tail` Module
+--------------------
 
 .. automodule:: idstools.scripts.u2tail
     :members:
     :undoc-members:
     :show-inheritance:
 
-
-Module contents
----------------
-
-.. automodule:: idstools.scripts
-    :members:
-    :undoc-members:
-    :show-inheritance:
