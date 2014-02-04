@@ -23,3 +23,5 @@ doc:
 dist:
 	python setup.py sdist
 
+dist-upload:
+	python setup.py sdist upload
