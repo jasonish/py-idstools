@@ -42,3 +42,12 @@ Further documentation is located at http://idstools.readthedocs.org.
 
 .. |Build Status| image:: https://travis-ci.org/jasonish/py-idstools.png?branch=master
    :target: https://travis-ci.org/jasonish/py-idstools
+
+Changelog
+---------
+
+0.3.1
+~~~~~
+
+- Support the new appid unified2 event types introduced in Snort
+  2.9.7.0.alpha.
