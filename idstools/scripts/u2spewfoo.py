@@ -67,6 +67,11 @@ def print_char(char):
         return c
     return "."
 
+def printable_chars(buf):
+    if buf:
+        return "".join([c for c in buf if c in printable])
+    return ""
+
 def print_raw(raw):
     bytes_per_line = 16
     parts = struct.unpack("B" * len(raw), raw)
@@ -102,6 +107,8 @@ def print_event(event):
          ),
         (("mpls label", "mpls-label", str),
          ("vlan id", "vlan-id", str),
+         ("policy id", "pad2", str),
+         ("appid", "appid", printable_chars),
          ),
         )
     print("\n(Event)")

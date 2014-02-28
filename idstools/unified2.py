@@ -54,13 +54,19 @@ LOG = logging.getLogger(__name__)
 # Record header length.
 HDR_LEN = 8
 
+# Length of an appid name.
+APPID_NAME_LEN = 16
+
 # Record types.
-PACKET       = 2
-EVENT        = 7
-EVENT_IP6    = 72
-EVENT_V2     = 104
-EVENT_IP6_V2 = 105
-EXTRA_DATA   = 110
+PACKET          = 2
+EVENT           = 7
+EVENT_IP6       = 72
+EVENT_V2        = 104
+EVENT_IP6_V2    = 105
+EXTRA_DATA      = 110
+EVENT_APPID     = 111
+EVENT_APPID_IP6 = 112
+APPSTAT         = 113
 
 class Field(object):
     """ A class to represent a field in a unified2 record. Used for
@@ -143,14 +149,22 @@ EVENT_IP6_FIELDS = (
 EVENT_V2_FIELDS = EVENT_FIELDS + (
     Field("mpls-label", 4),
     Field("vlan-id", 2),
-    Field("_pad2", 2),
+    Field("pad2", 2),
+)
+
+EVENT_APPID_FIELDS = EVENT_V2_FIELDS + (
+    Field("appid", APPID_NAME_LEN, "%ds" % (APPID_NAME_LEN)),
 )
 
 # Fields for an IPv6 v2 event.
 EVENT_IP6_V2_FIELDS = EVENT_IP6_FIELDS + (
     Field("mpls-label", 4),
     Field("vlan-id", 2),
-    Field("_pad2", 2),
+    Field("pad2", 2),
+)
+
+EVENT_APPID_IP6_FIELDS = EVENT_IP6_FIELDS + (
+    Field("appid", APPID_NAME_LEN, "%ds" % (APPID_NAME_LEN)),
 )
 
 # Fields in a UNIFIED_EXTRA_DATA record.
@@ -209,6 +223,9 @@ class Event(dict):
         # Only v2 events have MPLS and VLAN ids.
         self["mpls-label"] = None
         self["vlan-id"] = None
+
+        # Only v3/appid events have an appid.
+        self["appid"] = None
 
         for field, value in fields:
             self[field.name] = value
@@ -314,12 +331,14 @@ class ExtraDataDecoder(AbstractDecoder):
 
 # Map of decoders keyed by record type.
 DECODERS = {
-    EVENT:        EventDecoder(EVENT_FIELDS),
-    EVENT_IP6:    EventDecoder(EVENT_IP6_FIELDS),
-    EVENT_V2:     EventDecoder(EVENT_V2_FIELDS),
-    EVENT_IP6_V2: EventDecoder(EVENT_IP6_V2_FIELDS),
-    PACKET:       PacketDecoder(PACKET_FIELDS),
-    EXTRA_DATA:   ExtraDataDecoder(EXTRA_DATA_FIELDS),
+    EVENT:           EventDecoder(EVENT_FIELDS),
+    EVENT_IP6:       EventDecoder(EVENT_IP6_FIELDS),
+    EVENT_V2:        EventDecoder(EVENT_V2_FIELDS),
+    EVENT_IP6_V2:    EventDecoder(EVENT_IP6_V2_FIELDS),
+    EVENT_APPID:     EventDecoder(EVENT_APPID_FIELDS),
+    EVENT_APPID_IP6: EventDecoder(EVENT_APPID_IP6_FIELDS),
+    PACKET:          PacketDecoder(PACKET_FIELDS),
+    EXTRA_DATA:      ExtraDataDecoder(EXTRA_DATA_FIELDS),
 }
 
 class Aggregator(object):
