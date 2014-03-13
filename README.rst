@@ -46,6 +46,11 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+0.4.dev
+~~~~~~~
+
+- New tool, u2json to convert unified2 files to JSON.
+
 0.3.1
 ~~~~~
 
