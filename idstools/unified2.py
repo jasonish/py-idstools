@@ -48,6 +48,7 @@ import collections
 import logging
 import fnmatch
 import time
+import socket
 
 LOG = logging.getLogger(__name__)
 
@@ -114,8 +115,8 @@ EVENT_FIELDS = (
     Field("signature-revision", 4),
     Field("classification-id", 4),
     Field("priority", 4),
-    Field("ip-source", 4, "4s"),
-    Field("ip-destination", 4, "4s"),
+    Field("source-ip", 4, "4s"),
+    Field("destination-ip", 4, "4s"),
     Field("sport-itype", 2),
     Field("dport-icode", 2),
     Field("protocol", 1),
@@ -135,8 +136,8 @@ EVENT_IP6_FIELDS = (
     Field("signature-revision", 4),
     Field("classification-id", 4),
     Field("priority", 4),
-    Field("ip-source", 4, "16s"),
-    Field("ip-destination", 4, "16s"),
+    Field("source-ip", 4, "16s"),
+    Field("destination-ip", 4, "16s"),
     Field("sport-itype", 2),
     Field("dport-icode", 2),
     Field("protocol", 1),
@@ -213,7 +214,7 @@ class Event(dict):
 
     """
 
-    def __init__(self, fields):
+    def __init__(self, event):
 
         # Create fields to hold extra data and packets associated with
         # this event.
@@ -227,8 +228,7 @@ class Event(dict):
         # Only v3/appid events have an appid.
         self["appid"] = None
 
-        for field, value in fields:
-            self[field.name] = value
+        self.update(event)
 
 class Packet(dict):
     """Packet represents a unified2 packet record with a dict-like interface.
@@ -310,8 +310,21 @@ class EventDecoder(AbstractDecoder):
 
     def decode(self, buf):
         """Decodes a buffer into an :class:`.Event` object."""
-        parts = struct.unpack(self.format, buf)
-        return Event(zip(self.fields, parts))
+        values = struct.unpack(self.format, buf)
+        keys = [field.name for field in self.fields]
+        event = dict(zip(keys, values))
+        event["source-ip"] = self.decode_ip(event["source-ip"])
+        event["destination-ip"] = self.decode_ip(event["destination-ip"])
+        if "appid" in event:
+            event["appid"] = event["appid"].split("\x00")[0]
+        return Event(event)
+
+    def decode_ip(self, addr):
+        if len(addr) == 4:
+            return socket.inet_ntoa(addr)
+        else:
+            parts = struct.unpack("H" * (len(addr) / 2), addr)
+            return ":".join("%x" % p for p in parts)
 
 class PacketDecoder(AbstractDecoder):
     """ Decoder for packet type records. """

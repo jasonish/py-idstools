@@ -39,7 +39,7 @@ except:
 
 from idstools import unified2
 
-class Test_read_record(unittest.TestCase):
+class TestReadRecord(unittest.TestCase):
 
     # A unified2 test file containing 1 event consisting of 17 records.
     test_filename = "tests/multi-record-event.log"
@@ -76,6 +76,17 @@ class Test_read_record(unittest.TestCase):
 
         read_fileobj.close()
 
+    def test_decoders(self):
+        """Based on our knowledge of the test file, check that the
+        records were decoded as expected.
+
+        """
+        fileobj = open(self.test_filename, "rb")
+
+        record = unified2.read_record(fileobj)
+        self.assertEqual("207.25.71.28", record["source-ip"])
+        self.assertEqual("10.20.11.123", record["destination-ip"])
+
 class TestRecordReader(unittest.TestCase):
 
     # A unified2 test file containing 1 event consisting of 17 records.
@@ -106,7 +117,6 @@ class TestRecordReader(unittest.TestCase):
         self.assertEquals(fileobj.tell(), 0)
 
     def test_eof(self):
-
         """Test that we get None on EOF."""
 
         reader = unified2.RecordReader(open(self.test_filename, "rb"))
@@ -132,7 +142,6 @@ class FileRecordReaderTest(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
-
 
     def test_single_file_iteration(self):
         reader = unified2.FileRecordReader(self.test_filename)
