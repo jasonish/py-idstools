@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'idstools-gensidmsgmap = idstools.scripts.gensidmsgmap:main',
             'idstools-u2fast = idstools.scripts.u2fast:main',
+            'idstools-u2json = idstools.scripts.u2json:main',
     ]
     },
 )
