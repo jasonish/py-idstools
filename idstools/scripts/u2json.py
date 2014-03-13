@@ -35,6 +35,8 @@
 	-C <classification.config>
 	-G <gen-msg.map>
 	-S <sid-msg.map>
+        --no-extra-data
+        --no-packets
 
 Providing classification and map files are optional and will be used
 to resolve event ID's to event descriptions.
@@ -61,6 +63,12 @@ if sys.argv[0] == __file__:
 from idstools import unified2
 from idstools import maps
 
+# Options that are easiest shared globally.
+options = {
+    "no-extra-data": False,
+    "no-packets": False,
+}
+
 proto_map = {
     1: "ICMP",
     6: "TCP",
@@ -84,20 +92,26 @@ def render_timestamp(sec, usec):
 
 def print_event(event, msgmap, classmap):
 
-    for packet in event["packets"]:
-        packet["data"] = base64.b64encode(packet["data"])
-        packet["timestamp"] = render_timestamp(
-            packet["packet-second"], packet["packet-microsecond"])
-        del(packet["packet-second"])
-        del(packet["packet-microsecond"])
-        del(packet["event-second"])
-        del(packet["sensor-id"])
-        del(packet["event-id"])
+    if options["no-packets"]:
+        del(event["packets"])
+    else:
+        for packet in event["packets"]:
+            packet["data"] = base64.b64encode(packet["data"])
+            packet["timestamp"] = render_timestamp(
+                packet["packet-second"], packet["packet-microsecond"])
+            del(packet["packet-second"])
+            del(packet["packet-microsecond"])
+            del(packet["event-second"])
+            del(packet["sensor-id"])
+            del(packet["event-id"])
 
-    for extra_data in event["extra-data"]:
-        del(extra_data["event-second"])
-        del(extra_data["sensor-id"])
-        del(extra_data["event-id"])
+    if options["no-extra-data"]:
+        del(event["extra-data"])
+    else:
+        for extra_data in event["extra-data"]:
+            del(extra_data["event-second"])
+            del(extra_data["sensor-id"])
+            del(extra_data["event-id"])
 
     event["timestamp"] = render_timestamp(
         event["event-second"], event["event-microsecond"])
@@ -143,7 +157,8 @@ def main():
     classmap = maps.ClassificationMap()
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hC:G:S:")
+        opts, args = getopt.getopt(
+            sys.argv[1:], "hC:G:S:", ["no-extra-data", "no-packets"])
     except getopt.GetoptError as err:
         print("error: %s\n" % err, file=sys.stderr)
         usage()
@@ -158,6 +173,10 @@ def main():
         elif o == "-h":
             usage(sys.stdout)
             return 0
+        elif o == "--no-extra-data":
+            options["no-extra-data"] = True
+        elif o == "--no-packets":
+            options["no-packets"] = True
 
     if not args:
         usage()
