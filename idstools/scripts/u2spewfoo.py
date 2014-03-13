@@ -54,13 +54,6 @@ from idstools import unified2
 not_printable = "\t\r\n\x0b\x0c"
 printable = [c for c in string.printable if c not in not_printable]
 
-def print_ip(addr):
-    if len(addr) == 4:
-        return socket.inet_ntoa(addr)
-    else:
-        parts = struct.unpack("H" * (len(addr) / 2), addr)
-        return ":".join("%x" % p for p in parts)
-
 def print_char(char):
     c = chr(char)
     if c in printable:
@@ -96,8 +89,8 @@ def print_event(event):
          ("classification", "classification-id", str),
          ),
         (("priority", "priority", str),
-         ("ip source", "ip-source", print_ip),
-         ("ip destination", "ip-destination", print_ip),
+         ("ip source", "source-ip", str),
+         ("ip destination", "destination-ip", str),
          ),
         (("src port", "sport-itype", str),
          ("dest port", "dport-icode", str),

@@ -61,13 +61,6 @@ proto_map = {
     17: "UDP",
 }
 
-def print_ip(addr):
-    if len(addr) == 4:
-        return socket.inet_ntoa(addr)
-    else:
-        parts = struct.unpack("H" * (len(addr) / 2), addr)
-        return ":".join("%x" % p for p in parts)
-
 def print_time(sec, usec):
     tt = time.localtime(sec)
     return "%04d/%02d/%02d-%02d:%02d:%02d.%06d" % (
@@ -98,9 +91,9 @@ def print_event(event, msgmap, classmap):
             class_description,
             event["priority"],
             proto,
-            print_ip(event["ip-source"]),
+            event["source-ip"],
             event["sport-itype"],
-            print_ip(event["ip-destination"]),
+            event["destination-ip"],
             event["dport-icode"],
             ))
 
