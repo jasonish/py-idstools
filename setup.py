@@ -1,11 +1,22 @@
-try:
-    from setuptools import setup
-except:
-    print("Error importing setuptools, will use distutils.")
-    print("- Script entry points will not be installed.")
-    from distutils import setup
+import os
+import os.path
+import shutil
+
+from setuptools import setup
 
 import idstools
+
+if not os.path.exists("build/_bin"):
+    os.makedirs("build/_bin")
+scripts = [
+    "gensidmsgmap",
+    "u2fast",
+    "u2json",
+]
+for script in scripts:
+    shutil.copy(
+        "bin/%s" % (script),
+        "build/_bin/idstools-%s" % (script))
 
 setup(
     name="idstools",
@@ -22,11 +33,5 @@ setup(
     classifiers=[
         'License :: OSI Approved :: BSD License',
     ],
-    entry_points = {
-        'console_scripts': [
-            'idstools-gensidmsgmap = idstools.scripts.gensidmsgmap:main',
-            'idstools-u2fast = idstools.scripts.u2fast:main',
-            'idstools-u2json = idstools.scripts.u2json:main',
-    ]
-    },
+    scripts = ["build/_bin/idstools-%s" % script for script in scripts],
 )
