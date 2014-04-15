@@ -68,6 +68,9 @@ class SignatureMap(object):
     def __init__(self):
         self.map = {}
 
+    def size(self):
+        return len(self.map)
+
     def get(self, generator_id, signature_id):
         """Get signature info by generator_id and signature_id.
 
@@ -169,6 +172,9 @@ class ClassificationMap(object):
 
         if fileobj:
             self.load_from_file(fileobj)
+
+    def size(self):
+        return len(self.id_map)
 
     def add(self, classification):
         """Add a classification to the map."""

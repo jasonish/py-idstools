@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (c) 2011 Jason Ish
+# Copyright (c) 2014 Jason Ish
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,36 +25,81 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Read unified2 log files and output events as JSON
+"""Read unified2 log files and output events as JSON.
 
 ::
 
-    usage: u2json.py [options] <filename>...
+    usage: u2json [-h] [-C <classification.config>] [-S <msg-msg.map>]
+                  [-G <gen-msg.map>] [--snort-conf <snort.conf>]
+                  [--directory <spool directory>] [--prefix <spool file prefix>]
+                  [--bookmark] [--follow] [--delete] [--output <filename>]
+                  [--stdout]
+                  [filenames [filenames ...]]
 
-    options:
-	-C <classification.config>
-	-G <gen-msg.map>
-	-S <sid-msg.map>
-        --no-extra-data
-        --no-packets
+    positional arguments:
+      filenames
 
-Providing classification and map files are optional and will be used
-to resolve event ID's to event descriptions.
+    optional arguments:
+      -h, --help            show this help message and exit
+      -C <classification.config>
+                            path to classification config
+      -S <msg-msg.map>      path to sid-msg.map
+      -G <gen-msg.map>      path to gen-msg.map
+      --snort-conf <snort.conf>
+                            attempt to load classifications and map files based on
+                            the location of the snort.conf
+      --directory <spool directory>
+                            spool directory (eg: /var/log/snort)
+      --prefix <spool file prefix>
+                            spool filename prefix (eg: unified2.log)
+      --bookmark            enable bookmarking
+      --follow              follow files/continuous mode (spool mode only)
+      --delete              delete spool files
+      --output <filename>   output filename (eg: /var/log/snort/alerts.json
+      --stdout              also log to stdout if --output is a file
+
+    If --directory and --prefix are provided files will be read from
+    the specified 'spool' directory. Otherwise files on the command
+    line will be processed.
+
+An alternative to using command line arguments is to put the arguments
+in a file and call u2json like::
+
+    u2json @filename
+
+where filename looks something like::
+
+    -C=/etc/snort/etc/classification.config
+    -S=/etc/snort/etc/sid-msg.map
+    -G=/etc/snort/etc/gen-msg.map
+    --directory=/var/log/snort
+    --prefix=unified2.log
+    --output=/var/log/snort/alerts.json
+    --follow
+    --bookmark
+    --delete
+
 """
 
 from __future__ import print_function
 
 import sys
 import os
-import getopt
 import socket
 import time
 import base64
 import json
-import struct
-import socket
+import logging
 from datetime import datetime
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except:
+    from idstools.compat.ordereddict import OrderedDict
+
+try:
+    import argparse
+except:
+    from idstools.compat.argparse import argparse
 
 if sys.argv[0] == __file__:
     sys.path.insert(
@@ -63,11 +108,9 @@ if sys.argv[0] == __file__:
 from idstools import unified2
 from idstools import maps
 
-# Options that are easiest shared globally.
-options = {
-    "no-extra-data": False,
-    "no-packets": False,
-}
+logging.basicConfig(
+    level=logging.INFO, format="%(message)s")
+LOG = logging.getLogger()
 
 proto_map = {
     1: "ICMP",
@@ -90,101 +133,239 @@ def render_timestamp(sec, usec):
         tt.tm_year, tt.tm_mon, tt.tm_mday, tt.tm_hour, tt.tm_min, tt.tm_sec, 
         usec, get_tzoffset(sec))
 
-def print_event(event, msgmap, classmap):
+class Unified2Bookmark(object):
 
-    if options["no-packets"]:
-        del(event["packets"])
-    else:
-        for packet in event["packets"]:
-            packet["data"] = base64.b64encode(packet["data"])
-            packet["timestamp"] = render_timestamp(
-                packet["packet-second"], packet["packet-microsecond"])
-            del(packet["packet-second"])
-            del(packet["packet-microsecond"])
-            del(packet["event-second"])
-            del(packet["sensor-id"])
-            del(packet["event-id"])
+    def __init__(self, directory, prefix):
+        self.directory = directory
+        self.prefix = prefix
 
-    if options["no-extra-data"]:
-        del(event["extra-data"])
-    else:
-        for extra_data in event["extra-data"]:
-            del(extra_data["event-second"])
-            del(extra_data["sensor-id"])
-            del(extra_data["event-id"])
+        self.filename = os.path.join(
+            os.path.abspath(
+                self.directory), "%s.bookmark" % (
+                    os.path.basename(sys.argv[0])))
 
-    event["timestamp"] = render_timestamp(
-        event["event-second"], event["event-microsecond"])
-    del(event["event-second"])
-    del(event["event-microsecond"])
-    del(event["event-id"])
+        self.fileobj = None
 
-    if event["protocol"] in [socket.IPPROTO_UDP, socket.IPPROTO_TCP]:
-        event["source-port"] = event["sport-itype"]
-        event["destination-port"] = event["dport-icode"]
-    elif event["protocol"] == socket.IPPROTO_ICMP:
-        event["icmp-type"] = event["sport-itype"]
-        event["icmp-code"] = event["dport-icode"]
-    del(event["sport-itype"])
-    del(event["dport-icode"])
+    def get(self):
+        if os.path.exists(self.filename):
+            return json.loads(open(self.filename, "rb").read())
+        return {"filename": None, "offset": None}
 
-    msg_entry = msgmap.get(event["generator-id"], event["signature-id"])
-    if msg_entry:
-        event["signature"] = msg_entry["msg"]
-    else:
-        event["signature"] = "Snort Event"
+    def update(self, reader):
+        if not self.fileobj:
+            self.fileobj = open(self.filename, "wb")
+        self.fileobj.truncate(0)
+        self.fileobj.seek(0, 0)
+        filename, location = reader.tell()
+        json.dump({"filename": filename, "offset": location}, self.fileobj)
+        self.fileobj.flush()
 
-    class_entry = classmap.get(event["classification-id"])
-    if class_entry:
-        event["classtype"] = class_entry["name"]
+class SuricataJsonFilter(object):
 
-    if event["protocol"] in proto_map:
-        event["protocol"] = proto_map[event["protocol"]]
+    def __init__(self, msgmap=None, classmap=None):
+        self.msgmap = msgmap
+        self.classmap = classmap
 
-    print(json.dumps(event))
+    def filter(self, event):
+        output = OrderedDict()
+        output["timestamp"] = render_timestamp(
+            event["event-second"], event["event-microsecond"])
+        output["event_type"] = "alert"
+        output["src_ip"] = event["source-ip"]
+        if event["protocol"] in [socket.IPPROTO_UDP, socket.IPPROTO_TCP]:
+            output["src_port"] = event["sport-itype"]
+        output["dest_ip"] = event["destination-ip"]
+        if event["protocol"] in [socket.IPPROTO_UDP, socket.IPPROTO_TCP]:
+            output["dest_port"] = event["dport-icode"]
+        output["proto"] = self.getprotobynumber(event["protocol"])
 
-def usage(fileobj=sys.stderr):
-    print("usage: %s [options] <filename>..." % sys.argv[0], file=fileobj)
-    print("")
-    print("options:")
-    print("\t-C <classification.config>", file=fileobj)
-    print("\t-G <gen-msg.map>", file=fileobj)
-    print("\t-S <sid-msg.map>", file=fileobj)
+        if event["protocol"] in [socket.IPPROTO_ICMP, socket.IPPROTO_ICMPV6]:
+            output["icmp_type"] = event["sport-itype"]
+            output["icmp_code"] = event["dport-icode"]
+
+        alert = OrderedDict()
+        alert["action"] = "blocked" if event["blocked"] == 1 else "allowed"
+        alert["gid"] = event["generator-id"]
+        alert["signature_id"] = event["signature-id"]
+        alert["rev"] = event["signature-revision"]
+        alert["signature"] = self.resolve_msg(event)
+        alert["category"] = self.resolve_classification(event)
+        alert["severity"] = event["priority"]
+        output["alert"] = alert
+
+        return output
+
+    def resolve_classification(self, event, default=None):
+        if self.classmap:
+            classinfo = self.classmap.get(event["classification-id"])
+            if classinfo:
+                return classinfo["description"]
+        return default
+
+    def resolve_msg(self, event, default=None):
+        if self.msgmap:
+            signature = self.msgmap.get(
+                event["generator-id"], event["signature-id"])
+            if signature:
+                return signature["msg"]
+        return default
+
+    def getprotobynumber(self, protocol):
+        return proto_map.get(protocol, protocol)
+
+class OutputWrapper(object):
+
+    def __init__(self, filename, fileobj=None):
+        self.filename = filename
+        self.fileobj = fileobj
+
+        if self.fileobj is None:
+            self.reopen()
+            self.isfile = True
+        else:
+            self.isfile = False
+
+    def reopen(self):
+        if self.fileobj:
+            self.fileobj.close()
+        self.fileobj = open(self.filename, "ab")
+
+    def write(self, buf):
+        if self.isfile:
+            if not os.path.exists(self.filename):
+                self.reopen()
+        self.fileobj.write(buf)
+        self.fileobj.write("\n")
+        self.fileobj.flush()
+
+def load_from_snort_conf(snort_conf, classmap, msgmap):
+    snort_etc = os.path.dirname(snort_conf)
+
+    classification_config = os.path.join(snort_etc, "classification.config")
+    if os.path.exists(classification_config):
+        LOG.debug("Loading %s.", classification_config)
+        classmap.load_from_file(open(classification_config))
+
+    genmsg_map = os.path.join(snort_etc, "gen-msg.map")
+    if os.path.exists(genmsg_map):
+        LOG.debug("Loading %s.", genmsg_map)
+        msgmap.load_generator_map(open(genmsg_map))
+
+    sidmsg_map = os.path.join(snort_etc, "sid-msg.map")
+    if os.path.exists(sidmsg_map):
+        LOG.debug("Loading %s.", sidmsg_map)
+        msgmap.load_signature_map(open(sidmsg_map))
+
+epilog = """If --directory and --prefix are provided files will be
+read from the specified 'spool' directory.  Otherwise files on the
+command line will be processed.
+"""
 
 def main():
 
     msgmap = maps.SignatureMap()
     classmap = maps.ClassificationMap()
 
-    try:
-        opts, args = getopt.getopt(
-            sys.argv[1:], "hC:G:S:", ["no-extra-data", "no-packets"])
-    except getopt.GetoptError as err:
-        print("error: %s\n" % err, file=sys.stderr)
-        usage()
-        return 1
-    for o, a in opts:
-        if o == "-C":
-            classmap.load_from_file(open(a))
-        elif o == "-G":
-            msgmap.load_generator_map(open(a))
-        elif o == "-S":
-            msgmap.load_signature_map(open(a))
-        elif o == "-h":
-            usage(sys.stdout)
-            return 0
-        elif o == "--no-extra-data":
-            options["no-extra-data"] = True
-        elif o == "--no-packets":
-            options["no-packets"] = True
+    parser = argparse.ArgumentParser(
+        fromfile_prefix_chars='@', epilog=epilog)
+    parser.add_argument(
+        "-C", dest="classification_path", metavar="<classification.config>", 
+        help="path to classification config")
+    parser.add_argument(
+        "-S", dest="sidmsgmap_path", metavar="<msg-msg.map>", 
+        help="path to sid-msg.map")
+    parser.add_argument(
+        "-G", dest="genmsgmap_path", metavar="<gen-msg.map>", 
+        help="path to gen-msg.map")
+    parser.add_argument(
+        "--snort-conf", dest="snort_conf", metavar="<snort.conf>",
+        help="attempt to load classifications and map files based on the "
+        "location of the snort.conf")
+    parser.add_argument(
+        "--directory", metavar="<spool directory>",
+        help="spool directory (eg: /var/log/snort)")
+    parser.add_argument(
+        "--prefix", metavar="<spool file prefix>",
+        help="spool filename prefix (eg: unified2.log)")
+    parser.add_argument(
+        "--bookmark", action="store_true", default=False,
+        help="enable bookmarking")
+    parser.add_argument(
+        "--follow", action="store_true", default=False,
+        help="follow files/continuous mode (spool mode only)")
+    parser.add_argument(
+        "--delete", action="store_true", default=False,
+        help="delete spool files")
+    parser.add_argument(
+        "--output", metavar="<filename>",
+        help="output filename (eg: /var/log/snort/alerts.json")
+    parser.add_argument(
+        "--stdout", action="store_true", default=False,
+        help="also log to stdout if --output is a file")
+    parser.add_argument(
+        "filenames", nargs="*")
+    args = parser.parse_args()
 
-    if not args:
-        usage()
-        return 1
+    if args.snort_conf:
+        load_from_snort_conf(args.snort_conf, classmap, msgmap)
 
-    reader = unified2.FileEventReader(*args)
-    for event in reader:
-        print_event(event, msgmap, classmap)
+    if args.classification_path:
+        classmap.load_from_file(
+            open(os.path.expanduser(args.classification_path)))
+    if args.genmsgmap_path:
+        msgmap.load_generator_map(open(os.path.expanduser(args.genmsgmap_path)))
+    if args.sidmsgmap_path:
+        msgmap.load_signature_map(open(os.path.expanduser(args.sidmsgmap_path)))
+
+    if msgmap.size() == 0:
+        LOG.warn("WARNING: No alert message map entries loaded.")
+    else:
+        LOG.info("Loaded %s rule message map entries.", msgmap.size())
+
+    if classmap.size() == 0:
+        LOG.warn("WARNING: No classifications loaded.")
+    else:
+        LOG.info("Loaded %s classifications.", classmap.size())
+
+    output_filter = SuricataJsonFilter(msgmap, classmap)
+    if args.output:
+        output = OutputWrapper(args.output)
+    else:
+        output = OutputWrapper("-", sys.stdout)
+
+    if args.directory and args.prefix:
+        if args.bookmark:
+            bookmark = Unified2Bookmark(args.directory, args.prefix)
+            init_filename = bookmark.get()["filename"]
+            init_offset = bookmark.get()["offset"]
+        else:
+            bookmark = None
+            init_filename = None
+            init_offset = None
+
+        reader = unified2.SpoolEventReader(
+            directory=args.directory,
+            prefix=args.prefix,
+            tail=args.follow,
+            init_filename=init_filename,
+            init_offset=init_offset,
+            delete=args.delete)
+
+        for event in reader:
+            encoded = json.dumps(output_filter.filter(event))
+            output.write(encoded)
+            if output.isfile and args.stdout:
+                print(encoded)
+            if bookmark:
+                bookmark.update(reader)
+
+    elif args.filenames:
+        reader = unified2.FileEventReader(*args.filenames)
+        for event in reader:
+            print(json.dumps(output_filter.filter(event)))
+
+    else:
+        print("nothing to do.")
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -316,7 +316,7 @@ class EventDecoder(AbstractDecoder):
         event["source-ip"] = self.decode_ip(event["source-ip"])
         event["destination-ip"] = self.decode_ip(event["destination-ip"])
         if "appid" in event:
-            event["appid"] = event["appid"].split("\x00")[0]
+            event["appid"] = str(event["appid"]).split("\x00")[0]
         return Event(event)
 
     def decode_ip(self, addr):
@@ -755,30 +755,43 @@ class SpoolEventReader(object):
 
     """
 
-    def __init__(self,
-                 directory,
-                 prefix,
-                 init_filename = None,
-                 init_offset = None,
-                 tail = False,
-                 rollover_hook = None):
+    def __init__(self, directory, prefix, init_filename = None,
+                 init_offset = None, follow = False, tail = False,
+                 rollover_hook = None, 
+                 delete = False):
 
-        # Create a SpoolRecordReader.  We purposely don't pass the
-        # tail parameter through as we want to handle that here so we
-        # can flush the aggregator after a timeout.
-        self.reader = SpoolRecordReader(
-            directory, prefix, 
-            init_filename = init_filename, 
-            init_offset = init_offset,
-            rollover_hook = rollover_hook)
-        self.tail = tail
+        self.rollover_hook = rollover_hook
+        self.follow = follow or tail
+        self.delete = delete
 
         self.aggregator = Aggregator()
  
+        self.delete_on_next = []
+
+        # Create a SpoolRecordReader.  We purposely don't pass the
+        # follow parameter through as we want to handle that here so
+        # we can flush the aggregator after a timeout.
+        self.reader = SpoolRecordReader(
+            directory, prefix, init_filename=init_filename,
+            init_offset=init_offset, rollover_hook=self._rollover_hook)
+
+    def _rollover_hook(self, closed, opened):
+        if closed:
+            LOG.debug("Closed file %s, opened file %s", closed, opened)
+        else:
+            LOG.debug("Opened file %s", opened)
+        if self.rollover_hook:
+            try:
+                self.rollover_hook(closed, opened)
+            except Exception as err:
+                LOG.exception("exception caught while calling rollover hook")
+        if closed and self.delete:
+            self.delete_on_next.append(closed)
+
     def next(self):
         """Return the next :class:`.Event`.
 
-        If in tail mode and EOF is head, this method will sleep and
+        If in follow mode and EOF is head, this method will sleep and
         and try again.
 
         """
@@ -787,14 +800,22 @@ class SpoolEventReader(object):
             if record:
                 event = self.aggregator.add(record)
                 if event:
-                    return event
+                    #return event
+                    break
             else:
                 event = self.aggregator.flush()
-                if event or not self.tail:
-                    return event
+                if event or not self.follow:
+                    break
 
                 # Sleep for a moment and try again.
-                time.sleep(0.01)
+                time.sleep(0.1)
+
+        while self.delete_on_next:
+            filename = self.delete_on_next.pop()
+            LOG.info("Deleting file %s.", filename)
+            os.unlink(filename)
+
+        return event
 
     def tell(self):
         """ See :func:`.SpoolRecordReader.tell`. """

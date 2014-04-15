@@ -36,6 +36,15 @@ facilities provided by the :doc:`maps <maps>` module.
 Source:
     `idstools/scripts/u2fast.py <_modules/idstools/scripts/u2fast.html>`_
 
+u2json.py
+---------
+
+Description:
+    .. automodule:: idstools.scripts.u2json
+
+Source:
+    `idstools/scripts/u2json.py <_modules/idstools/scripts/u2json.html>`_
+
 u2tail.py
 ---------
 
@@ -44,3 +53,4 @@ Description:
 
 Source:
     `idstools/scripts/u2tail.py <_modules/idstools/scripts/u2tail.html>`_
+
