@@ -45,12 +45,3 @@ Description:
 Source:
     `idstools/scripts/u2json.py <_modules/idstools/scripts/u2json.html>`_
 
-u2tail.py
----------
-
-Description:
-    .. automodule:: idstools.scripts.u2tail
-
-Source:
-    `idstools/scripts/u2tail.py <_modules/idstools/scripts/u2tail.html>`_
-

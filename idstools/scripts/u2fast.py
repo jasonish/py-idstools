@@ -29,31 +29,58 @@
 
 ::
 
-    usage: u2fast.py [options] <filename>...
+    usage: u2fast [-h] [-C <classification.config>] [-S <msg-msg.map>]
+                  [-G <gen-msg.map>] [--snort-conf <snort.conf>]
+                  [--directory <spool directory>] [--prefix <spool file prefix>]
+                  [--bookmark] [--follow]
+                  [filenames [filenames ...]]
 
-    options:
-	-C <classification.config>
-	-G <gen-msg.map>
-	-S <sid-msg.map>
+    positional arguments:
+      filenames
 
-Providing classification and map files are optional and will be used
-to resolve event ID's to event descriptions.
+    optional arguments:
+      -h, --help            show this help message and exit
+      -C <classification.config>
+                            path to classification config
+      -S <msg-msg.map>      path to sid-msg.map
+      -G <gen-msg.map>      path to gen-msg.map
+      --snort-conf <snort.conf>
+                            attempt to load classifications and map files based on
+                            the location of the snort.conf
+      --directory <spool directory>
+                            spool directory (eg: /var/log/snort)
+      --prefix <spool file prefix>
+                            spool filename prefix (eg: unified2.log)
+      --bookmark            enable bookmarking
+      --follow              follow files/continuous mode (spool mode only)
+
 """
 
 from __future__ import print_function
 
 import sys
 import os
-import getopt
-import socket
-import time
+import os.path
 
 if sys.argv[0] == __file__:
     sys.path.insert(
         0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
+import time
+import json
+import logging
+
+try:
+    import argparse
+except:
+    from idstools.compat.argparse import argparse
+
 from idstools import unified2
 from idstools import maps
+
+logging.basicConfig(
+    level=logging.INFO, format="%(message)s")
+LOG = logging.getLogger()
 
 proto_map = {
     1: "ICMP",
@@ -97,43 +124,138 @@ def print_event(event, msgmap, classmap):
             event["dport-icode"],
             ))
 
-def usage(fileobj=sys.stderr):
-    print("usage: %s [options] <filename>..." % sys.argv[0], file=fileobj)
-    print("")
-    print("options:")
-    print("\t-C <classification.config>", file=fileobj)
-    print("\t-G <gen-msg.map>", file=fileobj)
-    print("\t-S <sid-msg.map>", file=fileobj)
+class Unified2Bookmark(object):
+
+    def __init__(self, directory, prefix):
+        self.directory = directory
+        self.prefix = prefix
+
+        self.filename = os.path.join(
+            os.path.abspath(
+                self.directory), "%s.bookmark" % (
+                    os.path.basename(sys.argv[0])))
+
+        self.fileobj = None
+
+    def get(self):
+        if os.path.exists(self.filename):
+            return json.loads(open(self.filename, "rb").read())
+        return {"filename": None, "offset": None}
+
+    def update(self, reader):
+        if not self.fileobj:
+            self.fileobj = open(self.filename, "wb")
+        self.fileobj.truncate(0)
+        self.fileobj.seek(0, 0)
+        filename, location = reader.tell()
+        json.dump({"filename": filename, "offset": location}, self.fileobj)
+        self.fileobj.flush()
+
+def load_from_snort_conf(snort_conf, classmap, msgmap):
+    snort_etc = os.path.dirname(snort_conf)
+
+    classification_config = os.path.join(snort_etc, "classification.config")
+    if os.path.exists(classification_config):
+        LOG.debug("Loading %s.", classification_config)
+        classmap.load_from_file(open(classification_config))
+
+    genmsg_map = os.path.join(snort_etc, "gen-msg.map")
+    if os.path.exists(genmsg_map):
+        LOG.debug("Loading %s.", genmsg_map)
+        msgmap.load_generator_map(open(genmsg_map))
+
+    sidmsg_map = os.path.join(snort_etc, "sid-msg.map")
+    if os.path.exists(sidmsg_map):
+        LOG.debug("Loading %s.", sidmsg_map)
+        msgmap.load_signature_map(open(sidmsg_map))
 
 def main():
 
     msgmap = maps.SignatureMap()
     classmap = maps.ClassificationMap()
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hC:G:S:")
-    except getopt.GetoptError as err:
-        print("error: %s\n" % err, file=sys.stderr)
-        usage()
-        return 1
-    for o, a in opts:
-        if o == "-C":
-            classmap.load_from_file(open(a))
-        elif o == "-G":
-            msgmap.load_generator_map(open(a))
-        elif o == "-S":
-            msgmap.load_signature_map(open(a))
-        elif o == "-h":
-            usage(sys.stdout)
-            return 0
+    parser = argparse.ArgumentParser(
+        fromfile_prefix_chars='@')
+    parser.add_argument(
+        "-C", dest="classification_path", metavar="<classification.config>", 
+        help="path to classification config")
+    parser.add_argument(
+        "-S", dest="sidmsgmap_path", metavar="<msg-msg.map>", 
+        help="path to sid-msg.map")
+    parser.add_argument(
+        "-G", dest="genmsgmap_path", metavar="<gen-msg.map>", 
+        help="path to gen-msg.map")
+    parser.add_argument(
+        "--snort-conf", dest="snort_conf", metavar="<snort.conf>",
+        help="attempt to load classifications and map files based on the "
+        "location of the snort.conf")
+    parser.add_argument(
+        "--directory", metavar="<spool directory>",
+        help="spool directory (eg: /var/log/snort)")
+    parser.add_argument(
+        "--prefix", metavar="<spool file prefix>",
+        help="spool filename prefix (eg: unified2.log)")
+    parser.add_argument(
+        "--bookmark", action="store_true", default=False,
+        help="enable bookmarking")
+    parser.add_argument(
+        "--follow", action="store_true", default=False,
+        help="follow files/continuous mode (spool mode only)")
+    parser.add_argument(
+        "filenames", nargs="*")
+    args = parser.parse_args()
 
-    if not args:
-        usage()
-        return 1
+    if args.snort_conf:
+        load_from_snort_conf(args.snort_conf, classmap, msgmap)
 
-    reader = unified2.FileEventReader(*args)
-    for event in reader:
-        print_event(event, msgmap, classmap)
+    if args.classification_path:
+        classmap.load_from_file(
+            open(os.path.expanduser(args.classification_path)))
+    if args.genmsgmap_path:
+        msgmap.load_generator_map(open(os.path.expanduser(args.genmsgmap_path)))
+    if args.sidmsgmap_path:
+        msgmap.load_signature_map(open(os.path.expanduser(args.sidmsgmap_path)))
+
+    if msgmap.size() == 0:
+        LOG.warn("WARNING: No alert message map entries loaded.")
+    else:
+        LOG.info("Loaded %s rule message map entries.", msgmap.size())
+
+    if classmap.size() == 0:
+        LOG.warn("WARNING: No classifications loaded.")
+    else:
+        LOG.info("Loaded %s classifications.", classmap.size())
+
+    if args.directory and args.prefix:
+        if args.bookmark:
+            bookmark = Unified2Bookmark(args.directory, args.prefix)
+            init_filename = bookmark.get()["filename"]
+            init_offset = bookmark.get()["offset"]
+        else:
+            bookmark = None
+            init_filename = None
+            init_offset = None
+
+        reader = unified2.SpoolEventReader(
+            directory=args.directory,
+            prefix=args.prefix,
+            follow=args.follow,
+            init_filename=init_filename,
+            init_offset=init_offset)
+
+        for event in reader:
+            print_event(event, msgmap, classmap)
+            if bookmark:
+                bookmark.update(reader)
+
+    elif args.filenames:
+        reader = unified2.FileEventReader(*args.filenames)
+        for event in reader:
+            print_event(event, msgmap, classmap)
+
+    else:
+        parser.print_help()
+        return 1
 
 if __name__ == "__main__":
     sys.exit(main())

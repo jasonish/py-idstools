@@ -41,11 +41,3 @@ scripts Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`u2tail` Module
---------------------
-
-.. automodule:: idstools.scripts.u2tail
-    :members:
-    :undoc-members:
-    :show-inheritance:
-

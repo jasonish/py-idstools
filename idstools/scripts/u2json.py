@@ -85,9 +85,14 @@ from __future__ import print_function
 
 import sys
 import os
+import os.path
+
+if sys.argv[0] == __file__:
+    sys.path.insert(
+        0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
+
 import socket
 import time
-import base64
 import json
 import logging
 from datetime import datetime
@@ -100,10 +105,6 @@ try:
     import argparse
 except:
     from idstools.compat.argparse import argparse
-
-if sys.argv[0] == __file__:
-    sys.path.insert(
-        0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
 from idstools import unified2
 from idstools import maps
@@ -346,7 +347,7 @@ def main():
         reader = unified2.SpoolEventReader(
             directory=args.directory,
             prefix=args.prefix,
-            tail=args.follow,
+            follow=args.follow,
             init_filename=init_filename,
             init_offset=init_offset,
             delete=args.delete)
