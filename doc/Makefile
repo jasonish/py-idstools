@@ -46,7 +46,8 @@ clean:
 
 html:
 	-rm -rf apidoc
-	$(SPHINXAPIDOC) -f -o ./apidoc ../idstools
+	$(SPHINXAPIDOC) -f -o ./apidoc ../idstools ../idstools/compat/*
+	rm -f apidoc/idstools.compat.*
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
