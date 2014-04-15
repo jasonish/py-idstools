@@ -25,6 +25,14 @@ scripts Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`u2json` Module
+--------------------
+
+.. automodule:: idstools.scripts.u2json
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`u2spewfoo` Module
 -----------------------
 

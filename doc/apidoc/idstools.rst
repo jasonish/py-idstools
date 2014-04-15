@@ -54,6 +54,6 @@ Subpackages
 
 .. toctree::
 
-    idstools.apps
+    idstools.compat
     idstools.scripts
 
