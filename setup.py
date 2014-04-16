@@ -1,20 +1,6 @@
-import os.path
-import shutil
-
 from setuptools import setup
 
 import idstools
-
-scripts = [
-    "gensidmsgmap",
-    "u2fast",
-    "u2json",
-]
-for script in scripts:
-    src = os.path.join("bin", script)
-    if os.path.exists(src):
-        dst = os.path.join("bin", "idstools-%s" % (script))
-        shutil.copy(src, dst)
 
 setup(
     name="idstools",
@@ -33,5 +19,9 @@ setup(
     classifiers=[
         'License :: OSI Approved :: BSD License',
     ],
-    scripts = ["bin/idstools-%s" % script for script in scripts],
+    scripts = [
+        "bin/idstools-gensidmsgmap",
+        "bin/idstools-u2fast",
+        "bin/idstools-u2json",
+    ],
 )
