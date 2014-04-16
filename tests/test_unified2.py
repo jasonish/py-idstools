@@ -26,11 +26,11 @@
 from __future__ import print_function
 
 import sys
+import os.path
 import shutil
 import tempfile
-import time
-import os
 import io
+import logging
 
 try:
     import unittest2 as unittest
@@ -38,6 +38,8 @@ except:
     import unittest
 
 from idstools import unified2
+
+logging.basicConfig(level=logging.DEBUG)
 
 class TestReadRecord(unittest.TestCase):
 
@@ -395,8 +397,7 @@ class SpoolEventReaderTestCase(unittest.TestCase):
 
     def test_with_growing_file(self):
 
-        reader = unified2.SpoolEventReader(
-            self.tmpdir, "unified2", rollover_hook = self.rollover_hook)
+        reader = unified2.SpoolEventReader(self.tmpdir, "unified2")
 
         log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
         log_file.write(open(self.test_filename, "rb").read())
@@ -420,3 +421,56 @@ class SpoolEventReaderTestCase(unittest.TestCase):
             self.assertTrue(isinstance(reader.next(), unified2.Event))
 
         self.assertTrue(reader.next() is None)
+
+    def test_bookmarking(self):
+        """Test that when bookmarking is used, a second invocation of
+        the SpoolEventReader picks up where it left off.
+
+        """
+
+        for i in range(2):
+            open("%s/unified2.log.%04d" % (self.tmpdir, i), "ab").write(
+                open(self.test_filename, "rb").read())
+
+        reader = unified2.SpoolEventReader(
+            self.tmpdir, "unified2", bookmark=True)
+
+        event = reader.next()
+        self.assertIsNotNone(event)
+        print(reader.bookmark.get())
+        bookmark_filename, bookmark_offset = reader.bookmark.get()
+        self.assertEquals(bookmark_filename, "unified2.log.0000")
+
+        # The offset should be the offset at end of the first event,
+        # even though the offset of the underlying file has moved on.
+        self.assertEquals(bookmark_offset, 38950)
+        self.assertEquals(reader.reader.tell()[1], 68)
+
+        # Now create a new SpoolEventReader, the underlying offset
+        # should be our bookmark locations.
+        reader = unified2.SpoolEventReader(
+            self.tmpdir, "unified2", bookmark=True)
+        bookmark_filename, bookmark_offset = reader.bookmark.get()
+        underlying_filename, underlying_offset = reader.reader.tell()
+
+        self.assertEquals(bookmark_filename, "unified2.log.0000")
+        self.assertEquals(bookmark_offset, 38950)
+
+        self.assertEquals(
+            bookmark_filename, os.path.basename(underlying_filename))
+        self.assertEquals(bookmark_offset, underlying_offset)
+
+        # Read the next and final event, and check bookmark location.
+        self.assertIsNotNone(reader.next())
+        self.assertIsNone(reader.next())
+        bookmark_filename, bookmark_offset = reader.bookmark.get()
+        self.assertEquals(bookmark_filename, "unified2.log.0001")
+        self.assertEquals(bookmark_offset, 38950)
+
+        # As this was the last event, the underlying location should
+        # be the same as the bookmark.
+        bookmark_filename, bookmark_offset = reader.bookmark.get()
+        underlying_filename, underlying_offset = reader.reader.tell()
+        self.assertEquals(
+            bookmark_filename, os.path.basename(underlying_filename))
+        self.assertEquals(bookmark_offset, underlying_offset)

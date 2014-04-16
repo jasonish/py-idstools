@@ -408,6 +408,45 @@ class Aggregator(object):
                 event["extra-data"].append(record)
         return event
 
+class Unified2Bookmark(object):
+    """Class to represent a "bookmark" for unified2 spool
+    directories.
+
+    """
+
+    def __init__(self, directory, prefix):
+        self.directory = directory
+        self.prefix = prefix
+
+        self.filename = os.path.join(
+            os.path.abspath(self.directory), "_%s.bookmark" % (prefix))
+
+        self.fileobj = None
+
+    def get(self):
+        """Get the current bookmark.
+
+        Returns a tuple of filename and offset.
+
+        """
+        if os.path.exists(self.filename):
+            filename, offset = open(
+                self.filename, "rb").read().decode().split('\0')
+            return filename, int(offset)
+        return None, None
+
+    def update(self, filename, offset):
+        """Update the bookmark with the given filename and offset."""
+        if filename is None or offset is None:
+            return
+        if not self.fileobj:
+            self.fileobj = open(self.filename, "wb")
+        self.fileobj.truncate(0)
+        self.fileobj.seek(0, 0)
+        self.fileobj.write(("%s\x00%d" % (
+            os.path.basename(filename), offset)).encode())
+        self.fileobj.flush()
+
 def decode_record(record_type, buf):
     """Decodes a raw record into an object representing the record.
 
@@ -587,43 +626,38 @@ class SpoolRecordReader(object):
     Required parameters:
 
     :param directory: Path to unified2 spool directory.
-    :param prefix: Filename prefixes for unified2 log files.
+    :param prefix: Filename prefix for unified2 log files.
 
     Optional parameters:
 
     :param init_filename: Filename open on initialization.
     :param init_offset: Offset to seek to on initialization.
 
-    :param tail: Set to true if reading should wait for the next
+    :param follow: Set to true if reading should wait for the next
       record to become available.
 
     :param rollover_hook: Function to call on rollover of log file,
       the first parameter being the filename being closed, the second
       being the filename being opened.
 
-    Example with tailing and rollover deletion::
+    Example with following and rollover deletion::
 
         def rollover_hook(closed, opened):
             os.unlink(closed)
 
         reader = unified2.SpoolRecordReader("/var/log/snort",
             "unified2.log", rollover_hook = rollover_hook,
-            tail = True)
+            follow = True)
         for record in reader:
             print(record)
 
     """
 
-    def __init__(self,
-                 directory,
-                 prefix,
-                 init_filename = None,
-                 init_offset = None,
-                 tail = False,
-                 rollover_hook = None):
+    def __init__(self, directory, prefix, init_filename=None, init_offset=None,
+                 follow=False, rollover_hook=None):
         self.directory = directory
         self.prefix = prefix
-        self.tail = tail
+        self.follow = follow
         self.rollover_hook = rollover_hook
         self.fileobj = None
         self.reader = None
@@ -684,7 +718,7 @@ class SpoolRecordReader(object):
         """
         if self.fileobj:
             return (self.fileobj.name, self.fileobj.tell())
-        return (None, None)
+        return None, None
 
     def _next(self):
         """Return the next decoded unified2 record from the spool
@@ -720,7 +754,7 @@ class SpoolRecordReader(object):
     def next(self):
         """Return the next record or None if EOF.
 
-        If in tail mode and EOF, this method will sleep and
+        If in follow mode and EOF, this method will sleep and
         and try again.
 
         :returns: A record of type :class:`.Event`, :class:`.Packet`,
@@ -732,7 +766,7 @@ class SpoolRecordReader(object):
             record = self._next()
             if record:
                 return record
-            if not self.tail:
+            if not self.follow:
                 return
             else:
                 # Sleep for a moment and try again.
@@ -745,7 +779,19 @@ class SpoolEventReader(object):
     """SpoolEventReader reads records from a unified2 spool directory
     and aggregates them into events.
 
-    See class:`.SpoolRecordReader` for constructor arguments.
+    Required parameters:
+
+    :param directory: Path to unified2 spool directory.
+    :param prefix: Filename prefix for unified2 log files.
+
+    Optional parameters:
+
+    :param follow: Set to true to follow the log files.  Reading will
+      wait until an event is available before returning.
+    :param delete: If True, unified2 files will be deleted when
+      reading has moved onto the next one.
+    :param bookmark: If True, the reader will remember its location and 
+      start reading from the bookmarked location on initialization.
 
     Example::
 
@@ -755,36 +801,35 @@ class SpoolEventReader(object):
 
     """
 
-    def __init__(self, directory, prefix, init_filename = None,
-                 init_offset = None, follow = False, tail = False,
-                 rollover_hook = None, 
-                 delete = False):
+    def __init__(self, directory, prefix, follow=False, delete=False,
+                 bookmark=False):
 
-        self.rollover_hook = rollover_hook
-        self.follow = follow or tail
+        self.follow = follow
         self.delete = delete
 
         self.aggregator = Aggregator()
  
         self.delete_on_next = []
 
+        if bookmark:
+            self.bookmark = Unified2Bookmark(directory, prefix)
+            init_filename, init_offset = self.bookmark.get()
+        else:
+            self.bookmark = None
+            init_filename, init_offset = None, None
+
         # Create a SpoolRecordReader.  We purposely don't pass the
         # follow parameter through as we want to handle that here so
         # we can flush the aggregator after a timeout.
         self.reader = SpoolRecordReader(
             directory, prefix, init_filename=init_filename,
-            init_offset=init_offset, rollover_hook=self._rollover_hook)
+            init_offset=init_offset, rollover_hook=self.rollover_hook)
 
-    def _rollover_hook(self, closed, opened):
+    def rollover_hook(self, closed, opened):
         if closed:
-            LOG.debug("Closed file %s, opened file %s", closed, opened)
+            LOG.info("Closed file %s, opened file %s", closed, opened)
         else:
-            LOG.debug("Opened file %s", opened)
-        if self.rollover_hook:
-            try:
-                self.rollover_hook(closed, opened)
-            except Exception as err:
-                LOG.exception("exception caught while calling rollover hook")
+            LOG.info("Opened file %s", opened)
         if closed and self.delete:
             self.delete_on_next.append(closed)
 
@@ -796,6 +841,12 @@ class SpoolEventReader(object):
 
         """
         while True:
+
+            # Get the underlying readers location before we read, as
+            # its the read of the next event that is going to trigger
+            # an event to be assembled.
+            mark = self.reader.tell()
+
             record = self.reader.next()
             if record:
                 event = self.aggregator.add(record)
@@ -814,6 +865,9 @@ class SpoolEventReader(object):
             filename = self.delete_on_next.pop()
             LOG.info("Deleting file %s.", filename)
             os.unlink(filename)
+
+        if self.bookmark and mark[0] is not None:
+            self.bookmark.update(mark[0], mark[1])
 
         return event
 

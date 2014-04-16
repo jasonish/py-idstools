@@ -7,17 +7,25 @@ systems (typically Snort and Suricata).
 Features
 --------
 
--  Snort/Suricata unified2 log file reading.
--  Continuous unified2 directory spool reading with bookmarking (a'la
-   Barnyard2).
--  Parser and mapping for classification.config.
--  Parser and mapping for gen-msg.map and sid-msg.map.
+- Snort/Suricata unified2 log file reading.
+- Continuous unified2 directory spool reading with bookmarking (a'la
+  Barnyard2).
+- Parser and mapping for classification.config.
+- Parser and mapping for gen-msg.map and sid-msg.map.
+- Useful utility programs.
+
+Programs
+--------
+
+- u2json - Convert unified2 files or spool directories to JSON.
+- gensidmsgmap - Easily create a sid-msg.map file from rule files,
+  directories or a rule tarball.
 
 Requirements
 ------------
 
--  Python 2.6 or 2.7; Python 3.3 works but is not as well tested.
--  Currently only tested on Linux.
+- Python 2.6 or 2.7; Python 3.3 works but is not as well tested.
+- Currently only tested on Linux.
 
 Examples
 --------

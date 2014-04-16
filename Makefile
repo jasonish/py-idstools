@@ -16,12 +16,13 @@ clean:
 	rm -rf idstools.egg*
 	rm -rf build dist MANIFEST
 	cd doc && $(MAKE) clean
+	rm -f bin/idstools-*
 
 doc:
 	cd doc && $(MAKE) clean html
 
-dist:
+sdist:
 	python setup.py sdist
 
-dist-upload:
+sdist-upload:
 	python setup.py sdist upload

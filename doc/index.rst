@@ -9,8 +9,8 @@ idstools
 `idstools` is a Python library for working with SNORT(R) and Suricata
 logs and rules.
 
-Contents
---------
+Library
+-------
 
 .. toctree::
    :maxdepth: 2
@@ -19,6 +19,14 @@ Contents
    maps
    example-programs
    api
+
+Programs
+--------
+
+.. toctree::
+   :maxdepth: 1
+
+   u2json
 
 Indices and Tables
 ------------------

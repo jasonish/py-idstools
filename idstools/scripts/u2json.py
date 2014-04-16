@@ -98,19 +98,18 @@ import logging
 from datetime import datetime
 try:
     from collections import OrderedDict
-except:
+except ImportError as err:
     from idstools.compat.ordereddict import OrderedDict
 
 try:
     import argparse
-except:
+except ImportError as err:
     from idstools.compat.argparse import argparse
 
 from idstools import unified2
 from idstools import maps
 
-logging.basicConfig(
-    level=logging.INFO, format="%(message)s")
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 LOG = logging.getLogger()
 
 proto_map = {
@@ -133,33 +132,6 @@ def render_timestamp(sec, usec):
     return "%04d-%02d-%02dT%02d:%02d:%02d.%06d%s" % (
         tt.tm_year, tt.tm_mon, tt.tm_mday, tt.tm_hour, tt.tm_min, tt.tm_sec, 
         usec, get_tzoffset(sec))
-
-class Unified2Bookmark(object):
-
-    def __init__(self, directory, prefix):
-        self.directory = directory
-        self.prefix = prefix
-
-        self.filename = os.path.join(
-            os.path.abspath(
-                self.directory), "%s.bookmark" % (
-                    os.path.basename(sys.argv[0])))
-
-        self.fileobj = None
-
-    def get(self):
-        if os.path.exists(self.filename):
-            return json.loads(open(self.filename, "rb").read())
-        return {"filename": None, "offset": None}
-
-    def update(self, reader):
-        if not self.fileobj:
-            self.fileobj = open(self.filename, "wb")
-        self.fileobj.truncate(0)
-        self.fileobj.seek(0, 0)
-        filename, location = reader.tell()
-        json.dump({"filename": filename, "offset": location}, self.fileobj)
-        self.fileobj.flush()
 
 class SuricataJsonFilter(object):
 
@@ -240,7 +212,7 @@ class OutputWrapper(object):
         self.fileobj.flush()
 
 def load_from_snort_conf(snort_conf, classmap, msgmap):
-    snort_etc = os.path.dirname(snort_conf)
+    snort_etc = os.path.dirname(os.path.expanduser(snort_conf))
 
     classification_config = os.path.join(snort_etc, "classification.config")
     if os.path.exists(classification_config):
@@ -335,30 +307,18 @@ def main():
         output = OutputWrapper("-", sys.stdout)
 
     if args.directory and args.prefix:
-        if args.bookmark:
-            bookmark = Unified2Bookmark(args.directory, args.prefix)
-            init_filename = bookmark.get()["filename"]
-            init_offset = bookmark.get()["offset"]
-        else:
-            bookmark = None
-            init_filename = None
-            init_offset = None
-
         reader = unified2.SpoolEventReader(
             directory=args.directory,
             prefix=args.prefix,
             follow=args.follow,
-            init_filename=init_filename,
-            init_offset=init_offset,
-            delete=args.delete)
+            delete=args.delete,
+            bookmark=args.bookmark)
 
         for event in reader:
             encoded = json.dumps(output_filter.filter(event))
             output.write(encoded)
             if output.isfile and args.stdout:
                 print(encoded)
-            if bookmark:
-                bookmark.update(reader)
 
     elif args.filenames:
         reader = unified2.FileEventReader(*args.filenames)

@@ -67,19 +67,17 @@ if sys.argv[0] == __file__:
         0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
 import time
-import json
 import logging
 
 try:
     import argparse
-except:
+except ImportError as err:
     from idstools.compat.argparse import argparse
 
 from idstools import unified2
 from idstools import maps
 
-logging.basicConfig(
-    level=logging.INFO, format="%(message)s")
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 LOG = logging.getLogger()
 
 proto_map = {
@@ -123,33 +121,6 @@ def print_event(event, msgmap, classmap):
             event["destination-ip"],
             event["dport-icode"],
             ))
-
-class Unified2Bookmark(object):
-
-    def __init__(self, directory, prefix):
-        self.directory = directory
-        self.prefix = prefix
-
-        self.filename = os.path.join(
-            os.path.abspath(
-                self.directory), "%s.bookmark" % (
-                    os.path.basename(sys.argv[0])))
-
-        self.fileobj = None
-
-    def get(self):
-        if os.path.exists(self.filename):
-            return json.loads(open(self.filename, "rb").read())
-        return {"filename": None, "offset": None}
-
-    def update(self, reader):
-        if not self.fileobj:
-            self.fileobj = open(self.filename, "wb")
-        self.fileobj.truncate(0)
-        self.fileobj.seek(0, 0)
-        filename, location = reader.tell()
-        json.dump({"filename": filename, "offset": location}, self.fileobj)
-        self.fileobj.flush()
 
 def load_from_snort_conf(snort_conf, classmap, msgmap):
     snort_etc = os.path.dirname(snort_conf)
@@ -227,26 +198,14 @@ def main():
         LOG.info("Loaded %s classifications.", classmap.size())
 
     if args.directory and args.prefix:
-        if args.bookmark:
-            bookmark = Unified2Bookmark(args.directory, args.prefix)
-            init_filename = bookmark.get()["filename"]
-            init_offset = bookmark.get()["offset"]
-        else:
-            bookmark = None
-            init_filename = None
-            init_offset = None
-
         reader = unified2.SpoolEventReader(
             directory=args.directory,
             prefix=args.prefix,
             follow=args.follow,
-            init_filename=init_filename,
-            init_offset=init_offset)
+            bookmark=args.bookmark)
 
         for event in reader:
             print_event(event, msgmap, classmap)
-            if bookmark:
-                bookmark.update(reader)
 
     elif args.filenames:
         reader = unified2.FileEventReader(*args.filenames)

@@ -90,29 +90,3 @@ ExtraData
 
 .. autoclass:: idstools.unified2.ExtraData
    :noindex:
-
-Bookmarking
------------
-
-The idstools unified2 module does not provide bookmarking features
-itself (yet), but it makes them very easy to implement.  All the
-readers support a *tell* method which returns the current filename and
-offset being read (with the exception of :class:`.RecordReader` which
-only returns the offset).
-
-Bookmarking Example::
-
-  # Read in bookmark.
-  bookmark_filename = bookmark_offset = None
-  if os.path.exists("bookmark"):
-      bookmark_filename, bookmark_offset = json.load(
-          open("bookmark"))
-
-  # Open a spool reader starting at a specific file and offset.
-  reader = unified2.SpoolEventReader("/var/log/snort",
-      "unified2.log", init_filename = bookmark_filename,
-      init_offset = bookmark_offset)
-
-  for event in reader:
-      # Do something with event, then write out an updated bookmark.
-      json.dump(reader.tell(), open("bookmark", "w"))
