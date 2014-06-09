@@ -323,7 +323,7 @@ class EventDecoder(AbstractDecoder):
         if len(addr) == 4:
             return socket.inet_ntoa(addr)
         else:
-            parts = struct.unpack("H" * (len(addr) / 2), addr)
+            parts = struct.unpack(">" + "H" * (len(addr) / 2), addr)
             return ":".join("%x" % p for p in parts)
 
 class PacketDecoder(AbstractDecoder):
