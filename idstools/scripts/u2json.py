@@ -184,7 +184,7 @@ class SuricataJsonFilter(object):
         return default
 
     def getprotobynumber(self, protocol):
-        return proto_map.get(protocol, protocol)
+        return proto_map.get(protocol, str(protocol))
 
 class OutputWrapper(object):
 
