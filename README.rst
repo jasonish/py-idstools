@@ -54,6 +54,13 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+0.4.1
+~~~~~
+
+- Fix IPv6 address unpacking.
+- In u2json, if the protocol number can't be converted to a string,
+  encode the number as a string for a consistent JSON data type.
+
 0.4.0
 ~~~~~
 
