@@ -28,9 +28,11 @@
 try:
     # Python 3.3...
     from urllib.request import urlopen
+    from urllib.error import HTTPError
 except ImportError:
     # Python 2.6, 2.7.
     from urllib2 import urlopen
+    from urllib2 import HTTPError
     
 # Number of bytes to read at a time in a GET request.
 GET_BLOCK_SIZE = 8192
