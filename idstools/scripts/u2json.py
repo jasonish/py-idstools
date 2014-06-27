@@ -136,10 +136,12 @@ def render_timestamp(sec, usec):
 
 class SuricataJsonFilter(object):
 
-    def __init__(self, msgmap=None, classmap=None, packets=False):
+    def __init__(
+            self, msgmap=None, classmap=None, packets=False, extra_data=False):
         self.msgmap = msgmap
         self.classmap = classmap
         self.packets = packets
+        self.extra_data = extra_data
 
     def filter(self, event):
         output = OrderedDict()
@@ -177,6 +179,17 @@ class SuricataJsonFilter(object):
                     "packet": base64.b64encode(packet["data"])
                 }
                 output["packets"].append(output_packet)
+
+        if self.extra_data:
+            output["extra-data"] = []
+            for data in event["extra-data"]:
+                output_data = {
+                    "data-type": data["data-type"],
+                    "event-type": data["event-type"],
+                    "type": data["type"],
+                    "data": data["data"]
+                }
+                output["extra-data"].append(output_data)
 
         return output
 
@@ -291,6 +304,9 @@ def main():
         "--packets", action="store_true", default=False,
         help="include packets")
     parser.add_argument(
+        "--extra-data", action="store_true", default=False,
+        help="include extra data")
+    parser.add_argument(
         "filenames", nargs="*")
     args = parser.parse_args()
 
@@ -315,7 +331,8 @@ def main():
     else:
         LOG.info("Loaded %s classifications.", classmap.size())
 
-    output_filter = SuricataJsonFilter(msgmap, classmap, args.packets)
+    output_filter = SuricataJsonFilter(
+        msgmap, classmap, args.packets, args.extra_data)
     if args.output:
         output = OutputWrapper(args.output)
     else:
