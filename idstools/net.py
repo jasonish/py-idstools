@@ -54,7 +54,10 @@ def get(url, fileobj, progress_hook=None):
 
     remote = urlopen(url)
     info = remote.info()
-    content_length = int(info["content-length"])
+    try:
+        content_length = int(info["content-length"])
+    except:
+        content_length = 0
     bytes_read = 0
     while True:
         buf = remote.read(GET_BLOCK_SIZE)
