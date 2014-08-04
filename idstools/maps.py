@@ -114,6 +114,7 @@ class SignatureMap(object):
         """
 
         for line in fileobj:
+            line = line.strip()
             if not line or line.startswith("#"):
                 continue
             parts = [p.strip() for p in line.split("||")]
