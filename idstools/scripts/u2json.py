@@ -147,6 +147,7 @@ class SuricataJsonFilter(object):
         output = OrderedDict()
         output["timestamp"] = render_timestamp(
             event["event-second"], event["event-microsecond"])
+        output["sensor_id"] = event["sensor-id"]
         output["event_type"] = "alert"
         output["src_ip"] = event["source-ip"]
         if event["protocol"] in [socket.IPPROTO_UDP, socket.IPPROTO_TCP]:
