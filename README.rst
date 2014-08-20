@@ -39,7 +39,7 @@ aggregating records into events::
     from idstools import unified2
 
     reader = unified2.SpoolEventReader("/var/log/snort",
-        "unified2.log", tail=True)
+        "unified2.log", follow=True)
     for event in reader:
         print(event)
 
