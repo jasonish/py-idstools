@@ -26,6 +26,8 @@
 """ Module for utility functions that don't really fit anywhere else. """
 
 import hashlib
+import socket
+import struct
 
 def md5_hexdigest(filename):
     """ Compute the MD5 checksum for the contents of the provided filename.
@@ -35,3 +37,10 @@ def md5_hexdigest(filename):
     :returns: A string representing the hex value of the computed MD5.
     """
     return hashlib.md5(open(filename).read().encode()).hexdigest()
+
+def decode_inet_addr(addr):
+    if len(addr) == 4:
+        return socket.inet_ntoa(addr)
+    else:
+        parts = struct.unpack(">" + "H" * (len(addr) / 2), addr)
+        return ":".join("%04x" % p for p in parts)

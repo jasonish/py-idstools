@@ -28,13 +28,23 @@
 import struct
 import socket
 
+from idstools import util
+
 ETHERTYPE_IP = 0x0800
+ETHERTYPE_IP6 = 0x86dd
+
+IPPROTO_ICMP = 1
+IPPROTO_TCP = 6
+IPPROTO_UDP = 17
+IPPROTO_ICMPV6 = 58
 
 ETHER_HDR_LEN = 14
-IP_HDR_LEN    = 20
+IP_HDR_LEN = 20
+IP6_HDR_LEN = 40
 ICMP4_HDR_LEN = 4
-UDP_HDR_LEN   = 8
-TCP_HDR_LEN   = 20
+ICMP6_HDR_LEN = 4
+UDP_HDR_LEN = 8
+TCP_HDR_LEN = 20
 
 def printable_ethernet_addr(addr):
     """Return a formatted ethernet address from its raw form."""
@@ -49,6 +59,18 @@ def decode_icmp(pkt):
      icmp["icmp_chksum"]) = struct.unpack(">BBH", pkt[0:ICMP4_HDR_LEN])
 
     icmp["icmp_payload"] = pkt[ICMP4_HDR_LEN:]
+
+    return icmp
+
+def decode_icmp6(pkt):
+    """ Decode an ICMPv6 packet. """
+    icmp = {}
+
+    (icmp["icmp_type"],
+     icmp["icmp_code"],
+     icmp["icmp_chksum"]) = struct.unpack(">BBH", pkt[0:ICMP4_HDR_LEN])
+
+    icmp["icmp_payload"] = pkt[ICMP6_HDR_LEN:]
 
     return icmp
 
@@ -114,17 +136,44 @@ def decode_ip(pkt):
     if ihl > IP_HDR_LEN:
         ip["ip_options_raw"] = pkt[IP_HDR_LEN:ihl]
 
-    if ip["ip_protocol"] == socket.IPPROTO_ICMP:
+    if ip["ip_protocol"] == IPPROTO_ICMP:
         icmp = decode_icmp(pkt[ihl:])
         ip.update(icmp)
-    elif ip["ip_protocol"] == socket.IPPROTO_UDP:
+    elif ip["ip_protocol"] == IPPROTO_UDP:
         udp = decode_udp(pkt[ihl:])
         ip.update(udp)
-    elif ip["ip_protocol"] == socket.IPPROTO_TCP:
+    elif ip["ip_protocol"] == IPPROTO_TCP:
         tcp = decode_tcp(pkt[ihl:])
         ip.update(tcp)
 
     return ip
+
+def decode_ip6(pkt):
+    """Decode an IPv6 packet."""
+    ip6 = {}
+
+    (ip6["ip6_label"],
+     ip6["ip6_length"],
+     ip6["ip6_nh"],
+     ip6["ip6_hop_limit"],
+     ip6["ip6_source_raw"],
+     ip6["ip6_destination_raw"]) = struct.unpack(
+         ">LHBB16s16s", pkt[0:IP6_HDR_LEN])
+
+    ip6["ip6_version"] = ip6["ip6_label"] >> 28
+    ip6["ip6_class"] = (ip6["ip6_label"] >> 20) & 0xff
+    ip6["ip6_label"] = ip6["ip6_label"] & 0xfffff
+    ip6["ip6_source"] = util.decode_inet_addr(ip6["ip6_source_raw"])
+    ip6["ip6_destination"] = util.decode_inet_addr(ip6["ip6_destination_raw"])
+
+    if ip6["ip6_nh"] == IPPROTO_UDP:
+        ip6.update(decode_udp(pkt[IP6_HDR_LEN:]))
+    elif ip6["ip6_nh"] == IPPROTO_TCP:
+        ip6.update(decode_tcp(pkt[IP6_HDR_LEN:]))
+    elif ip6["ip6_nh"] == IPPROTO_ICMPV6:
+        ip6.update(decode_icmp6(pkt[IP6_HDR_LEN:]))
+
+    return ip6
 
 def decode_ethernet(pkt):
     """Decode an ethernet packet."""
@@ -138,5 +187,7 @@ def decode_ethernet(pkt):
 
     if ether["ether_type"] == ETHERTYPE_IP:
         ether.update(decode_ip(pkt[ETHER_HDR_LEN:]))
+    elif ether["ether_type"] == ETHERTYPE_IP6:
+        ether.update(decode_ip6(pkt[ETHER_HDR_LEN:]))
 
     return ether
