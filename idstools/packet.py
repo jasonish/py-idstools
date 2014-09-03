@@ -46,6 +46,25 @@ ICMP6_HDR_LEN = 4
 UDP_HDR_LEN = 8
 TCP_HDR_LEN = 20
 
+# IPv6 Extension Headers
+IP6_EXT_HOP_BY_HOP = 0
+IP6_EXT_DEST_OPTS = 60
+IP6_EXT_ROUTING = 43
+IP6_EXT_FRAGMENT = 44
+IP6_EXT_AH = 51
+IP6_EXT_ESP = 50
+IP6_EXT_MOBILITY = 135
+
+IP6_EXT_HEADER_TYPES = [
+    IP6_EXT_HOP_BY_HOP,
+    IP6_EXT_DEST_OPTS,
+    IP6_EXT_ROUTING,
+    IP6_EXT_FRAGMENT,
+    IP6_EXT_AH,
+    IP6_EXT_ESP,
+    IP6_EXT_MOBILITY,
+]
+
 def printable_ethernet_addr(addr):
     """Return a formatted ethernet address from its raw form."""
     return ":".join(["%02x" % (x) for x in struct.unpack("BBBBBB", addr)])
@@ -166,12 +185,22 @@ def decode_ip6(pkt):
     ip6["ip6_source"] = util.decode_inet_addr(ip6["ip6_source_raw"])
     ip6["ip6_destination"] = util.decode_inet_addr(ip6["ip6_destination_raw"])
 
+    offset = IP6_HDR_LEN
+
+    # Skip over known extension headers.
+    while True:
+        if ip6["ip6_nh"] in IP6_EXT_HEADER_TYPES:
+            ip6["ip6_nh"], ext_len = struct.unpack(">BB", pkt[offset:offset+2])
+            offset += 8 + (ext_len * 8)
+        else:
+            break
+
     if ip6["ip6_nh"] == IPPROTO_UDP:
-        ip6.update(decode_udp(pkt[IP6_HDR_LEN:]))
+        ip6.update(decode_udp(pkt[offset:]))
     elif ip6["ip6_nh"] == IPPROTO_TCP:
-        ip6.update(decode_tcp(pkt[IP6_HDR_LEN:]))
+        ip6.update(decode_tcp(pkt[offset:]))
     elif ip6["ip6_nh"] == IPPROTO_ICMPV6:
-        ip6.update(decode_icmp6(pkt[IP6_HDR_LEN:]))
+        ip6.update(decode_icmp6(pkt[offset:]))
 
     return ip6
 
