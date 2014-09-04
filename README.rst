@@ -54,6 +54,11 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+0.4.2
+~~~~~
+
+- Fix issue loading signature map files (GitHub issue #2).
+
 0.4.1
 ~~~~~
 
