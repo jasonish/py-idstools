@@ -156,6 +156,16 @@ class SearchCommand(object):
             rule.gid, rule.sid, rule.rev,
             rule.msg)
 
+class UpdateCommand(object):
+
+    def __init__(self, config, args):
+        self.config = config
+        self.args = args
+
+    def run(self):
+        if FetchCommand(self.config, []).run():
+            ApplyCommand(self.config, []).run()
+
 commands = {
     "fetch": FetchCommand,
     "source": SourceCommand,
@@ -165,6 +175,7 @@ commands = {
     "apply": ApplyCommand,
     "config": ConfigCommand,
     "dump-dynamic-rules": DumpDynamicRulesCommand,
+    "update": UpdateCommand,
 }
 
 command_help = """
@@ -175,4 +186,5 @@ command_help = """
   apply                Apply ruleset modifications and write
   config               Configuration commands
   dump-dynamic-rules   Dump dynamic rules
+  update               Fetch then apply
 """

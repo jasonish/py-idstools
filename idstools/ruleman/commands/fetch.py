@@ -60,13 +60,13 @@ class FetchCommand(object):
             if not source["enabled"]:
                 continue
             if self.check_checksum(source):
-                LOG.info("Source checksum has not changed, not fetching")
+                LOG.info(
+                    "Source checksum has not changed, not fetching %s.",
+                    source["name"])
             else:
                 fileobj = self.fetch(source)
                 if fileobj:
                     fetched.append({"source": source, "fileobj": fileobj})
-
-        print("Fetched:", [item["source"]["name"] for item in fetched])
 
         for entry in fetched:
             source = entry["source"]
@@ -80,6 +80,8 @@ class FetchCommand(object):
                 util.md5_filename(entry["fileobj"].name))
 
             self.dump_dynamic_rules(source["name"])
+
+        return True if fetched else False
 
     def has_dynamic_rules(self, source):
         if os.path.exists("sources/%s/so_rules" % (source)):
