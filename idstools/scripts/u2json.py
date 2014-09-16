@@ -334,10 +334,15 @@ def main():
 
     output_filter = SuricataJsonFilter(
         msgmap, classmap, args.packets, args.extra_data)
+
+    outputs = []
+
     if args.output:
-        output = OutputWrapper(args.output)
+        outputs.append(OutputWrapper(args.output))
+        if args.stdout:
+            outputs.append(OutputWrapper("-", sys.stdout))
     else:
-        output = OutputWrapper("-", sys.stdout)
+        outputs.append(OutputWrapper("-", sys.stdout))
 
     if args.directory and args.prefix:
         reader = unified2.SpoolEventReader(
@@ -346,20 +351,16 @@ def main():
             follow=args.follow,
             delete=args.delete,
             bookmark=args.bookmark)
-
-        for event in reader:
-            encoded = json.dumps(output_filter.filter(event))
-            output.write(encoded)
-            if output.isfile and args.stdout:
-                print(encoded)
-
     elif args.filenames:
         reader = unified2.FileEventReader(*args.filenames)
-        for event in reader:
-            print(json.dumps(output_filter.filter(event)))
-
     else:
         print("nothing to do.")
+        return
+
+    for event in reader:
+        encoded = json.dumps(output_filter.filter(event))
+        for out in outputs:
+            out.write(encoded)
 
 if __name__ == "__main__":
     sys.exit(main())
