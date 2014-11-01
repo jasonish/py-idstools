@@ -32,6 +32,7 @@ import hashlib
 import tempfile
 import shutil
 import atexit
+import re
 
 def get_filename_from_url(url):
     """Given a URL, attempt to derive the filename.
@@ -40,6 +41,11 @@ def get_filename_from_url(url):
     of the URL.
 
     """
+
+    # First use a regex to attempt to find the filename.
+    m = re.search(".*\/([^\/}]+.tar.gz)", url)
+    if m:
+        return m.group(1)
 
     # Step backwards through the URL components looking for what might
     # be a filename.
