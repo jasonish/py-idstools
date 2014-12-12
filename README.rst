@@ -54,6 +54,11 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+0.4.3
+~~~~~
+
+- Make the rule direction an accessible field of the rule object.
+
 0.4.2
 ~~~~~
 
