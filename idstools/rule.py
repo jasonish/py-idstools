@@ -49,15 +49,15 @@ actions = (
 # Compiled regular expression to detect a rule and break out some of
 # its parts.
 rule_pattern = re.compile(
-    r"^(?P<enabled>#)*\s*"	# Enabled/disabled
+    r"^(?P<enabled>#)*\s*"      # Enabled/disabled
     r"(?P<raw>"
-    r"(?P<action>%s)\s*"	# Action
-    r"[^\s]*\s*"		# Protocol
-    r"[^\s]*\s*"		# Source address(es)
-    r"[^\s]*\s*"		# Source port
-    r"[-><]+\s*"		# Direction
-    r"[^\s]*\s*"		# Destination address(es)
-    r"[^\s]*\s*" 		# Destination port
+    r"(?P<action>%s)\s*"        # Action
+    r"[^\s]*\s*"                # Protocol
+    r"[^\s]*\s*"                # Source address(es)
+    r"[^\s]*\s*"                # Source port
+    r"(?P<direction>[-><]+)\s*"	# Direction
+    r"[^\s]*\s*"		        # Destination address(es)
+    r"[^\s]*\s*"                # Destination port
     r"\((?P<options>.*)\)\s*" 	# Options
     r")"
     % "|".join(actions))
@@ -101,6 +101,8 @@ class Rule(dict):
     - **action**: The action of the rule (alert, pass, etc) as a
         string
 
+    - **direction**: The direction string of the rule.
+
     - **gid**: The gid of the rule as an integer
 
     - **sid**: The sid of the rule as an integer
@@ -129,6 +131,7 @@ class Rule(dict):
         dict.__init__(self)
         self["enabled"] = enabled
         self["action"] = action
+        self["direction"] = None
         self["group"] = group
         self["gid"] = 1
         self["sid"] = None
@@ -187,6 +190,7 @@ def parse(buf, group=None):
                 action=m.group("action"),
                 group=group)
 
+    rule["direction"] = m.group("direction")
     options = m.group("options")
     for p in option_patterns:
         for opt, val in p.findall(options):
