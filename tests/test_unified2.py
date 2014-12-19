@@ -41,6 +41,8 @@ from idstools import unified2
 
 logging.basicConfig(level=logging.DEBUG)
 
+LOG = logging.getLogger(__name__)
+
 class TestReadRecord(unittest.TestCase):
 
     # A unified2 test file containing 1 event consisting of 17 records.
@@ -52,12 +54,13 @@ class TestReadRecord(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
 
-    @unittest.skipIf(sys.platform == "darwin" and sys.version_info[0] < 3,
-                     "known failure on mac")
     def test_growing_file(self):
 
-        write_fileobj = open("%s/unified2.log" % self.tmpdir, "ab").write(
-            open(self.test_filename, "rb").read())
+        write_fileobj = open("%s/unified2.log" % self.tmpdir, "ab")
+        write_fileobj.write(open(self.test_filename, "rb").read())
+        write_fileobj.flush()
+        write_fileobj.close()
+
         read_fileobj = open("%s/unified2.log" % self.tmpdir, "rb")
 
         for i in range(17):
@@ -66,8 +69,10 @@ class TestReadRecord(unittest.TestCase):
         self.assertTrue(unified2.read_record(read_fileobj) is None)
 
         # Grow the file by 17 more records.
-        write_fileobj = open("%s/unified2.log" % self.tmpdir, "ab").write(
-            open(self.test_filename, "rb").read())
+        write_fileobj = open("%s/unified2.log" % self.tmpdir, "ab")
+        write_fileobj.write(open(self.test_filename, "rb").read())
+        write_fileobj.flush()
+        write_fileobj.close()
 
         for i in range(17):
             record = unified2.read_record(read_fileobj)
