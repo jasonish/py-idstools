@@ -1,7 +1,13 @@
 .PHONY: doc
 
 # No default for now.
-all:
+all: build
+
+build:
+	python setup.py build
+
+install:
+	python setup.py install
 
 lint:
 	pylint idstools
