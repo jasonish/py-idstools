@@ -54,6 +54,12 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+0.4.4
+~~~~~
+
+- Fix reading of growing file on OS X.
+- Fix error in parsing decoder rules introduced in 0.4.3.
+
 0.4.3
 ~~~~~
 
