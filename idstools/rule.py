@@ -186,7 +186,8 @@ def parse(buf):
     rule = Rule(enabled=True if m.group("enabled") is None else False,
                 action=m.group("action"))
 
-    rule["direction"] = m.group("direction")
+    rule["direction"] = m.groupdict().get("direction", None)
+
     options = m.group("options")
     for p in option_patterns:
         for opt, val in p.findall(options):
