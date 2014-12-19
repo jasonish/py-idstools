@@ -190,7 +190,8 @@ def parse(buf, group=None):
                 action=m.group("action"),
                 group=group)
 
-    rule["direction"] = m.group("direction")
+    rule["direction"] = m.groupdict().get("direction", None)
+
     options = m.group("options")
     for p in option_patterns:
         for opt, val in p.findall(options):
