@@ -478,6 +478,12 @@ def read_record(fileobj):
     """
 
     offset = fileobj.tell()
+
+    # Not sure why this is needed, but without doing this, read on OS X
+    # won't read the new data in a file in the case where the file
+    # being read is growing.
+    fileobj.seek(offset)
+
     try:
         buf = fileobj.read(HDR_LEN)
         if not buf:
@@ -512,11 +518,6 @@ class RecordReader(object):
     def __init__(self, fileobj):
         self.fileobj = fileobj
 
-        if sys.platform == "darwin" and sys.version_info[0] < 3:
-            self.next = self._darwin_next
-        else:
-            self.next = self._default_next
-
     def next(self):
         """Return the next record or None if EOF.
 
@@ -524,16 +525,7 @@ class RecordReader(object):
         :class:`.Packet`, :class:`.ExtraData` or :class:`.Unknown` if
         the record is of an unknown type.
         """
-        return self.default_next()
-
-    def _default_next(self):
         return read_record(self.fileobj)
-
-    def _darwin_next(self):
-        record = self._default_next()
-        if record is None:
-            self.fileobj.seek(self.fileobj.tell())
-        return record
 
     def tell(self):
         """Get the current offset in the underlying file object."""
