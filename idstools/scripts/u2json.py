@@ -188,7 +188,7 @@ class SuricataJsonFilter(object):
                     "data-type": data["data-type"],
                     "event-type": data["event-type"],
                     "type": data["type"],
-                    "data": data["data"]
+                    "data": base64.b64encode(data["data"])
                 }
                 output["extra-data"].append(output_data)
 
