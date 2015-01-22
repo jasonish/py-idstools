@@ -379,7 +379,10 @@ class Aggregator(object):
                 event = self.flush()
             self.queue.append(record)
         elif self.queue:
-            self.queue.append(record)
+            if record["event-id"] == self.queue[-1]["event-id"]:
+                self.queue.append(record)
+            else:
+                LOG.warn("Record not associated with current event, discarding.")
         else:
             LOG.warn("Discarding non-event type while not in event context.")
         return event

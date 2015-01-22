@@ -215,6 +215,26 @@ class AggregatorTestCase(unittest.TestCase):
         self.assertTrue(event)
         self.assertTrue(isinstance(event, unified2.Event))
 
+    def test_interleaved(self):
+
+        # First read in all records from a known multi-record event.
+        records = []
+        reader = unified2.RecordReader(open(self.test_filename, "rb"))
+        for record in reader:
+            records.append(record)
+        self.assertEquals(len(records), 17)
+
+        # Modify the event ID of the last record.
+        records[16]["event-id"] = records[16]["event-id"] - 1
+
+        # Add all 17 records to the aggregator.  Should only end up
+        # with 16 as the last one will be thrown out due to an
+        # event-id mismatch.
+        aggregator = unified2.Aggregator()
+        for record in records:
+            aggregator.add(record)
+        self.assertEquals(len(aggregator.queue), 16)
+
 class FileEventReaderTestCase(unittest.TestCase):
 
     # A unified2 test file containing 1 event consisting of 17 records.
