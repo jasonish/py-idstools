@@ -25,6 +25,7 @@
 
 from __future__ import print_function
 
+import sys
 import os
 import os.path
 import subprocess
@@ -51,6 +52,13 @@ class SnortApp(object):
         self.dynamic_engine_lib = self.set_dynamic_engine_lib(
             dynamic_engine_lib, config)
 
+    def version(self):
+        stdout, stderr = subprocess.Popen(
+            [self.path, "-V"], stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE).communicate()
+        m = re.search("(Version (\d+\.\d+\.\d+\.\d+).*)$", stderr, re.M)
+        return m.group(2).strip(), m.group(1).strip(), stderr
+        
     def set_dynamic_engine_lib(self, dynamic_engine_lib, config):
         if dynamic_engine_lib:
             return dynamic_engine_lib
@@ -107,7 +115,7 @@ class SnortApp(object):
         else:
             return None
 
-    def dump_dynamic_rules(self, dynamic_detection_lib_dir):
+    def dump_dynamic_rules(self, dynamic_detection_lib_dir, verbose=False):
 
         if not self.exists():
             LOG.warn("Snort application not set or does not exist")
@@ -118,8 +126,9 @@ class SnortApp(object):
                 "--dynamic-detection-lib-dir=%s" % (dynamic_detection_lib_dir),
                 "--dynamic-engine-lib=%s" % (self.dynamic_engine_lib),
                 "--dump-dynamic-rules=%s" % (destination)]
-        process = subprocess.Popen(
-            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout = sys.stdout if verbose else subprocess.PIPE
+        stderr = sys.stderr if verbose else subprocess.PIPE
+        process = subprocess.Popen(args, stdout=stdout, stderr=stderr)
         rc = process.wait()
         if rc == 0:
             files = {}
@@ -128,6 +137,10 @@ class SnortApp(object):
                     os.path.join(destination, filename)).read()
             return files
         else:
-            LOG.error("Failed to build dynamic rule stubs: %s" % (
-                process.communicate()[1]))
+            if not verbose:
+                LOG.error("Failed to build dynamic rule stubs: %s" % (
+                    process.communicate()[1]))
+            else:
+                # Error already printed to stderr.
+                LOG.error("Failed to build dynamic rule stubs.")
             return None
