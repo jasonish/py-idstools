@@ -196,8 +196,8 @@ class Event(dict):
     * signature-revision
     * classification-id
     * priority
-    * ip-source
-    * ip-destination
+    * source-ip
+    * destination-ip
     * sport-itype
     * dport-icode
     * protocol
