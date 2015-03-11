@@ -51,6 +51,7 @@ class SnortApp(object):
         self.os = os if os else (config.get("os") if config else None)
         self.dynamic_engine_lib = self.set_dynamic_engine_lib(
             dynamic_engine_lib, config)
+        self.arch = self.get_arch()
 
     def version(self):
         stdout, stderr = subprocess.Popen(
