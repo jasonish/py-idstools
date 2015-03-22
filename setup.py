@@ -26,5 +26,6 @@ setup(
         "bin/idstools-u2fast",
         "bin/idstools-u2json",
         "bin/idstools-ruleman",
+        "bin/idstools-u2eve",
     ],
 )
