@@ -115,8 +115,8 @@ EVENT_FIELDS = (
     Field("signature-revision", 4),
     Field("classification-id", 4),
     Field("priority", 4),
-    Field("source-ip", 4, "4s"),
-    Field("destination-ip", 4, "4s"),
+    Field("source-ip.raw", 4, "4s"),
+    Field("destination-ip.raw", 4, "4s"),
     Field("sport-itype", 2),
     Field("dport-icode", 2),
     Field("protocol", 1),
@@ -136,8 +136,8 @@ EVENT_IP6_FIELDS = (
     Field("signature-revision", 4),
     Field("classification-id", 4),
     Field("priority", 4),
-    Field("source-ip", 4, "16s"),
-    Field("destination-ip", 4, "16s"),
+    Field("source-ip.raw", 4, "16s"),
+    Field("destination-ip.raw", 4, "16s"),
     Field("sport-itype", 2),
     Field("dport-icode", 2),
     Field("protocol", 1),
@@ -313,8 +313,8 @@ class EventDecoder(AbstractDecoder):
         values = struct.unpack(self.format, buf)
         keys = [field.name for field in self.fields]
         event = dict(zip(keys, values))
-        event["source-ip"] = self.decode_ip(event["source-ip"])
-        event["destination-ip"] = self.decode_ip(event["destination-ip"])
+        event["source-ip"] = self.decode_ip(event["source-ip.raw"])
+        event["destination-ip"] = self.decode_ip(event["destination-ip.raw"])
         if "appid" in event:
             event["appid"] = str(event["appid"]).split("\x00")[0]
         return Event(event)
