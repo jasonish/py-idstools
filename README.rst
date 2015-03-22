@@ -54,6 +54,17 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+TBD
+~~~
+
+- New tool: idstools-dumpdynamicrules. A wrapper around Snort to dump
+  dynamic rule stubs and optionally repack the tarball with the new
+  stubs.
+- New tool: idstools-u2eve. Basically a copy of the current u2json,
+  but will aim to keep a compatible eve output style.  idstools-u2json
+  will probably become more of a basic example program.
+- A basic packet decoding module.
+
 0.4.4
 ~~~~~
 
