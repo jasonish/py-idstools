@@ -1,25 +1,7 @@
 u2json
 ======
 
-u2json is a program that at its simplest will display events in a
-unified2 file as json (Suricata style for now).
-
-It is also capable of operating in a 'barnyard' like mode where it
-will process a spool directory of unified files, remembering its
-location (bookmarking, or 'waldo') and optionally delete unified2 log
-files once processed as json.
-
-Output
-------
-
-Currently the output is hardcoded to be like Suricata's JSON eve log format to make it easy to deal with events from Snort and Suricata with Logstash, Elastic Search and Kibana.
-
-   {"timestamp": "2014-04-15T23:32:11.736275-0600", "event_type":
-   "alert", "src_ip": "10.16.1.11", "src_port": 49719, "dest_ip":
-   "192.168.88.3", "dest_port": 443, "proto": "TCP", "alert":
-   {"action": "allowed", "gid": 1, "signature_id": 30524, "rev": 1,
-   "signature": "SERVER-OTHER OpenSSL TLSv1.1 heartbeat read overrun
-   attempt", "category": "Attempted Information Leak", "severity": 2}}
+Convert unified2 records to a JSON representation.
 
 Usage
 -----
