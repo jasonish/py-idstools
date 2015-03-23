@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (c) 2014 Jason Ish
+# Copyright (c) 2014-2015 Jason Ish
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,12 @@
 
 ::
 
-    usage: u2json [-h] [-C <classification.config>] [-S <msg-msg.map>]
-                  [-G <gen-msg.map>] [--snort-conf <snort.conf>]
-                  [--directory <spool directory>] [--prefix <spool file prefix>]
-                  [--bookmark] [--follow] [--delete] [--output <filename>]
-                  [--stdout]
-                  [filenames [filenames ...]]
+    usage: idstools-u2json [-h] [-C <classification.config>] [-S <msg-msg.map>]
+                           [-G <gen-msg.map>] [--snort-conf <snort.conf>]
+                           [--directory <spool directory>]
+                           [--prefix <spool file prefix>] [--bookmark] [--follow]
+                           [--delete] [--output <filename>] [--stdout]
+                           [filenames [filenames ...]]
 
     positional arguments:
       filenames
@@ -134,72 +134,11 @@ def render_timestamp(sec, usec):
         tt.tm_year, tt.tm_mon, tt.tm_mday, tt.tm_hour, tt.tm_min, tt.tm_sec, 
         usec, get_tzoffset(sec))
 
-class SuricataJsonFilter(object):
+class Formatter(object):
 
-    def __init__(
-            self, msgmap=None, classmap=None, packets=False, extra_data=False):
+    def __init__(self, msgmap=None, classmap=None):
         self.msgmap = msgmap
         self.classmap = classmap
-        self.packets = packets
-        self.extra_data = extra_data
-
-    def filter(self, event):
-        output = OrderedDict()
-        output["timestamp"] = render_timestamp(
-            event["event-second"], event["event-microsecond"])
-        output["sensor_id"] = event["sensor-id"]
-        output["event_type"] = "alert"
-        output["src_ip"] = event["source-ip"]
-        if event["protocol"] in [socket.IPPROTO_UDP, socket.IPPROTO_TCP]:
-            output["src_port"] = event["sport-itype"]
-        output["dest_ip"] = event["destination-ip"]
-        if event["protocol"] in [socket.IPPROTO_UDP, socket.IPPROTO_TCP]:
-            output["dest_port"] = event["dport-icode"]
-        output["proto"] = self.getprotobynumber(event["protocol"])
-
-        if event["protocol"] in [socket.IPPROTO_ICMP, socket.IPPROTO_ICMPV6]:
-            output["icmp_type"] = event["sport-itype"]
-            output["icmp_code"] = event["dport-icode"]
-
-        alert = OrderedDict()
-        alert["action"] = "blocked" if event["blocked"] == 1 else "allowed"
-        alert["gid"] = event["generator-id"]
-        alert["signature_id"] = event["signature-id"]
-        alert["rev"] = event["signature-revision"]
-        alert["signature"] = self.resolve_msg(event)
-        alert["category"] = self.resolve_classification(event)
-        alert["severity"] = event["priority"]
-        output["alert"] = alert
-
-        if self.packets:
-            output["packets"] = []
-            for packet in event["packets"]:
-                output_packet = {
-                    "timestamp": render_timestamp(
-                        packet["packet-second"], packet["packet-microsecond"]),
-                    "packet": base64.b64encode(packet["data"])
-                }
-                output["packets"].append(output_packet)
-
-        if self.extra_data:
-            output["extra-data"] = []
-            for data in event["extra-data"]:
-                output_data = {
-                    "data-type": data["data-type"],
-                    "event-type": data["event-type"],
-                    "type": data["type"],
-                    "data": base64.b64encode(data["data"])
-                }
-                output["extra-data"].append(output_data)
-
-        return output
-
-    def resolve_classification(self, event, default=None):
-        if self.classmap:
-            classinfo = self.classmap.get(event["classification-id"])
-            if classinfo:
-                return classinfo["description"]
-        return default
 
     def resolve_msg(self, event, default=None):
         if self.msgmap:
@@ -209,8 +148,83 @@ class SuricataJsonFilter(object):
                 return signature["msg"]
         return default
 
-    def getprotobynumber(self, protocol):
-        return proto_map.get(protocol, str(protocol))
+    def resolve_classification(self, event, default=None):
+        if self.classmap:
+            classinfo = self.classmap.get(event["classification-id"])
+            if classinfo:
+                return classinfo["description"]
+        return default
+
+    def format_event(self, record):
+        event = {}
+
+        msg = self.resolve_msg(record)
+        if msg:
+            event["msg"] = msg
+        classification = self.resolve_classification(record)
+        if classification:
+            event["classification"] = classification
+
+        for key in record:
+            if key.endswith(".raw"):
+                continue
+            elif key in ["extra-data", "packets"]:
+                continue
+            elif key == "appid" and not record["appid"]:
+                continue
+            else:
+                event[key] = record[key]
+        return {"event": event}
+
+    def format_packet(self, record):
+        packet = {}
+        for key in record:
+            if key == "data":
+                packet[key] = base64.b64encode(record[key])
+            else:
+                packet[key] = record[key]
+        return {"packet": packet}
+
+    def format_extra_data(self, record):
+        data = {}
+
+        # For data types that can be printed in plain text, extract
+        # the data into its own field with a descriptive name.
+        if record["type"] == unified2.EXTRA_DATA_TYPE["SMTP_FILENAME"]:
+            data["smtp-filename"] = record["data"]
+        elif record["type"] == unified2.EXTRA_DATA_TYPE["SMTP_MAIL_FROM"]:
+            data["smtp-from"] = record["data"]
+        elif record["type"] == unified2.EXTRA_DATA_TYPE["SMTP_RCPT_TO"]:
+            data["smtp-rcpt-to"] = record["data"]
+        elif record["type"] == unified2.EXTRA_DATA_TYPE["SMTP_HEADERS"]:
+            data["smtp-headers"] = record["data"]
+        elif record["type"] == unified2.EXTRA_DATA_TYPE["HTTP_URI"]:
+            data["http-uri"] = record["data"]
+        elif record["type"] == unified2.EXTRA_DATA_TYPE["HTTP_HOSTNAME"]:
+            data["http-hostname"] = record["data"]
+        elif record["type"] == unified2.EXTRA_DATA_TYPE["NORMALIZED_JS"]:
+            data["javascript"] = record["data"]
+
+        for key in record:
+            if key == "data":
+                data[key] = base64.b64encode(record[key])
+            else:
+                data[key] = record[key]
+
+        return {"extra-data": data}
+
+    def format(self, record):
+        if isinstance(record, unified2.Event):
+            return self.format_event(record)
+        elif isinstance(record, unified2.Packet):
+            return self.format_packet(record)
+        elif isinstance(record, unified2.ExtraData):
+            return self.format_extra_data(record)
+        else:
+            print(record.__class__)
+            print(record)
+            sys.exit(1)
+            return record.__class__
 
 class OutputWrapper(object):
 
@@ -302,12 +316,6 @@ def main():
         "--stdout", action="store_true", default=False,
         help="also log to stdout if --output is a file")
     parser.add_argument(
-        "--packets", action="store_true", default=False,
-        help="include packets")
-    parser.add_argument(
-        "--extra-data", action="store_true", default=False,
-        help="include extra data")
-    parser.add_argument(
         "filenames", nargs="*")
     args = parser.parse_args()
 
@@ -332,9 +340,6 @@ def main():
     else:
         LOG.info("Loaded %s classifications.", classmap.size())
 
-    output_filter = SuricataJsonFilter(
-        msgmap, classmap, args.packets, args.extra_data)
-
     outputs = []
 
     if args.output:
@@ -345,22 +350,24 @@ def main():
         outputs.append(OutputWrapper("-", sys.stdout))
 
     if args.directory and args.prefix:
-        reader = unified2.SpoolEventReader(
+        reader = unified2.SpoolRecordReader(
             directory=args.directory,
             prefix=args.prefix,
             follow=args.follow,
             delete=args.delete,
             bookmark=args.bookmark)
     elif args.filenames:
-        reader = unified2.FileEventReader(*args.filenames)
+        reader = unified2.FileRecordReader(*args.filenames)
     else:
         print("nothing to do.")
         return
 
-    for event in reader:
-        encoded = json.dumps(output_filter.filter(event))
+    formatter = Formatter(msgmap=msgmap, classmap=classmap)
+
+    for record in reader:
+        as_json = json.dumps(formatter.format(record))
         for out in outputs:
-            out.write(encoded)
+            out.write(as_json)
 
 if __name__ == "__main__":
     sys.exit(main())

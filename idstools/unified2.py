@@ -69,6 +69,22 @@ EVENT_APPID     = 111
 EVENT_APPID_IP6 = 112
 APPSTAT         = 113
 
+EXTRA_DATA_TYPE = {
+    "ORIG_CLIENT_IP4": 1,
+    "ORIG_CLIENT_IP6": 2,
+    "UNUSED0": 3,
+    "GZIP_DATA": 4,
+    "SMTP_FILENAME": 5,
+    "SMTP_MAIL_FROM": 6,
+    "SMTP_RCPT_TO": 7,
+    "SMTP_HEADERS": 8,
+    "HTTP_URI": 9,
+    "HTTP_HOSTNAME": 10,
+    "IP6_SRC_ADDR": 11,
+    "IP6_DST_ADDR": 12,
+    "NORMALIZED_JS": 13,
+}
+
 class Field(object):
     """ A class to represent a field in a unified2 record. Used for
     building the decoders. """
