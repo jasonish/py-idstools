@@ -32,8 +32,8 @@
     usage: idstools-u2json [-h] [-C <classification.config>] [-S <msg-msg.map>]
                            [-G <gen-msg.map>] [--snort-conf <snort.conf>]
                            [--directory <spool directory>]
-                           [--prefix <spool file prefix>] [--bookmark] [--follow]
-                           [--delete] [--output <filename>] [--stdout]
+                           [--prefix <spool file prefix>] [--bookmark <filename>]
+                           [--follow] [--delete] [--output <filename>] [--stdout]
                            [filenames [filenames ...]]
 
     positional arguments:
@@ -52,15 +52,15 @@
                             spool directory (eg: /var/log/snort)
       --prefix <spool file prefix>
                             spool filename prefix (eg: unified2.log)
-      --bookmark            enable bookmarking
+      --bookmark <filename>
+                            enable bookmarking
       --follow              follow files/continuous mode (spool mode only)
       --delete              delete spool files
       --output <filename>   output filename (eg: /var/log/snort/alerts.json
       --stdout              also log to stdout if --output is a file
 
-    If --directory and --prefix are provided files will be read from
-    the specified 'spool' directory. Otherwise files on the command
-    line will be processed.
+    If --directory and --prefix are provided files will be read from the specified
+    'spool' directory. Otherwise files on the command line will be processed.
 
 An alternative to using command line arguments is to put the arguments
 in a file and call u2json like::
@@ -92,15 +92,8 @@ if sys.argv[0] == __file__:
     sys.path.insert(
         0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
-import socket
-import time
 import json
 import logging
-from datetime import datetime
-try:
-    from collections import OrderedDict
-except ImportError as err:
-    from idstools.compat.ordereddict import OrderedDict
 
 try:
     import argparse
@@ -110,29 +103,8 @@ except ImportError as err:
 from idstools import unified2
 from idstools import maps
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 LOG = logging.getLogger()
-
-proto_map = {
-    1: "ICMP",
-    6: "TCP",
-    17: "UDP",
-}
-
-def get_tzoffset(sec):
-    offset = datetime.fromtimestamp(sec) - datetime.utcfromtimestamp(sec)
-    if offset.days == -1:
-        return "-%02d%02d" % (
-            (86400 - offset.seconds) / 3600, (86400 - offset.seconds) % 3600)
-    else:
-        return "+%02d%02d" % (
-            offset.seconds / 3600, offset.seconds % 3600)
-
-def render_timestamp(sec, usec):
-    tt = time.localtime(sec)
-    return "%04d-%02d-%02dT%02d:%02d:%02d.%06d%s" % (
-        tt.tm_year, tt.tm_mon, tt.tm_mday, tt.tm_hour, tt.tm_min, tt.tm_sec, 
-        usec, get_tzoffset(sec))
 
 class Formatter(object):
 
@@ -274,6 +246,11 @@ read from the specified 'spool' directory.  Otherwise files on the
 command line will be processed.
 """
 
+def rollover_hook(closed, opened):
+    """ The rollover hook for the spool reader. Will delete the closed file. """
+    LOG.debug("Deleting %s.", closed)
+    os.unlink(closed)
+
 def main():
 
     msgmap = maps.SignatureMap()
@@ -301,8 +278,7 @@ def main():
         "--prefix", metavar="<spool file prefix>",
         help="spool filename prefix (eg: unified2.log)")
     parser.add_argument(
-        "--bookmark", action="store_true", default=False,
-        help="enable bookmarking")
+        "--bookmark", metavar="<filename>", help="enable bookmarking")
     parser.add_argument(
         "--follow", action="store_true", default=False,
         help="follow files/continuous mode (spool mode only)")
@@ -331,12 +307,12 @@ def main():
         msgmap.load_signature_map(open(os.path.expanduser(args.sidmsgmap_path)))
 
     if msgmap.size() == 0:
-        LOG.warn("WARNING: No alert message map entries loaded.")
+        LOG.warn("No alert message map entries loaded.")
     else:
         LOG.info("Loaded %s rule message map entries.", msgmap.size())
 
     if classmap.size() == 0:
-        LOG.warn("WARNING: No classifications loaded.")
+        LOG.warn("No classifications loaded.")
     else:
         LOG.info("Loaded %s classifications.", classmap.size())
 
@@ -349,18 +325,35 @@ def main():
     else:
         outputs.append(OutputWrapper("-", sys.stdout))
 
-    if args.directory and args.prefix:
+    if args.filenames:
+        if args.bookmark:
+            LOG.error("Bookmarking not valid in file mode.")
+            return 1
+        if args.follow:
+            LOG.error("Follow not valid in file mode.")
+            return 1
+        if args.delete:
+            LOG.error("Delete not valid in file mode.")
+            return 1
+        bookmark = None
+        reader = unified2.FileRecordReader(*args.filenames)
+    elif args.directory and args.prefix:
+        if args.bookmark:
+            bookmark = unified2.Unified2Bookmark(filename=args.bookmark)
+            init_filename, init_offset = bookmark.get()
+        else:
+            init_filename = None
+            init_offset = None
         reader = unified2.SpoolRecordReader(
             directory=args.directory,
             prefix=args.prefix,
             follow=args.follow,
-            delete=args.delete,
-            bookmark=args.bookmark)
-    elif args.filenames:
-        reader = unified2.FileRecordReader(*args.filenames)
+            rollover_hook=rollover_hook if args.delete else None,
+            init_filename=init_filename,
+            init_offset=init_offset)
     else:
-        print("nothing to do.")
-        return
+        LOG.error("No spool or files provided.")
+        return 1
 
     formatter = Formatter(msgmap=msgmap, classmap=classmap)
 
@@ -368,6 +361,9 @@ def main():
         as_json = json.dumps(formatter.format(record))
         for out in outputs:
             out.write(as_json)
+        if bookmark:
+            filename, offset = reader.tell()
+            bookmark.update(filename, offset)
 
 if __name__ == "__main__":
     sys.exit(main())

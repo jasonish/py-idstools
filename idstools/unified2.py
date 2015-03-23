@@ -433,14 +433,17 @@ class Unified2Bookmark(object):
 
     """
 
-    def __init__(self, directory, prefix):
+    def __init__(self, directory=None, prefix=None, filename=None):
         self.directory = directory
         self.prefix = prefix
 
-        self.filename = os.path.join(
-            os.path.abspath(self.directory), "_%s.bookmark" % (prefix))
+        if filename:
+            self.filename = filename
+        else:
+            self.filename = os.path.join(
+                os.path.abspath(self.directory), "_%s.bookmark" % (prefix))
 
-        self.fileobj = None
+        self.fileobj = open(self.filename, "ab")
 
     def get(self):
         """Get the current bookmark.
@@ -449,17 +452,16 @@ class Unified2Bookmark(object):
 
         """
         if os.path.exists(self.filename):
-            filename, offset = open(
-                self.filename, "rb").read().decode().split('\0')
-            return filename, int(offset)
+            buf = open(self.filename, "rb").read()
+            if buf:
+                filename, offset = buf.decode().split("\0")
+                return filename, int(offset)
         return None, None
 
     def update(self, filename, offset):
         """Update the bookmark with the given filename and offset."""
         if filename is None or offset is None:
             return
-        if not self.fileobj:
-            self.fileobj = open(self.filename, "wb")
         self.fileobj.truncate(0)
         self.fileobj.seek(0, 0)
         self.fileobj.write(("%s\x00%d" % (
