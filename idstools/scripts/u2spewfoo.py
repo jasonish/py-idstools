@@ -129,15 +129,25 @@ def print_packet(packet):
     print(print_raw(packet["data"]))
 
 def print_extra(extra):
-    rows = (
-        (("sensor id", "sensor-id", str),
-         ("event id", "event-id", str),
-         ("event second", "event-second", str),
-         ),
-        (("type", "type", str),
-         ("datatype", "data-type", str),
-         ("bloblength", "data-length", str),
-         ))
+    rows = [
+        [["sensor id", str(extra["sensor-id"])],
+         ["event id", str(extra["event-id"])],
+         ["event second", str(extra["event-second"])],
+        ],
+        [["type", str(extra["type"])],
+         ["datatype", str(extra["data-type"])],
+         ["bloblength", str(extra["data-length"])],
+     ]]
+
+    body = None
+
+    if extra["type"] == unified2.EXTRA_DATA_TYPE["HTTP_URI"]:
+        rows[1] += [["HTTP URI", str(extra["data"])]]
+    elif extra["type"] == unified2.EXTRA_DATA_TYPE["HTTP_HOSTNAME"]:
+        rows[1] += [["HTTP Hostname", str(extra["data"])]]
+    else:
+        # Don't yet know how to render this.
+        body = extra["data"]
 
     print("\n(ExtraDataHdr)")
     print("\tevent type: %(event-type)d\tevent length: %(event-length)d" % (
@@ -145,9 +155,10 @@ def print_extra(extra):
 
     print("\n(ExtraData)")
     for row in rows:
-        parts = ["%s: %s" % (col[0], col[2](extra[col[1]])) for col in row]
+        parts = ["%s: %s" % (col[0], col[1]) for col in row]
         print("\t" + "\t".join(parts))
-    print(extra["data"])
+    if body:
+        print(body)
 
 def print_record(record):
     if isinstance(record, unified2.Event):
