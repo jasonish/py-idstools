@@ -136,7 +136,7 @@ def print_extra(extra):
          ),
         (("type", "type", str),
          ("datatype", "data-type", str),
-         ("bloglength", "data-length", str),
+         ("bloblength", "data-length", str),
          ))
 
     print("\n(ExtraDataHdr)")
