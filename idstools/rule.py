@@ -156,6 +156,10 @@ class Rule(dict):
         """
         return (int(self.gid), int(self.sid))
 
+    @property
+    def idstr(self):
+        return "[%s:%s]" % (str(self.gid), str(self.sid))
+
     def brief(self):
         """ A brief description of the rule.
 
@@ -221,8 +225,11 @@ def parse_fileobj(fileobj, group=None):
     """
     rules = []
     for line in fileobj:
-        if type(line) == type(b""):
-            line = line.decode()
+        try:
+            if type(line) == type(b""):
+                line = line.decode()
+        except:
+            pass
         try:
             rule = parse(line, group)
             if rule:
@@ -283,3 +290,9 @@ class FlowbitResolver(object):
             return tokens[0], tokens[1]
         else:
             raise Exception("Flowbit parse error on %s" % (flowbit))
+
+def enable_flowbit_dependencies(rulemap):
+    """Helper function to resolve flowbits, wrapping the FlowbitResolver
+    class. """
+    resolver = FlowbitResolver()
+    return resolver.resolve(rulemap)

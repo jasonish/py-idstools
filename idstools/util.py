@@ -28,6 +28,12 @@
 import hashlib
 import socket
 import struct
+import tempfile
+import atexit
+import shutil
+import subprocess
+import os
+import fnmatch
 
 def md5_hexdigest(filename):
     """ Compute the MD5 checksum for the contents of the provided filename.
@@ -44,3 +50,32 @@ def decode_inet_addr(addr):
     else:
         parts = struct.unpack(">" + "H" * int(len(addr) / 2), addr)
         return ":".join("%04x" % p for p in parts)
+
+def mktempdir(delete_on_exit=True):
+    """ Create a temporary directory that is removed on exit. """
+    tmpdir = tempfile.mkdtemp("idstools")
+    if delete_on_exit:
+        atexit.register(shutil.rmtree, tmpdir, ignore_errors=True)
+    return tmpdir
+
+def archive_to_dict(filename, include="*"):
+    """Convert an archive file (eg: .tar.gz) to a dict of filenames and
+    their content.
+
+    Useful for working with rules."""
+
+    files = {}
+    if filename.endswith(".tar.gz"):
+        # This is faster than using the Python libs.
+        tempdir = mktempdir(delete_on_exit=True)
+        subprocess.Popen(
+            "gunzip -c %s | tar xf -" % (filename),
+            cwd=tempdir, shell=True).wait()
+        for dirpath, dirnames, filenames in os.walk(tempdir):
+            for filename in filenames:
+                path = os.path.join(dirpath, filename)
+                if include and not fnmatch.fnmatch(path, include):
+                    continue
+                content = open(path, "rb").read()
+                files[path[len(tempdir) + 1:]] = content
+    return files
