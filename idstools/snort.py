@@ -32,7 +32,7 @@ import subprocess
 import re
 import logging
 
-import idstools.ruleman.util
+import idstools.util
 
 LOG = logging.getLogger()
 
@@ -122,7 +122,7 @@ class SnortApp(object):
             LOG.warn("Snort application not set or does not exist")
             return
 
-        destination = idstools.ruleman.util.mktempdir()
+        destination = idstools.util.mktempdir()
         args = [self.path,
                 "--dynamic-detection-lib-dir=%s" % (dynamic_detection_lib_dir),
                 "--dynamic-engine-lib=%s" % (self.dynamic_engine_lib),
