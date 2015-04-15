@@ -32,11 +32,15 @@ import re
 import os.path
 import logging
 import argparse
-import StringIO
 import shlex
 import time
 import hashlib
 import fnmatch
+
+try:
+    from io import StringIO
+except:
+    from StringIO import StringIO
 
 try:
     import progressbar
@@ -192,7 +196,7 @@ class Fetch(object):
             if local_checksum.strip() == remote_checksum_buf.getvalue().strip():
                 os.utime(tmp_filename, None)
                 return True
-        except Exception, err:
+        except Exception as err:
             logger.error("Failed to check remote checksum: %s" % err)
         return False
 
