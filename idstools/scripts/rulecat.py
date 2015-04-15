@@ -38,9 +38,9 @@ import hashlib
 import fnmatch
 
 try:
-    from io import StringIO
+    from io import BytesIO
 except:
-    from StringIO import StringIO
+    from StringIO import StringIO as BytesIO
 
 try:
     import progressbar
@@ -177,6 +177,8 @@ class Fetch(object):
         self.args = args
 
     def get_rule_url(self):
+        if self.args.url:
+            return self.args.url
         suricata_version = idstools.suricata.get_version(self.args.suricata)
         if not suricata_version or not suricata_version.short:
             return ET_OPEN_URL % {"version": ""}
@@ -187,7 +189,7 @@ class Fetch(object):
         try:
             checksum_url = url + ".md5"
             local_checksum = hashlib.md5(open(tmp_filename).read()).hexdigest()
-            remote_checksum_buf = StringIO.StringIO()
+            remote_checksum_buf = BytesIO()
             logger.info("Fetching %s." % (checksum_url))
             remote_checksum = idstools.net.get(
                 checksum_url, remote_checksum_buf)
@@ -302,7 +304,7 @@ def write_to_directory(directory, files, rulemap):
             open(outpath, "wb").write(files[filename])
         else:
             content = []
-            for line in StringIO.StringIO(files[filename]):
+            for line in BytesIO(files[filename]):
                 rule = idstools.rule.parse(line)
                 if not rule:
                     content.append(line.strip())
@@ -353,6 +355,8 @@ def main():
                         help="Output merged rules file.")
     parser.add_argument("--yaml-fragment", metavar="<filename>",
                         help="Output YAML fragment for rule inclusion.")
+    parser.add_argument("--url", metavar="<url>",
+                        help="URL to use instead of auto-generating one")
     parser.add_argument("--local", metavar="<filename>",
                         help="Local rule files or directories.")
     args = parser.parse_args()
@@ -378,7 +382,7 @@ def main():
     for filename in files:
         logger.debug("Parsing %s." % (filename))
         rules += idstools.rule.parse_fileobj(
-            StringIO.StringIO(files[filename]), filename)
+            BytesIO(files[filename]), filename)
 
     rulemap = {}
     for rule in rules:
