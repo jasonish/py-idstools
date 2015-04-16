@@ -79,23 +79,6 @@ def file_iterator(files):
         elif filename.endswith(".rules"):
             yield filename, open(filename)
 
-def render_v1(rule):
-    """ Render an original style sid-msg.map entry. """
-    return " || ".join([str(rule.sid), rule.msg] + rule.references)
-
-def render_v2(rule):
-    """ Render a v2 style sid-msg.map entry.
-
-    gid || sid || rev || classification || priority || msg || ref0 || refN
-    """
-    return " || ".join([
-        str(rule.gid),
-        str(rule.sid),
-        str(rule.rev),
-        "NOCLASS" if rule.classtype is None else rule.classtype,
-        str(rule.priority),
-        rule.msg] + rule.references)
-
 def usage(file=sys.stderr):
     print("""
 usage: %s [options] <file>...
@@ -160,9 +143,9 @@ def main():
 
     for rule_id in sorted(rules):
         if opt_v2:
-            print(render_v2(rules[rule_id]))
+            print(idstools.rule.format_sidmsgmap_v2(rules[rule_id]))
         else:
-            print(render_v1(rules[rule_id]))
+            print(idstools.rule.format_sidmsgmap(rules[rule_id]))
 
     return 0
 

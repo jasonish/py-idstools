@@ -296,3 +296,18 @@ def enable_flowbit_dependencies(rulemap):
     class. """
     resolver = FlowbitResolver()
     return resolver.resolve(rulemap)
+
+def format_sidmsgmap(rule):
+    """ Format a rule as a sid-msg.map entry. """
+    return " || ".join([str(rule.sid), rule.msg] + rule.references)
+
+def format_sidmsgmap_v2(rule):
+    """ Format a rule as a v2 sid-msg.map entry.
+
+    eg:
+    gid || sid || rev || classification || priority || msg || ref0 || refN
+    """
+    return " || ".join([
+        str(rule.gid), str(rule.sid), str(rule.rev),
+        "NOCLASS" if rule.classtype is None else rule.classtype,
+        str(rule.priority), rule.msg] + rule.references)
