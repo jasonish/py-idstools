@@ -424,6 +424,18 @@ def main():
                         help="Generate a sid-msg.map file")
     parser.add_argument("--sid-msg-map-2", metavar="<filename>",
                         help="Generate a v2 sid-msg.map file")
+    parser.add_argument("--disable", metavar="<filename>",
+                        help="Filename of disable rule configuration "
+                        "(default: %s)" % (DISABLE_CONF),
+                        default=DISABLE_CONF)
+    parser.add_argument("--enable", metavar="<filename>",
+                        help="Filename of enable rule configuration "
+                        "(default: %s)" % (ENABLE_CONF),
+                        default=ENABLE_CONF)
+    parser.add_argument("--modify", metavar="<filename>",
+                        help="Filename of rule modification configuration "
+                        "(default: %s)" % (MODIFY_CONF),
+                        default=MODIFY_CONF)
     args = parser.parse_args()
 
     if args.verbose:
@@ -433,10 +445,10 @@ def main():
     disable_matchers = []
     enable_matchers = []
 
-    if os.path.exists(DISABLE_CONF):
-        disable_matchers += load_matchers(DISABLE_CONF)
-    if os.path.exists(ENABLE_CONF):
-        enable_matchers += load_matchers(ENABLE_CONF)
+    if os.path.exists(args.disable):
+        disable_matchers += load_matchers(args.disable)
+    if os.path.exists(args.enable):
+        enable_matchers += load_matchers(args.enable)
 
     files = Fetch(args).run()
 
