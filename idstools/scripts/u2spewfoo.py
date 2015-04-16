@@ -174,7 +174,7 @@ def main():
     if not filenames:
         print("usage: %s <file>..." % (sys.argv[0]))
         return 1
-    
+
     reader = unified2.FileRecordReader(*filenames)
     for record in reader:
         print_record(record)

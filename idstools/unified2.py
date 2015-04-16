@@ -803,7 +803,7 @@ class SpoolEventReader(object):
       wait until an event is available before returning.
     :param delete: If True, unified2 files will be deleted when
       reading has moved onto the next one.
-    :param bookmark: If True, the reader will remember its location and 
+    :param bookmark: If True, the reader will remember its location and
       start reading from the bookmarked location on initialization.
 
     Example::
@@ -821,7 +821,7 @@ class SpoolEventReader(object):
         self.delete = delete
 
         self.aggregator = Aggregator()
- 
+
         self.delete_on_next = []
 
         if bookmark:

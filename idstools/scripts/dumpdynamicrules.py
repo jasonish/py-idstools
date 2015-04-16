@@ -159,7 +159,7 @@ def main():
                                     args.version)
             logger.info("Using %s.", path)
             stubs = snort_app.dump_dynamic_rules(path, verbose=args.verbose)
-            
+
         else:
             for dist in reversed(os.listdir(precompiled_dir)):
                 path = "%s/%s/%s/%s" % (precompiled_dir, dist, snort_app.arch, args.version)
@@ -179,13 +179,13 @@ def main():
                 logger.info("Writing %s.", out_path)
                 with open(out_path, "w") as fileobj:
                     fileobj.write(stubs[stub])
-                
+
         if args.repack:
             if not stubs:
                 logger.error("Error: No stubs generated, nothing to repace.")
             repack(tempdir, stubs, args.path if args.repack == True
                    else args.repack)
-            
+
 if __name__ == "__main__":
     sys.exit(main())
 

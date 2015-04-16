@@ -259,13 +259,13 @@ def main():
     parser = argparse.ArgumentParser(
         fromfile_prefix_chars='@', epilog=epilog)
     parser.add_argument(
-        "-C", dest="classification_path", metavar="<classification.config>", 
+        "-C", dest="classification_path", metavar="<classification.config>",
         help="path to classification config")
     parser.add_argument(
-        "-S", dest="sidmsgmap_path", metavar="<msg-msg.map>", 
+        "-S", dest="sidmsgmap_path", metavar="<msg-msg.map>",
         help="path to sid-msg.map")
     parser.add_argument(
-        "-G", dest="genmsgmap_path", metavar="<gen-msg.map>", 
+        "-G", dest="genmsgmap_path", metavar="<gen-msg.map>",
         help="path to gen-msg.map")
     parser.add_argument(
         "--snort-conf", dest="snort_conf", metavar="<snort.conf>",

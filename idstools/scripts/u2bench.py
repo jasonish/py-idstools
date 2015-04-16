@@ -27,7 +27,7 @@ def main():
 
     try:
         opts, args = getopt.getopt(
-            sys.argv[1:], "h", 
+            sys.argv[1:], "h",
             ["help"])
     except getopt.GetoptError as err:
         print("error: invalid command line: %s" % err, file=sys.stderr)

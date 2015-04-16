@@ -68,7 +68,7 @@ IP6_EXT_HEADER_TYPES = [
 def printable_ethernet_addr(addr):
     """Return a formatted ethernet address from its raw form."""
     return ":".join(["%02x" % (x) for x in struct.unpack("BBBBBB", addr)])
-    
+
 def decode_icmp(pkt):
     """ Decode an ICMP packet. """
     icmp = {}

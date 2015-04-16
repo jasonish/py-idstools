@@ -89,7 +89,7 @@ proto_map = {
 def print_time(sec, usec):
     tt = time.localtime(sec)
     return "%04d/%02d/%02d-%02d:%02d:%02d.%06d" % (
-        tt.tm_year, tt.tm_mon, tt.tm_mday, tt.tm_hour, tt.tm_min, tt.tm_sec, 
+        tt.tm_year, tt.tm_mon, tt.tm_mday, tt.tm_hour, tt.tm_min, tt.tm_sec,
         usec)
 
 def print_event(event, msgmap, classmap):
@@ -148,13 +148,13 @@ def main():
     parser = argparse.ArgumentParser(
         fromfile_prefix_chars='@')
     parser.add_argument(
-        "-C", dest="classification_path", metavar="<classification.config>", 
+        "-C", dest="classification_path", metavar="<classification.config>",
         help="path to classification config")
     parser.add_argument(
-        "-S", dest="sidmsgmap_path", metavar="<msg-msg.map>", 
+        "-S", dest="sidmsgmap_path", metavar="<msg-msg.map>",
         help="path to sid-msg.map")
     parser.add_argument(
-        "-G", dest="genmsgmap_path", metavar="<gen-msg.map>", 
+        "-G", dest="genmsgmap_path", metavar="<gen-msg.map>",
         help="path to gen-msg.map")
     parser.add_argument(
         "--snort-conf", dest="snort_conf", metavar="<snort.conf>",

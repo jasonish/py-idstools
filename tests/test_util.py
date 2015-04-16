@@ -37,5 +37,5 @@ class Md5TestCase(unittest.TestCase):
         test_file.write(b"This is a test.")
         test_file.flush()
         self.assertEquals(
-            "120ea8a25e5d487bf68b5f7096440019", 
+            "120ea8a25e5d487bf68b5f7096440019",
             util.md5_hexdigest(test_file.name))

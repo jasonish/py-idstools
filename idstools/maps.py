@@ -41,7 +41,7 @@ class SignatureMap(object):
 
     The dict's in the map will have at a minimum the following
     fields:
-    
+
     * gid *(int)*
     * sid *(int)*
     * msg *(string)*
@@ -57,10 +57,10 @@ class SignatureMap(object):
         >>> sigmap.load_generator_map(open("tests/gen-msg.map"))
         >>> sigmap.load_signature_map(open("tests/sid-msg-v2.map"))
         >>> print(sigmap.get(1, 2495))
-        {'classification': 'misc-attack', 'rev': 8, 'priority': 0, 'gid': 1, 
-        'sid': 2495, 
-        'msg': 'GPL NETBIOS SMB DCEPRC ORPCThis request flood attempt', 
-        'ref': ['bugtraq,8811', 'cve,2003-0813', 'nessus,12206', 
+        {'classification': 'misc-attack', 'rev': 8, 'priority': 0, 'gid': 1,
+        'sid': 2495,
+        'msg': 'GPL NETBIOS SMB DCEPRC ORPCThis request flood attempt',
+        'ref': ['bugtraq,8811', 'cve,2003-0813', 'nessus,12206',
         'url,www.microsoft.com/technet/security/bulletin/MS04-011.mspx']}
 
     """

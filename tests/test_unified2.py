@@ -77,7 +77,7 @@ class TestReadRecord(unittest.TestCase):
         for i in range(17):
             record = unified2.read_record(read_fileobj)
             self.assertTrue(
-                record is not None, 
+                record is not None,
                 "record None at i=%d; expected on OSX w/Py2" % (i))
         self.assertTrue(unified2.read_record(read_fileobj) is None)
 
@@ -110,7 +110,7 @@ class TestRecordReader(unittest.TestCase):
         reader = unified2.RecordReader(fileobj)
         self.assertRaises(EOFError, reader.next)
         self.assertEquals(fileobj.tell(), 0)
-    
+
     def test_short_read_of_body(self):
 
         # Just read in 12, 8 for the header and some body.
@@ -245,7 +245,7 @@ class FileEventReaderTestCase(unittest.TestCase):
 
         reader = unified2.FileEventReader(
             self.test_filename, self.test_filename)
-        
+
         # On our first call to next we should get an event.
         self.assertTrue(isinstance(reader.next(), unified2.Event))
 
@@ -296,13 +296,13 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
         shutil.copy("tests/merged.log", "%s/unified2.log.0004" % (self.tmpdir))
 
         next_filename = reader.open_next()
-        self.assertEquals("unified2.log.0001", next_filename) 
+        self.assertEquals("unified2.log.0001", next_filename)
         next_filename = reader.open_next()
-        self.assertEquals("unified2.log.0002", next_filename) 
+        self.assertEquals("unified2.log.0002", next_filename)
         next_filename = reader.open_next()
-        self.assertEquals("unified2.log.0003", next_filename) 
+        self.assertEquals("unified2.log.0003", next_filename)
         next_filename = reader.open_next()
-        self.assertEquals("unified2.log.0004", next_filename) 
+        self.assertEquals("unified2.log.0004", next_filename)
 
         next_filename = reader.open_next()
         self.assertEquals(None, next_filename)

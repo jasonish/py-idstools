@@ -58,7 +58,7 @@ class RuleTestCase(unittest.TestCase):
         self.assertFalse(rule.enabled)
         self.assertEquals(rule.raw, """alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)""")
         self.assertEquals(str(rule), rule_buf)
-                                  
+
     def test_toggle_rule(self):
         rule_buf = """# alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)"""
         rule = idstools.rule.parse(rule_buf)

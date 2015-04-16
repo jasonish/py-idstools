@@ -20,7 +20,7 @@ To resolve alert descriptions and classifications::
 
    idstools-u2json --snort-conf /etc/snort/etc/snort.conf \
        /var/log/snort/unified2.log.1397575268
-   
+
 The above assumes that sid-msg.map, gen-msg.map and
 classification.config live alongside the specified snort.conf.  If
 they do not, the options to specify each individually may be used::

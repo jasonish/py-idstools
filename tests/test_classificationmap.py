@@ -8,10 +8,10 @@ class ClassificationMapTestCase(unittest.TestCase):
 
     def test_load_from_file(self):
         m = ClassificationMap(open(self.test_filename))
-        
+
         # Classifications are indexed at 1.
         self.assertEquals(None, m.get(0))
-        
+
         c = m.get(1)
         self.assertEquals("not-suspicious", c["name"])
         self.assertEquals("Not Suspicious Traffic", c["description"])

@@ -281,7 +281,7 @@ class FlowbitResolver(object):
                 if option in self.getters:
                     required_flowbits.add(value)
         return required_flowbits
-                        
+
     def parse_flowbit(self, flowbit):
         tokens = flowbit.split(",", 1)
         if len(tokens) == 1:

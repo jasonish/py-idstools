@@ -59,7 +59,7 @@ class SnortApp(object):
             stderr=subprocess.PIPE).communicate()
         m = re.search("(Version (\d+\.\d+\.\d+\.\d+).*)$", stderr, re.M)
         return m.group(2).strip(), m.group(1).strip(), stderr
-        
+
     def set_dynamic_engine_lib(self, dynamic_engine_lib, config):
         if dynamic_engine_lib:
             return dynamic_engine_lib
