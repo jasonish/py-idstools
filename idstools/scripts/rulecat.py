@@ -312,8 +312,43 @@ def write_to_directory(directory, files, rulemap):
                     content.append(str(rulemap[rule.id]))
             open(outpath, "wb").write("\n".join(content))
 
+def build_report(prev_rulemap, rulemap):
+    """Build a report of changes between 2 rulemaps.
+
+    Returns a dict with the following keys that each contain a list of
+    rules.
+    - added
+    - removed
+    - modified
+    """
+    report = {
+        "added": [],
+        "removed": [],
+        "modified": []
+    }
+
+    for rule in rulemap.itervalues():
+        if not rule.id in prev_rulemap:
+            report["added"].append(rule)
+        elif str(rule) != str(prev_rulemap[rule.id]):
+            report["modified"].append(rule)
+    for rule in prev_rulemap.itervalues():
+        if not rule.id in rulemap:
+            report["removed"].append(rule)
+
+    return report
+
 def write_merged(filename, rulemap):
-    logger.info("Writing merged rules file: %s." % (filename))
+
+    prev_rulemap = {}
+    if os.path.exists(filename):
+        prev_rulemap = build_rule_map(
+            idstools.rule.parse_fileobj(open(filename)))
+    report = build_report(prev_rulemap, rulemap)
+
+    logger.info("Writing %s: added: %d; removed %d; modified: %d" % (
+        filename, len(report["added"]), len(report["removed"]),
+        len(report["modified"])))
     with open(filename, "w") as fileobj:
         for rule in rulemap:
             print(str(rulemap[rule]), file=fileobj)
@@ -337,6 +372,23 @@ def write_sid_msg_map(filename, rulemap, version=1):
                 print(idstools.rule.format_sidmsgmap_v2(rule), file=fileobj)
             else:
                 print(idstools.rule.format_sidmsgmap(rule), file=fileobj)
+
+def build_rule_map(rules):
+    """Turn a list of rules into a mapping of rules.
+
+    In case of gid:sid conflict, the rule with the higher revision
+    number will be used.
+    """
+    rulemap = {}
+
+    for rule in rules:
+        if rule.id not in rulemap:
+            rulemap[rule.id] = rule
+        else:
+            if rule["rev"] > rulemap[rule.id]["rev"]:
+                rulemap[rule.id] = rule
+
+    return rulemap
 
 def main():
 
@@ -397,12 +449,7 @@ def main():
         rules += idstools.rule.parse_fileobj(
             BytesIO(files[filename]), filename)
 
-    rulemap = {}
-    for rule in rules:
-        if rule.id not in rulemap:
-            rulemap[rule.id] = rule
-        else:
-            logger.warning("Found duplicate rule id: %s" % (rule.brief()))
+    rulemap = build_rule_map(rules)
     logger.info("Loaded %d rules." % (len(rules)))
 
     disable_count = 0
