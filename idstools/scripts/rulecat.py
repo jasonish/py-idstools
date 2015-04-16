@@ -329,6 +329,15 @@ def write_yaml_fragment(filename, files):
             if fn.endswith(".rules"):
                 print("  - %s" % os.path.basename(fn), file=fileobj)
 
+def write_sid_msg_map(filename, rulemap, version=1):
+    logger.info("Writing %s." % (filename))
+    with open(filename, "w") as fileobj:
+        for rule in rulemap.itervalues():
+            if version == 2:
+                print(idstools.rule.format_sidmsgmap_v2(rule), file=fileobj)
+            else:
+                print(idstools.rule.format_sidmsgmap(rule), file=fileobj)
+
 def main():
 
     if os.path.exists("rulecat.conf"):
@@ -352,13 +361,17 @@ def main():
     parser.add_argument("--rules-dir", metavar="<directory>",
                         help="Output rules directory.")
     parser.add_argument("--merged", default=None, metavar="<filename>",
-                        help="Output merged rules file.")
+                        help="Output merged rules file")
     parser.add_argument("--yaml-fragment", metavar="<filename>",
-                        help="Output YAML fragment for rule inclusion.")
+                        help="Output YAML fragment for rule inclusion")
     parser.add_argument("--url", metavar="<url>",
                         help="URL to use instead of auto-generating one")
     parser.add_argument("--local", metavar="<filename>",
-                        help="Local rule files or directories.")
+                        help="Local rule files or directories")
+    parser.add_argument("--sid-msg-map", metavar="<filename>",
+                        help="Generate a sid-msg.map file")
+    parser.add_argument("--sid-msg-map-2", metavar="<filename>",
+                        help="Generate a v2 sid-msg.map file")
     args = parser.parse_args()
 
     if args.verbose:
@@ -423,6 +436,11 @@ def main():
 
     if args.yaml_fragment:
         write_yaml_fragment(args.yaml_fragment, files)
+
+    if args.sid_msg_map:
+        write_sid_msg_map(args.sid_msg_map, rulemap, version=1)
+    if args.sid_msg_map_2:
+        write_sid_msg_map(args.sid_msg_map_2, rulemap, version=2)
 
     logger.info("Done.")
 
