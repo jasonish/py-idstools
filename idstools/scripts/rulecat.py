@@ -507,11 +507,11 @@ def main():
     enable_matchers = []
     modify_filters = []
 
-    if os.path.exists(args.disable):
+    if args.disable and os.path.exists(args.disable):
         disable_matchers += load_matchers(args.disable)
-    if os.path.exists(args.enable):
+    if args.enable and os.path.exists(args.enable):
         enable_matchers += load_matchers(args.enable)
-    if os.path.exists(args.modify):
+    if args.modify and os.path.exists(args.modify):
         modify_filters += load_filters(args.modify)
 
     files = Fetch(args).run()
