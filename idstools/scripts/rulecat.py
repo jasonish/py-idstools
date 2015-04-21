@@ -454,6 +454,29 @@ def dump_sample_configs():
         else:
             write_file(filename, files[filename])
 
+def resolve_flowbits(rulemap, disabled_rules):
+    flowbit_resolver = idstools.rule.FlowbitResolver()
+    flowbit_enabled = set()
+    while True:
+        flowbits = flowbit_resolver.get_required_flowbits(rulemap)
+        logger.debug("Found %d required flowbits.", len(flowbits))
+        required_rules = flowbit_resolver.get_required_rules(rulemap, flowbits)
+        logger.debug(
+            "Found %d rules to enable to fullfull flowbit requirements",
+            len(required_rules))
+        if not required_rules:
+            logger.debug("All required rules enabled.")
+            break
+        for rule in required_rules:
+            if not rule.enabled and rule in disabled_rules:
+                logger.debug(
+                    "Enabling previously disabled rule for flowbits: %s" % (
+                        rule.brief()))
+            rule.enabled = True
+            flowbit_enabled.add(rule)
+    logger.info("Enabled %d rules for flowbit dependencies." % (
+        len(flowbit_enabled)))
+
 def main():
 
     conf_filenames = [arg for arg in sys.argv if arg.startswith("@")]
@@ -539,9 +562,13 @@ def main():
     rulemap = build_rule_map(rules)
     logger.info("Loaded %d rules." % (len(rules)))
 
-    disable_count = 0
+    # Counts of user enabled and modified rules.
     enable_count = 0
     modify_count = 0
+
+    # List of rules disabled by user. Used for counting, and to log
+    # rules that are re-enabled to meeto flowbit requirements.
+    disabled_rules = []
 
     for key, rule in rulemap.items():
 
@@ -549,7 +576,7 @@ def main():
             if rule.enabled and matcher.match(rule):
                 logger.debug("Disabling: %s" % (rule.brief()))
                 rule.enabled = False
-                disable_count += 1
+                disabled_rules.append(rule)
 
         for matcher in enable_matchers:
             if not rule.enabled and matcher.match(rule):
@@ -564,13 +591,12 @@ def main():
                 rulemap[rule.id] = filter.filter(rule)
                 modify_count += 1
 
-    logger.info("Disabled %d rules." % (disable_count))
+    logger.info("Disabled %d rules." % (len(disabled_rules)))
     logger.info("Enabled %d rules." % (enable_count))
     logger.info("Modified %d rules." % (modify_count))
 
     # Fixup flowbits.
-    flowbits = idstools.rule.enable_flowbit_dependencies(rulemap)
-    logger.info("Enabled %d rules for flowbit dependencies." % (len(flowbits)))
+    resolve_flowbits(rulemap, disabled_rules)
 
     if args.rules_dir:
         write_to_directory(args.rules_dir, files, rulemap)
