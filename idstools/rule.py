@@ -274,6 +274,22 @@ class FlowbitResolver(object):
                     enabled.append(rule)
         return enabled
 
+    def get_required_rules(self, rulemap, flowbits, include_enabled=False):
+        """Returns a list of rules that need to be enabled in order to satisfy
+        the list of required flowbits.
+
+        """
+        required = []
+
+        for rule in [rule for rule in rulemap.values()]:
+            for option, value in map(self.parse_flowbit, rule.flowbits):
+                if option in self.setters and value in flowbits:
+                    if rule.enabled and not include_enabled:
+                        continue
+                    required.append(rule)
+
+        return required
+
     def get_required_flowbits(self, rules):
         required_flowbits = set()
         for rule in [rule for rule in rules.values() if rule.enabled]:
