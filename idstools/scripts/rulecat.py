@@ -500,10 +500,14 @@ def main():
     parser.add_argument("--dump-sample-configs", action="store_true",
                         default=False,
                         help="Dump sample config files to current directory")
+    parser.add_argument("-q", "--quiet", action="store_true", default=False,
+                       help="Be quiet, warning and error messages only")
     args = parser.parse_args()
 
     if args.verbose:
         logger.setLevel(logging.DEBUG)
+    if args.quiet:
+        logger.setLevel(logging.WARNING)
 
     if args.dump_sample_configs:
         return dump_sample_configs()
