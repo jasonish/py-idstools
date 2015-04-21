@@ -56,16 +56,45 @@ import idstools.suricata
 import idstools.net
 import idstools.util
 
+CONF_SAMPLE = """# rulecat.conf
+"""
+
+SAMPLE_ENABLE_CONF = """# enable.conf
+
+# Example of enabling a rule by signature ID (gid is optional).
+# 1:2019401
+# 2019401
+
+# Example of enabling a rule by regular expression.
+# - All regular expression matches are case insensitive.
+# re:hearbleed
+# re:MS(0[7-9]|10)-\d+
+"""
+
+SAMPLE_DISABLE_CONF = """# disable.conf
+
+# Example of disabling a rule by signature ID (gid is optional).
+# 1:2019401
+# 2019401
+
+# Example of disabling a rule by regular expression.
+# - All regular expression matches are case insensitive.
+# re:hearbleed
+# re:MS(0[7-9]|10)-\d+
+"""
+
+SAMPLE_MODIFY_CONF = """# modify.conf
+
+# Format: <sid> "<from>" "<to>"
+
+# Example changing the seconds for rule 2019401 to 3600.
+# 2019401 "seconds \d+" "seconds 3600"
+"""
+
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger()
 
 ET_OPEN_URL = "https://rules.emergingthreats.net/open/suricata%(version)s/emerging.rules.tar.gz"
-
-DEFAULT_RULES_DIRECTORY = "/etc/suricata/rules"
-
-DISABLE_CONF = "/etc/suricata/disable.conf"
-ENABLE_CONF  = "/etc/suricata/enable.conf"
-MODIFY_CONF  = "/etc/suricata/modify.conf"
 
 class IdRuleMatcher(object):
     """Matcher object to match an idstools rule object by its signature
@@ -257,6 +286,21 @@ def parse_rule_match(match):
         return matcher
     return None
 
+def load_filters(filename):
+
+    filters = []
+
+    with open(filename) as fileobj:
+        for line in fileobj:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            filter = ModifyRuleFilter.parse(line)
+            if filter:
+                filters.append(filter)
+
+    return filters
+
 def load_matchers(filename):
 
     matchers = []
@@ -390,6 +434,24 @@ def build_rule_map(rules):
 
     return rulemap
 
+def dump_sample_configs():
+
+    def write_file(filename, content):
+        logger.info("Writing %s." % (filename))
+        open(filename, "w").write(content)
+
+    files = {
+        "enable.conf": SAMPLE_ENABLE_CONF,
+        "disable.conf": SAMPLE_DISABLE_CONF,
+        "modify.conf": SAMPLE_MODIFY_CONF,
+    }
+
+    for filename in files:
+        if os.path.exists(filename):
+            logger.info("File already exists, not dumping %s." % (filename))
+        else:
+            write_file(filename, files[filename])
+
 def main():
 
     if os.path.exists("rulecat.conf"):
@@ -425,30 +487,32 @@ def main():
     parser.add_argument("--sid-msg-map-2", metavar="<filename>",
                         help="Generate a v2 sid-msg.map file")
     parser.add_argument("--disable", metavar="<filename>",
-                        help="Filename of disable rule configuration "
-                        "(default: %s)" % (DISABLE_CONF),
-                        default=DISABLE_CONF)
+                        help="Filename of disable rule configuration")
     parser.add_argument("--enable", metavar="<filename>",
-                        help="Filename of enable rule configuration "
-                        "(default: %s)" % (ENABLE_CONF),
-                        default=ENABLE_CONF)
+                        help="Filename of enable rule configuration")
     parser.add_argument("--modify", metavar="<filename>",
-                        help="Filename of rule modification configuration "
-                        "(default: %s)" % (MODIFY_CONF),
-                        default=MODIFY_CONF)
+                        help="Filename of rule modification configuration")
+    parser.add_argument("--dump-sample-configs", action="store_true",
+                        default=False,
+                        help="Dump sample config files to current directory")
     args = parser.parse_args()
 
     if args.verbose:
         logger.setLevel(logging.DEBUG)
-    logger.debug(args)
+
+    if args.dump_sample_configs:
+        return dump_sample_configs()
 
     disable_matchers = []
     enable_matchers = []
+    modify_filters = []
 
     if os.path.exists(args.disable):
         disable_matchers += load_matchers(args.disable)
     if os.path.exists(args.enable):
         enable_matchers += load_matchers(args.enable)
+    if os.path.exists(args.modify):
+        modify_filters += load_filters(args.modify)
 
     files = Fetch(args).run()
 
@@ -466,6 +530,8 @@ def main():
 
     disable_count = 0
     enable_count = 0
+    modify_count = 0
+
     for key, rule in rulemap.items():
 
         for matcher in disable_matchers:
@@ -480,8 +546,16 @@ def main():
                 rule.enabled = True
                 enable_count += 1
 
+        # Unlike enable and disable, modify returns a new instance of
+        # the rule.
+        for filter in modify_filters:
+            if filter.match(rule):
+                rulemap[rule.id] = filter.filter(rule)
+                modify_count += 1
+
     logger.info("Disabled %d rules." % (disable_count))
     logger.info("Enabled %d rules." % (enable_count))
+    logger.info("Modified %d rules." % (modify_count))
 
     # Fixup flowbits.
     flowbits = idstools.rule.enable_flowbit_dependencies(rulemap)
