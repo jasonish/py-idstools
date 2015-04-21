@@ -91,7 +91,9 @@ SAMPLE_MODIFY_CONF = """# modify.conf
 # 2019401 "seconds \d+" "seconds 3600"
 """
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+logging.basicConfig(
+    level=logging.getLevelName(os.environ.get("RULECAT_LOG_LEVEL", "INFO")),
+    format="%(message)s")
 logger = logging.getLogger()
 
 ET_OPEN_URL = "https://rules.emergingthreats.net/open/suricata%(version)s/emerging.rules.tar.gz"
