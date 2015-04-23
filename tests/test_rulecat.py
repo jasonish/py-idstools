@@ -27,9 +27,55 @@ from __future__ import print_function
 
 import unittest
 import shlex
+import re
 
 import idstools.rule
 from idstools.scripts import rulecat
+
+class ThresholdProcessorTestCase(unittest.TestCase):
+
+    processor = rulecat.ThresholdProcessor()
+
+    def test_extract_regex(self):
+        processor = rulecat.ThresholdProcessor()
+
+        line = "suppress re:java"
+        self.assertEquals("java", processor.extract_regex(line))
+        
+        line = 'suppress re:"vulnerable java version"'
+        self.assertEquals(
+            "vulnerable java version", processor.extract_regex(line))
+
+        line = "suppress re:java, track <by_src|by_dst>, ip <ip|subnet>"
+        self.assertEquals("java", processor.extract_regex(line))
+    
+        line = 'suppress re:"vulnerable java version", track <by_src|by_dst>, ip <ip|subnet>'
+        self.assertEquals(
+            "vulnerable java version", processor.extract_regex(line))
+
+        line = 'threshold re:"vulnerable java version", type threshold, track by_dst, count 1, seconds 10'
+        self.assertEquals(
+            "vulnerable java version", processor.extract_regex(line))
+
+    def test_replace(self):
+        rule_string = """alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,from_server; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
+        rule = idstools.rule.parse(rule_string)
+
+        line = "suppress re:windows"
+        self.assertEquals(
+            "suppress gen_id 1, sig_id 2020757",
+            self.processor.replace(line, rule))
+
+        line = 'threshold re:"ET MALWARE Windows", type threshold, ' \
+               'track by_dst, count 1, seconds 10'
+        self.assertEquals("threshold gen_id 1, sig_id 2020757, type threshold, track by_dst, count 1, seconds 10", self.processor.replace(line, rule))
+
+        line = 'threshold re:malware, type threshold, track by_dst, count 1, ' \
+               'seconds 10'
+        self.assertEquals(
+            "threshold gen_id 1, sig_id 2020757, type threshold, "
+            "track by_dst, count 1, seconds 10",
+            self.processor.replace(line, rule))
 
 class ModifyRuleFilterTestCase(unittest.TestCase):
 

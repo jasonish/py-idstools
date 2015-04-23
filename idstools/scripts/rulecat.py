@@ -91,6 +91,31 @@ SAMPLE_MODIFY_CONF = """# modify.conf
 # 2019401 "seconds \d+" "seconds 3600"
 """
 
+SAMPLE_THRESHOLD_CONF = """# threshold.conf (rulecat)
+
+# This file contains thresholding configurations that will be turned into
+# a Suricata compatible threshold.conf file.
+
+# This file can contain standard threshold.conf configurations:
+#
+# suppress gen_id <gid>, sig_id <sid>
+# suppress gen_id <gid>, sig_id <sid>, track <by_src|by_dst>, ip <ip|subnet>
+# threshold gen_id 0, sig_id 0, type threshold, track by_src, count 10, seconds 10
+# suppress gen_id 1, sig_id 2009557, track by_src, ip 217.110.97.128/25
+
+# Or ones that will be preprocessed...
+
+# Suppress all rules containing "java".
+#
+# suppress re:java
+# suppress re:java, track by_src, ip 217.110.97.128/25
+
+# Threshold all rules containing "java".
+#
+# threshold re:java, type threshold, track by_dst, count 1, seconds 10
+
+"""
+
 logging.basicConfig(
     level=logging.getLevelName(os.environ.get("RULECAT_LOG_LEVEL", "INFO")),
     format="%(message)s")
@@ -477,6 +502,50 @@ def resolve_flowbits(rulemap, disabled_rules):
     logger.info("Enabled %d rules for flowbit dependencies." % (
         len(flowbit_enabled)))
 
+class ThresholdProcessor:
+
+    patterns = [
+        re.compile("\s+(re:\"(.*)\")"),
+        re.compile("\s+(re:(.*?)),.*"),
+        re.compile("\s+(re:(.*))"),
+    ]
+
+    def extract_regex(self, buf):
+        for pattern in self.patterns:
+            m = pattern.search(buf)
+            if m:
+                return m.group(2)
+
+    def extract_pattern(self, buf):
+        regex = self.extract_regex(buf)
+        if regex:
+            return re.compile(regex)
+
+    def replace(self, threshold, rule):
+        for pattern in self.patterns:
+            m = pattern.search(threshold)
+            if m:
+                return threshold.replace(
+                    m.group(1), "gen_id %d, sig_id %d" % (rule.gid, rule.sid))
+        return thresold
+
+    def process(self, filein, fileout, rulemap):
+        count = 0
+        for line in filein:
+            line = line.rstrip()
+            pattern = self.extract_pattern(line)
+            if not pattern:
+                print(line, file=fileout)
+            else:
+                for rule in rulemap.values():
+                    if rule.enabled:
+                        if pattern.search(str(rule)):
+                            count += 1
+                            print("# %s" % (rule.brief()), file=fileout)
+                            print(self.replace(line, rule), file=fileout)
+                            print("", file=fileout)
+        logger.info("Generated %d thresholds to %s." % (count, fileout.name))
+
 def main():
 
     conf_filenames = [arg for arg in sys.argv if arg.startswith("@")]
@@ -522,6 +591,10 @@ def main():
                         help="Filename of enable rule configuration")
     parser.add_argument("--modify", metavar="<filename>",
                         help="Filename of rule modification configuration")
+    parser.add_argument("--threshold", metavar="<filename>",
+                        help="Filename of rule thresholding configuration")
+    parser.add_argument("--threshold-out", metavar="<filename>",
+                        help="Output of processed threshold configuration")
     parser.add_argument("--dump-sample-configs", action="store_true",
                         default=False,
                         help="Dump sample config files to current directory")
@@ -611,6 +684,11 @@ def main():
         write_sid_msg_map(args.sid_msg_map, rulemap, version=1)
     if args.sid_msg_map_2:
         write_sid_msg_map(args.sid_msg_map_2, rulemap, version=2)
+
+    if args.threshold and args.threshold_out:
+        threshold_processor = ThresholdProcessor()
+        threshold_processor.process(
+            open(args.threshold), open(args.threshold_out, "w"), rulemap)
 
     logger.info("Done.")
 
