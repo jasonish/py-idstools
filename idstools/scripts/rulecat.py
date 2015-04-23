@@ -519,7 +519,7 @@ class ThresholdProcessor:
     def extract_pattern(self, buf):
         regex = self.extract_regex(buf)
         if regex:
-            return re.compile(regex)
+            return re.compile(regex, re.I)
 
     def replace(self, threshold, rule):
         for pattern in self.patterns:
