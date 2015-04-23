@@ -36,6 +36,7 @@ import shlex
 import time
 import hashlib
 import fnmatch
+import subprocess
 
 try:
     from io import BytesIO
@@ -600,6 +601,8 @@ def main():
                         help="Dump sample config files to current directory")
     parser.add_argument("-q", "--quiet", action="store_true", default=False,
                        help="Be quiet, warning and error messages only")
+    parser.add_argument("--post-hook", metavar="<command>",
+                        help="Command to run after update")
     args = parser.parse_args()
 
     if args.verbose:
@@ -689,6 +692,10 @@ def main():
         threshold_processor = ThresholdProcessor()
         threshold_processor.process(
             open(args.threshold), open(args.threshold_out, "w"), rulemap)
+
+    if args.post_hook:
+        logger.info("Running %s." % (args.post_hook))
+        subprocess.Popen(args.post_hook, shell=True).wait()
 
     logger.info("Done.")
 
