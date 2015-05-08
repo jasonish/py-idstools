@@ -92,7 +92,7 @@ SAMPLE_MODIFY_CONF = """# modify.conf
 # 2019401 "seconds \d+" "seconds 3600"
 """
 
-SAMPLE_THRESHOLD_CONF = """# threshold.conf (rulecat)
+SAMPLE_THRESHOLD_IN = """# threshold.in (rulecat)
 
 # This file contains thresholding configurations that will be turned into
 # a Suricata compatible threshold.conf file.
@@ -472,6 +472,7 @@ def dump_sample_configs():
         "enable.conf": SAMPLE_ENABLE_CONF,
         "disable.conf": SAMPLE_DISABLE_CONF,
         "modify.conf": SAMPLE_MODIFY_CONF,
+        "threshold.in": SAMPLE_THRESHOLD_IN,
     }
 
     for filename in files:
