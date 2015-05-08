@@ -593,7 +593,7 @@ def main():
                         help="Filename of enable rule configuration")
     parser.add_argument("--modify", metavar="<filename>",
                         help="Filename of rule modification configuration")
-    parser.add_argument("--threshold", metavar="<filename>",
+    parser.add_argument("--threshold-in", metavar="<filename>",
                         help="Filename of rule thresholding configuration")
     parser.add_argument("--threshold-out", metavar="<filename>",
                         help="Output of processed threshold configuration")
@@ -689,10 +689,10 @@ def main():
     if args.sid_msg_map_2:
         write_sid_msg_map(args.sid_msg_map_2, rulemap, version=2)
 
-    if args.threshold and args.threshold_out:
+    if args.threshold_in and args.threshold_out:
         threshold_processor = ThresholdProcessor()
         threshold_processor.process(
-            open(args.threshold), open(args.threshold_out, "w"), rulemap)
+            open(args.threshold_in), open(args.threshold_out, "w"), rulemap)
 
     if args.post_hook:
         logger.info("Running %s." % (args.post_hook))
