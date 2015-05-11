@@ -535,6 +535,9 @@ class ThresholdProcessor:
         count = 0
         for line in filein:
             line = line.rstrip()
+            if not line or line.startswith("#"):
+                print(line, file=fileout)
+                continue
             pattern = self.extract_pattern(line)
             if not pattern:
                 print(line, file=fileout)
@@ -547,6 +550,44 @@ class ThresholdProcessor:
                             print(self.replace(line, rule), file=fileout)
                             print("", file=fileout)
         logger.info("Generated %d thresholds to %s." % (count, fileout.name))
+
+class HashTracker:
+    """Used to check if files are modified.
+
+    Usage: Add files with add(filename) prior to modification. Test
+    with any_modified() which will return True if any of the checksums
+    have been modified.
+
+    """
+
+    def __init__(self):
+        self.hashes = {}
+
+    def add(self, filename):
+        checksum = self.get_md5(filename)
+        logger.debug("Recording file %s with hash '%s'.", filename, checksum)
+        self.hashes[filename] = checksum
+
+    def get_md5(self, filename):
+        if not os.path.exists(filename):
+            return ""
+        elif os.path.isdir(filename):
+            return self.get_md5_for_directory(filename)
+        else:
+            return hashlib.md5(open(filename, "rb").read()).hexdigest()
+
+    def get_md5_for_directory(self, directory):
+        checksum = hashlib.md5()
+        for filename in sorted(os.listdir(directory)):
+            path = os.path.join(directory, filename)
+            checksum.update(open(path, "rb").read())
+        return checksum.hexdigest()
+
+    def any_modified(self):
+        for filename in self.hashes:
+            if self.get_md5(filename) != self.hashes[filename]:
+                return True
+        return False
 
 def main():
 
@@ -603,7 +644,7 @@ def main():
     parser.add_argument("-q", "--quiet", action="store_true", default=False,
                        help="Be quiet, warning and error messages only")
     parser.add_argument("--post-hook", metavar="<command>",
-                        help="Command to run after update")
+                        help="Command to run after update if modified")
     args = parser.parse_args()
 
     if args.verbose:
@@ -613,6 +654,8 @@ def main():
 
     if args.dump_sample_configs:
         return dump_sample_configs()
+
+    hash_tracker = HashTracker()
 
     disable_matchers = []
     enable_matchers = []
@@ -679,12 +722,15 @@ def main():
         if not os.path.exists(args.rules_dir):
             logger.info("Making directory %s.", args.rules_dir)
             os.makedirs(args.rules_dir)
+        hash_tracker.add(args.rules_dir)
         write_to_directory(args.rules_dir, files, rulemap)
 
     if args.merged:
+        hash_tracker.add(args.merged)
         write_merged(args.merged, rulemap)
 
     if args.yaml_fragment:
+        hash_tracker.add(args.yaml_fragment)
         write_yaml_fragment(args.yaml_fragment, files)
 
     if args.sid_msg_map:
@@ -693,13 +739,22 @@ def main():
         write_sid_msg_map(args.sid_msg_map_2, rulemap, version=2)
 
     if args.threshold_in and args.threshold_out:
+        hash_tracker.add(args.threshold_out)
         threshold_processor = ThresholdProcessor()
         threshold_processor.process(
             open(args.threshold_in), open(args.threshold_out, "w"), rulemap)
 
     if args.post_hook:
-        logger.info("Running %s." % (args.post_hook))
-        subprocess.Popen(args.post_hook, shell=True).wait()
+        if args.force:
+            logger.info("Running post-hook as force is set.")
+        elif hash_tracker.any_modified():
+            logger.info("Running post-hook as output has been modified.")
+        else:
+            logger.info("No modification to output files, "
+                        "post-hook will not be run.")
+        if args.force or hash_tracker.any_modified():
+            logger.info("Running %s." % (args.post_hook))
+            subprocess.Popen(args.post_hook, shell=True).wait()
 
     logger.info("Done.")
 
