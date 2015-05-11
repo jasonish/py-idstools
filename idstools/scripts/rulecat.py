@@ -676,6 +676,9 @@ def main():
     resolve_flowbits(rulemap, disabled_rules)
 
     if args.rules_dir:
+        if not os.path.exists(args.rules_dir):
+            logger.info("Making directory %s.", args.rules_dir)
+            os.makedirs(args.rules_dir)
         write_to_directory(args.rules_dir, files, rulemap)
 
     if args.merged:
