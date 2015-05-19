@@ -25,7 +25,7 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Read unified2 log files and output events as JSON.
+"""Read unified2 log files and output records as JSON.
 
 ::
 
@@ -325,6 +325,8 @@ def main():
     else:
         outputs.append(OutputWrapper("-", sys.stdout))
 
+    bookmark = None
+
     if args.filenames:
         if args.bookmark:
             LOG.error("Bookmarking not valid in file mode.")
@@ -335,7 +337,6 @@ def main():
         if args.delete:
             LOG.error("Delete not valid in file mode.")
             return 1
-        bookmark = None
         reader = unified2.FileRecordReader(*args.filenames)
     elif args.directory and args.prefix:
         if args.bookmark:
