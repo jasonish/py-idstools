@@ -28,14 +28,6 @@ idstools.scripts.rulecat module
     :undoc-members:
     :show-inheritance:
 
-idstools.scripts.u2bench module
--------------------------------
-
-.. automodule:: idstools.scripts.u2bench
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 idstools.scripts.u2eve module
 -----------------------------
 

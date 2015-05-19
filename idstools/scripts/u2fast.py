@@ -25,36 +25,7 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Read unified2 log files and output events in "fast" style.
-
-::
-
-    usage: u2fast [-h] [-C <classification.config>] [-S <msg-msg.map>]
-                  [-G <gen-msg.map>] [--snort-conf <snort.conf>]
-                  [--directory <spool directory>] [--prefix <spool file prefix>]
-                  [--bookmark] [--follow]
-                  [filenames [filenames ...]]
-
-    positional arguments:
-      filenames
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      -C <classification.config>
-                            path to classification config
-      -S <msg-msg.map>      path to sid-msg.map
-      -G <gen-msg.map>      path to gen-msg.map
-      --snort-conf <snort.conf>
-                            attempt to load classifications and map files based on
-                            the location of the snort.conf
-      --directory <spool directory>
-                            spool directory (eg: /var/log/snort)
-      --prefix <spool file prefix>
-                            spool filename prefix (eg: unified2.log)
-      --bookmark            enable bookmarking
-      --follow              follow files/continuous mode (spool mode only)
-
-"""
+"""Read unified2 log files and output events in "fast" style. """
 
 from __future__ import print_function
 

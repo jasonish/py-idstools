@@ -1,15 +1,17 @@
 u2json
 ======
 
-Convert unified2 records to a JSON representation.
+.. automodule:: idstools.scripts.u2json
+
+.. contents:: Contents
 
 Usage
 -----
 
 .. program-output:: ../bin/idstools-u2json --help
 
-Example 1 - View unified2 File as JSON
---------------------------------------
+Example - View unified2 File as JSON
+------------------------------------
 
 ::
 
@@ -29,8 +31,8 @@ they do not, the options to specify each individually may be used::
       -G /etc/snort/etc/gen-msg.map \
       /var/log/snort/unified2.log.1397575268
 
-Example 2 - Continuous Conversion to JSON
------------------------------------------
+Example - Continuous Conversion to JSON
+---------------------------------------
 
 ::
 
@@ -59,7 +61,7 @@ arguments, one per line with an '=' separating the name from the
 argument.  For example, to save the arguments used in example 2
 above::
 
-   --snort.conf=/etc/snort/etc/snort.conf
+   --snort-conf=/etc/snort/etc/snort.conf
    --directory=/var/log/snort
    --prefix=unified2.log
    --follow
@@ -74,3 +76,8 @@ Then call idstools-u2json like::
 Addtional arguments can also be provided like::
 
   idstools-u2json @/path/to/config-file --stdout
+
+Source
+------
+
+`idstools/scripts/u2json.py <../_modules/idstools/scripts/u2json.html>`_

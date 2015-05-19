@@ -25,23 +25,8 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Signature->Message Map Generator
-
-Use idstools to generate a Snort style sid-msg.map file from a rule
-tarball, list of rule files or directories containing Snort-style
-rules.
-
-::
-
-    usage: gensidmsgmap.py [options] <file>...
-
-    options:
-
-        -2, --v2      Output a new (v2) style sid-msg.map file.
-
-    The files passed on the command line can be a list of a filenames, a
-    tarball, a directory name (containing rule files) or any combination
-    of the above.
+"""Generate sid-msg.map files (v1 and v2) from rule archives, files
+and/or directories.
 
 """
 

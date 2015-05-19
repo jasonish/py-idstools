@@ -28,13 +28,7 @@
 # An example of how to create a program much like u2spewfoo that comes
 # with Snort.
 
-"""A python reimplementation of Snort's u2spewfoo.
-
-::
-
-    usage: u2spewfoo.py <file>...
-
-"""
+"""A python reimplementation of Snort's u2spewfoo. """
 
 from __future__ import print_function
 

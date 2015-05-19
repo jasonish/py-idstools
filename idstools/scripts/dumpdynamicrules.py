@@ -23,6 +23,12 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Dump Snort SO rule stub helper program. Can optionally repack a
+Snort rule tarball with the generated stubs, in place or to a new
+file.
+
+"""
+
 from __future__ import print_function
 
 import sys
@@ -51,8 +57,6 @@ from idstools import snort
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger()
 
-#logger.setLevel(logging.DEBUG)
-
 def mktempdir(delete_on_exit=True):
     """ Create a temporary directory that is removed on exit. """
     tmpdir = tempfile.mkdtemp("idstools")
@@ -67,20 +71,6 @@ def find_snort():
         if os.path.exists(filename):
             return filename
     return None
-
-def get_os_release():
-    os_release = open("/etc/os-release").read()
-    print(os_release)
-    print("---")
-    os_id = None
-    os_version = None
-    m = re.search("^ID=\"?(.*)\"?$", os_release, re.M)
-    if m:
-        os_id = m.group(1)
-    m = re.search("^VERSION_ID=\"?(.*)\"?$", os_release, re.M)
-    if m:
-        os_version = m.group(1)
-    return (os_id, os_version)
 
 def repack(prefix, stubs, filename):
     logger.info("Repacking to %s.", filename)
@@ -188,4 +178,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

@@ -25,61 +25,7 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Read unified2 log files and output events as Suricata EVE JSON.
-
-::
-
-    usage: idstools-u2eve [-h] [-C <classification.config>] [-S <msg-msg.map>]
-                  [-G <gen-msg.map>] [--snort-conf <snort.conf>]
-                  [--directory <spool directory>] [--prefix <spool file prefix>]
-                  [--bookmark] [--follow] [--delete] [--output <filename>]
-                  [--stdout]
-                  [filenames [filenames ...]]
-
-    positional arguments:
-      filenames
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      -C <classification.config>
-                            path to classification config
-      -S <msg-msg.map>      path to sid-msg.map
-      -G <gen-msg.map>      path to gen-msg.map
-      --snort-conf <snort.conf>
-                            attempt to load classifications and map files based on
-                            the location of the snort.conf
-      --directory <spool directory>
-                            spool directory (eg: /var/log/snort)
-      --prefix <spool file prefix>
-                            spool filename prefix (eg: unified2.log)
-      --bookmark            enable bookmarking
-      --follow              follow files/continuous mode (spool mode only)
-      --delete              delete spool files
-      --output <filename>   output filename (eg: /var/log/snort/alerts.json
-      --stdout              also log to stdout if --output is a file
-
-    If --directory and --prefix are provided files will be read from
-    the specified 'spool' directory. Otherwise files on the command
-    line will be processed.
-
-An alternative to using command line arguments is to put the arguments
-in a file and call idstools-u2eve like::
-
-    idstools-u2eve @filename
-
-where filename looks something like::
-
-    -C=/etc/snort/etc/classification.config
-    -S=/etc/snort/etc/sid-msg.map
-    -G=/etc/snort/etc/gen-msg.map
-    --directory=/var/log/snort
-    --prefix=unified2.log
-    --output=/var/log/snort/alerts.json
-    --follow
-    --bookmark
-    --delete
-
-"""
+"""Read unified2 log files and output events as Suricata EVE JSON."""
 
 from __future__ import print_function
 

@@ -18,14 +18,6 @@ Contents
    library
    tools
 
-Programs
---------
-
-.. toctree::
-   :maxdepth: 1
-
-   u2json
-
 Indices and Tables
 ------------------
 
