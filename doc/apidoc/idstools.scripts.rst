@@ -1,43 +1,78 @@
-scripts Package
-===============
+idstools.scripts package
+========================
 
-:mod:`gensidmsgmap` Module
---------------------------
+Submodules
+----------
+
+idstools.scripts.dumpdynamicrules module
+----------------------------------------
+
+.. automodule:: idstools.scripts.dumpdynamicrules
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+idstools.scripts.gensidmsgmap module
+------------------------------------
 
 .. automodule:: idstools.scripts.gensidmsgmap
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`u2bench` Module
----------------------
+idstools.scripts.rulecat module
+-------------------------------
+
+.. automodule:: idstools.scripts.rulecat
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+idstools.scripts.u2bench module
+-------------------------------
 
 .. automodule:: idstools.scripts.u2bench
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`u2fast` Module
---------------------
+idstools.scripts.u2eve module
+-----------------------------
+
+.. automodule:: idstools.scripts.u2eve
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+idstools.scripts.u2fast module
+------------------------------
 
 .. automodule:: idstools.scripts.u2fast
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`u2json` Module
---------------------
+idstools.scripts.u2json module
+------------------------------
 
 .. automodule:: idstools.scripts.u2json
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`u2spewfoo` Module
------------------------
+idstools.scripts.u2spewfoo module
+---------------------------------
 
 .. automodule:: idstools.scripts.u2spewfoo
     :members:
     :undoc-members:
     :show-inheritance:
 
+
+Module contents
+---------------
+
+.. automodule:: idstools.scripts
+    :members:
+    :undoc-members:
+    :show-inheritance:

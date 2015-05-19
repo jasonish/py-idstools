@@ -6,8 +6,7 @@ Convert unified2 records to a JSON representation.
 Usage
 -----
 
-.. automodule:: idstools.scripts.u2json
-
+.. program-output:: ../bin/idstools-u2json --help
 
 Example 1 - View unified2 File as JSON
 --------------------------------------

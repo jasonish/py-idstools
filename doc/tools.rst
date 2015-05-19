@@ -1,5 +1,5 @@
-Example Programs
-================
+Tools
+=====
 
 .. contents:: Contents
    :depth: 2
@@ -35,6 +35,14 @@ facilities provided by the :doc:`maps <maps>` module.
 
 Source:
     `idstools/scripts/u2fast.py <_modules/idstools/scripts/u2fast.html>`_
+
+u2eve
+-----
+
+Usage
+~~~~~
+
+.. program-output:: ../bin/idstools-u2eve --help
 
 u2json.py
 ---------
