@@ -48,6 +48,11 @@ if sys.argv[0] == __file__:
     sys.path.insert(
         0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
+try:
+    import argparse
+except ImportError as err:
+    from idstools.compat.argparse import argparse
+
 from idstools import unified2
 
 # Create a list of characters we consider printable.
@@ -170,12 +175,15 @@ def print_record(record):
 
 def main():
 
-    filenames = sys.argv[1:]
-    if not filenames:
-        print("usage: %s <file>..." % (sys.argv[0]))
-        return 1
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filename", nargs="*")
+    args = parser.parse_args()
 
-    reader = unified2.FileRecordReader(*filenames)
+    if not args.filename:
+        parser.print_usage()
+        return
+
+    reader = unified2.FileRecordReader(*args.filename)
     for record in reader:
         print_record(record)
 
