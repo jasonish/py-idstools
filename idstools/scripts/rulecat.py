@@ -122,6 +122,8 @@ logging.basicConfig(
     format="%(message)s")
 logger = logging.getLogger()
 
+ET_PRO_URL = "http://rules.emergingthreatspro.com/%(code)s/suricata%(version)s/etpro.rules.tar.gz"
+
 ET_OPEN_URL = "https://rules.emergingthreats.net/open/suricata%(version)s/emerging.rules.tar.gz"
 
 class IdRuleMatcher(object):
@@ -236,11 +238,18 @@ class Fetch(object):
     def get_rule_url(self):
         if self.args.url:
             return self.args.url
+        mappings = {}
+        if self.args.etpro:
+            template_url = ET_PRO_URL
+            mappings["code"] = self.args.etpro
+        else:
+            template_url = ET_OPEN_URL
         suricata_version = idstools.suricata.get_version(self.args.suricata)
         if not suricata_version or not suricata_version.short:
-            return ET_OPEN_URL % {"version": ""}
+            mappings["version"] = ""
         else:
-            return ET_OPEN_URL % {"version": "-" + suricata_version.short}
+            mappings["version"] = "-" + suricata_version.short
+        return template_url % mappings
 
     def check_checksum(self, tmp_filename, url):
         try:
@@ -641,6 +650,8 @@ def main():
     parser.add_argument("--dump-sample-configs", action="store_true",
                         default=False,
                         help="Dump sample config files to current directory")
+    parser.add_argument("--etpro", metavar="<etpro-code>",
+                        help="Use ET-Pro rules with provided ET-Pro code")
     parser.add_argument("-q", "--quiet", action="store_true", default=False,
                        help="Be quiet, warning and error messages only")
     parser.add_argument("--post-hook", metavar="<command>",
