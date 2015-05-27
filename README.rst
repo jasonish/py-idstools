@@ -20,11 +20,15 @@ Programs
 - u2json - Convert unified2 files or spool directories to JSON.
 - gensidmsgmap - Easily create a sid-msg.map file from rule files,
   directories or a rule tarball.
+- dumpdynamicrules - Helper for dumping Snort SO dynamic rule stubs.
+- u2eve - Convert unified2 files to EVE compatible JSON.
+- rulecat - Basic Suricata rule management tool.
 
 Requirements
 ------------
 
-- Python 2.6 or 2.7; Python 3.3 works but is not as well tested.
+- Python 2.7; Python 3.3 works but is not as well tested.
+- Python 2.6 may work, but is not as well tested.
 - Currently only tested on Linux.
 
 Examples
@@ -54,8 +58,8 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-TBD
-~~~
+0.5.0
+~~~~~
 
 - New tool: idstools-dumpdynamicrules. A wrapper around Snort to dump
   dynamic rule stubs and optionally repack the tarball with the new
@@ -64,6 +68,7 @@ TBD
   but will aim to keep a compatible eve output style.  idstools-u2json
   will probably become more of a basic example program.
 - A basic packet decoding module.
+- New tool: rulecat. A basic Suricata rule management tool.
 
 0.4.4
 ~~~~~
