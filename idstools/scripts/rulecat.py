@@ -605,9 +605,6 @@ def main():
         if os.path.exists("./rulecat.conf"):
             logger.info("Loading ./rulecat.conf.")
             sys.argv.insert(1, "@./rulecat.conf")
-        elif os.path.exists("/etc/suricata/rulecat.conf"):
-            logger.info("Loading /etc/suricata/rulecat.conf.")
-            sys.argv.insert(1, "@/etc/suricata/rulecat.conf")
 
     suricata_path = idstools.suricata.get_path()
 
