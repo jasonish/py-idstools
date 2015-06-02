@@ -90,3 +90,11 @@ class RuleTestCase(unittest.TestCase):
         rule_string = """alert ( msg:"DECODE_NOT_IPV4_DGRAM"; sid:1; gid:116; rev:1; metadata:rule-type decode; classtype:protocol-command-decode;)"""
         rule = idstools.rule.parse(rule_string)
         self.assertEquals(rule["direction"], None)
+
+    def test_multiline_rule(self):
+        rule_string = u"""
+alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
+      app-layer-event:dnp3.flooded; sid:2200104; rev:1;)
+"""
+        rules = idstools.rule.parse_fileobj(io.StringIO(rule_string))
+        self.assertEquals(len(rules), 1)

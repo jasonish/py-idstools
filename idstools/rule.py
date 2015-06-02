@@ -37,6 +37,7 @@ duplicate signature IDs.
 
 from __future__ import print_function
 
+import sys
 import re
 import logging
 
@@ -224,19 +225,24 @@ def parse_fileobj(fileobj, group=None):
     :returns: A list of :py:class:`.Rule` instances, one for each rule parsed
     """
     rules = []
+    buf = ""
     for line in fileobj:
         try:
             if type(line) == type(b""):
                 line = line.decode()
         except:
             pass
+        if line.rstrip().endswith("\\"):
+            buf = "%s%s " % (buf, line.rstrip()[0:-1])
+            continue
         try:
-            rule = parse(line, group)
+            rule = parse(buf + line, group)
             if rule:
                 rules.append(rule)
         except:
-            logger.error("failed to parse rule: %s" % (line))
+            logger.error("failed to parse rule: %s" % (buf))
             raise
+        buf = ""
     return rules
 
 def parse_file(filename, group=None):
