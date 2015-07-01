@@ -300,9 +300,13 @@ def main():
         return
 
     for event in reader:
-        encoded = json.dumps(eve_filter.filter(event))
-        for out in outputs:
-            out.write(encoded)
+        try:
+            encoded = json.dumps(eve_filter.filter(event))
+            for out in outputs:
+                out.write(encoded)
+        except Exception as err:
+            LOG.error("Failed to encode record as JSON: %s: %s" % (
+                str(err), str(event)))
 
 if __name__ == "__main__":
     sys.exit(main())
