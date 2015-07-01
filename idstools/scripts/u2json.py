@@ -305,12 +305,16 @@ def main():
     formatter = Formatter(msgmap=msgmap, classmap=classmap)
 
     for record in reader:
-        as_json = json.dumps(formatter.format(record))
-        for out in outputs:
-            out.write(as_json)
-        if bookmark:
-            filename, offset = reader.tell()
-            bookmark.update(filename, offset)
+        try:
+            as_json = json.dumps(formatter.format(record))
+            for out in outputs:
+                out.write(as_json)
+            if bookmark:
+                filename, offset = reader.tell()
+                bookmark.update(filename, offset)
+        except Exception as err:
+            LOG.error("Failed to encode record as JSON: %s: %s" % (
+                str(err), str(record)))
 
 if __name__ == "__main__":
     sys.exit(main())
