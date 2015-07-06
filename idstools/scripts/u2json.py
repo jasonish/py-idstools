@@ -122,6 +122,9 @@ class Formatter(object):
             data["http-hostname"] = record["data"]
         elif record["type"] == unified2.EXTRA_DATA_TYPE["NORMALIZED_JS"]:
             data["javascript"] = record["data"]
+        else:
+            LOG.warning("Unknown extra-data record type: %s" % (
+                str(record["type"])))
 
         for key in record:
             if key == "data":
@@ -139,10 +142,8 @@ class Formatter(object):
         elif isinstance(record, unified2.ExtraData):
             return self.format_extra_data(record)
         else:
-            print(record.__class__)
-            print(record)
-            sys.exit(1)
-            return record.__class__
+            LOG.warning("Unknown record type: %s: %s" % (
+                str(record.__class__), str(record)))
 
 class OutputWrapper(object):
 
@@ -306,15 +307,15 @@ def main():
 
     for record in reader:
         try:
-            as_json = json.dumps(formatter.format(record))
+            as_json = json.dumps(formatter.format(record), encoding="latin-1")
             for out in outputs:
                 out.write(as_json)
-            if bookmark:
-                filename, offset = reader.tell()
-                bookmark.update(filename, offset)
         except Exception as err:
             LOG.error("Failed to encode record as JSON: %s: %s" % (
                 str(err), str(record)))
+        if bookmark:
+            filename, offset = reader.tell()
+            bookmark.update(filename, offset)
 
 if __name__ == "__main__":
     sys.exit(main())
