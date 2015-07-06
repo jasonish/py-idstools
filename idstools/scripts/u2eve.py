@@ -301,7 +301,7 @@ def main():
 
     for event in reader:
         try:
-            encoded = json.dumps(eve_filter.filter(event))
+            encoded = json.dumps(eve_filter.filter(event), encoding="latin-1")
             for out in outputs:
                 out.write(encoded)
         except Exception as err:
