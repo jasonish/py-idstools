@@ -106,6 +106,17 @@ def parse_timestamp(timestamp):
     dt = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f-0600")
     return (int(dt.strftime("%s")), dt.microsecond)
 
+def eve2pcap(event):
+    if not "packet" in event:
+        return
+    packet = base64.b64decode(event["packet"])
+    hdr = pcap_pkthdr()
+    hdr.ts_sec, hdr.ts_usec = parse_timestamp(
+        event["timestamp"])
+    hdr.pktlen = len(packet)
+    hdr.caplen = len(packet)
+    return (hdr, packet)
+
 def main():
 
     parser = argparse.ArgumentParser()
@@ -128,12 +139,7 @@ def main():
             for line in fileobj:
                 event = json.loads(line)
                 if "packet" in event:
-                    packet = base64.b64decode(event["packet"])
-                    hdr = pcap_pkthdr()
-                    hdr.ts_sec, hdr.ts_usec = parse_timestamp(
-                        event["timestamp"])
-                    hdr.pktlen = len(packet)
-                    hdr.caplen = len(packet)
+                    hdr, packet = eve2pcap(event)
                     dumper.dump(hdr, ctypes.c_char_p(packet))
 
     dumper.close()
