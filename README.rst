@@ -17,12 +17,13 @@ Features
 Programs
 --------
 
+- rulecat - Basic Suricata rule management tool.
+- eve2pcap - Convert packets and payloads in eve logs to pcap.
 - u2json - Convert unified2 files or spool directories to JSON.
 - gensidmsgmap - Easily create a sid-msg.map file from rule files,
   directories or a rule tarball.
 - dumpdynamicrules - Helper for dumping Snort SO dynamic rule stubs.
 - u2eve - Convert unified2 files to EVE compatible JSON.
-- rulecat - Basic Suricata rule management tool.
 
 Requirements
 ------------
@@ -57,6 +58,12 @@ Further documentation is located at http://idstools.readthedocs.org.
 
 Changelog
 ---------
+
+Not yet released
+~~~~~~~~~~~~~~~~
+
+- New tool: eve2pcap. Converts packets and payloads found in Suricata
+  EVE logs to pcap files.
 
 0.5.0
 ~~~~~
