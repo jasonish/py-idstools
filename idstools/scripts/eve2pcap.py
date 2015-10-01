@@ -47,6 +47,20 @@ from datetime import datetime
 import ctypes
 import ctypes.util
 
+PCAP_ERRBUF_SIZE = 256
+DLT_EN10MB = 1
+DLT_RAW = 12
+
+libpcap_filename = ctypes.util.find_library("pcap")
+if not libpcap_filename:
+    has_libpcap = False
+else:
+    has_libpcap = True
+    libpcap = ctypes.cdll.LoadLibrary(libpcap_filename)
+    libpcap.pcap_geterr.restype = ctypes.c_char_p
+    pcap_errbuf = ctypes.create_string_buffer(PCAP_ERRBUF_SIZE)
+    libc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("c"))
+
 # For now, Scapy is required for payload to packet conversion. And do
 # it quietly.
 try:
@@ -70,36 +84,23 @@ class pcap_pkthdr(ctypes.Structure):
 
 class Pcap:
 
-    PCAP_ERRBUF_SIZE = 256
-    DLT_EN10MB = 1
-    DLT_RAW = 12
-
-    libpcap_filename = ctypes.util.find_library("pcap")
-    if not libpcap_filename:
-        print("ERROR: Failed to load libpcap.", file=sys.stderr)
-        sys.exit(1)
-    libpcap = ctypes.cdll.LoadLibrary(libpcap_filename)
-    libpcap.pcap_geterr.restype = ctypes.c_char_p
-    pcap_errbuf = ctypes.create_string_buffer(PCAP_ERRBUF_SIZE)
-    libc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("c"))
-
     def __init__(self, pcap_t):
         self._pcap_t = pcap_t
 
     @classmethod
     def open_dead(cls, linktype, snaplen):
-        pcap_t = cls.libpcap.pcap_open_dead(linktype, snaplen)
+        pcap_t = libpcap.pcap_open_dead(linktype, snaplen)
         if not pcap_t:
-            raise Exception(cls.pcap_errbuf.value)
+            raise Exception(pcap_errbuf.value)
         return cls(pcap_t)
 
     def dump_open(self, filename):
         if filename == "-":
             return self.dump_fopen(sys.stdout.fileno())
-        pcap_dumper_t = self.libpcap.pcap_dump_open(self._pcap_t, filename)
+        pcap_dumper_t = libpcap.pcap_dump_open(self._pcap_t, filename)
         if not pcap_dumper_t:
-            print(self.pcap_errbuf.value)
-            raise Exception(self.pcap_errbuf.value)
+            print(pcap_errbuf.value)
+            raise Exception(pcap_errbuf.value)
         return PcapDumper(pcap_dumper_t)
 
     def dump_fopen(self, fileno):
@@ -119,11 +120,10 @@ class PcapDumper:
         self._pcap_dumper_t = pcap_dumper_t
 
     def dump(self, pkthdr, packet):
-        Pcap.libpcap.pcap_dump(
-            self._pcap_dumper_t, ctypes.byref(pkthdr), packet)
+        libpcap.pcap_dump(self._pcap_dumper_t, ctypes.byref(pkthdr), packet)
 
     def close(self):
-        Pcap.libpcap.pcap_dump_close(self._pcap_dumper_t)
+        libpcap.pcap_dump_close(self._pcap_dumper_t)
 
 def parse_timestamp(timestamp):
     dt = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f-0600")
@@ -181,6 +181,10 @@ def main():
     parser.add_argument("filenames", nargs="+")
     args = parser.parse_args()
 
+    if not has_libpcap:
+        print("ERROR: Failed to load libpcap.")
+        return 1
+
     # Bail if payload is requested but we don't have Scapy.
     if args.payload and not has_scapy:
         print("ERROR: Scapy is required for payload conversion.",
@@ -190,12 +194,12 @@ def main():
     # Bail if writing out to a tty.
     if args.output == "-" and os.isatty(sys.stdout.fileno()):
         print("Cowardly refusing to write output to terminal.", file=sys.stderr)
-        #return 1
+        return 1
 
     if args.payload:
-        pcap = Pcap.open_dead(Pcap.DLT_RAW, 65535)
+        pcap = Pcap.open_dead(DLT_RAW, 65535)
     else:
-        pcap = Pcap.open_dead(Pcap.DLT_EN10MB, 65535)
+        pcap = Pcap.open_dead(DLT_EN10MB, 65535)
     dumper = pcap.dump_open(args.output)
 
     for filename in args.filenames:
