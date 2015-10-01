@@ -25,7 +25,16 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Convert packets in EVE logs to pcap."""
+"""Convert packets in EVE logs to pcap.
+
+eve2pcap will convert the packets or the payloads found in an eve log
+file to a pcap file.
+
+Note that payload conversion requires Scapy, and will not recreate the
+original packets as the headers need to be built on the fly from the
+available information in the eve log.
+
+"""
 
 from __future__ import print_function
 
@@ -37,6 +46,18 @@ import base64
 from datetime import datetime
 import ctypes
 import ctypes.util
+
+# For now, Scapy is required for payload to packet conversion. And do
+# it quietly.
+try:
+    orig_stderr = sys.stderr
+    sys.stderr = open(os.devnull, "w")
+    from scapy.all import *
+    has_scapy = True
+except:
+    has_scapy = False
+finally:
+    sys.stderr = orig_stderr
 
 class pcap_pkthdr(ctypes.Structure):
     """Internal class representing struct pcap_pkthdr. """
@@ -51,6 +72,7 @@ class Pcap:
 
     PCAP_ERRBUF_SIZE = 256
     DLT_EN10MB = 1
+    DLT_RAW = 12
 
     libpcap_filename = ctypes.util.find_library("pcap")
     if not libpcap_filename:
@@ -76,6 +98,7 @@ class Pcap:
             return self.dump_fopen(sys.stdout.fileno())
         pcap_dumper_t = self.libpcap.pcap_dump_open(self._pcap_t, filename)
         if not pcap_dumper_t:
+            print(self.pcap_errbuf.value)
             raise Exception(self.pcap_errbuf.value)
         return PcapDumper(pcap_dumper_t)
 
@@ -108,7 +131,7 @@ def parse_timestamp(timestamp):
 
 def eve2pcap(event):
     if not "packet" in event:
-        return
+        return None, None
     packet = base64.b64decode(event["packet"])
     hdr = pcap_pkthdr()
     hdr.ts_sec, hdr.ts_usec = parse_timestamp(
@@ -117,29 +140,74 @@ def eve2pcap(event):
     hdr.caplen = len(packet)
     return (hdr, packet)
 
+def payload2packet(event):
+    if not "payload" in event:
+        return None, None
+    payload = base64.b64decode(event["payload"])
+    packet = IP(src=event["src_ip"], dst=event["dest_ip"])
+    if event["proto"] == "TCP":
+        packet = packet / TCP(sport=event["src_port"], dport=event["dest_port"])
+    elif event["proto"] == "UDP":
+        packet = packet / UDP(sport=event["src_port"], dport=event["dest_port"])
+    elif event["proto"] == "ICMP":
+        packet = packet / ICMP(type=event["icmp_type"], code=event["icmp_code"])
+    else:
+        print("Unhandled protocol: %s" % event["proto"], file=sys.stderr)
+        try:
+            protonum = int(event["proto"])
+            packet.proto = protonum
+        except:
+            pass
+
+    packet = packet / payload
+    packet = packet.build()
+
+    hdr = pcap_pkthdr()
+    hdr.ts_sec, hdr.ts_usec = parse_timestamp(
+        event["timestamp"])
+    hdr.pktlen = len(packet)
+    hdr.caplen = len(packet)
+
+    return (hdr, packet)
+
 def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", metavar="<filename>",
                         dest="output", default="-",
                         help="Output filename")
+    parser.add_argument("--payload", action="store_true",
+                        help="Convert payload instead of packet")
     parser.add_argument("filenames", nargs="+")
     args = parser.parse_args()
+
+    # Bail if payload is requested but we don't have Scapy.
+    if args.payload and not has_scapy:
+        print("ERROR: Scapy is required for payload conversion.",
+              file=sys.stderr)
+        return 1
 
     # Bail if writing out to a tty.
     if args.output == "-" and os.isatty(sys.stdout.fileno()):
         print("Cowardly refusing to write output to terminal.", file=sys.stderr)
-        return 1
+        #return 1
 
-    pcap = Pcap.open_dead(Pcap.DLT_EN10MB, 65535)
+    if args.payload:
+        pcap = Pcap.open_dead(Pcap.DLT_RAW, 65535)
+    else:
+        pcap = Pcap.open_dead(Pcap.DLT_EN10MB, 65535)
     dumper = pcap.dump_open(args.output)
 
     for filename in args.filenames:
         with open(filename) as fileobj:
             for line in fileobj:
                 event = json.loads(line)
-                if "packet" in event:
+                hdr, packet = None, None
+                if args.payload and "payload" in event:
+                    hdr, packet = payload2packet(event)
+                elif "packet" in event:
                     hdr, packet = eve2pcap(event)
+                if hdr and packet:
                     dumper.dump(hdr, ctypes.c_char_p(packet))
 
     dumper.close()
