@@ -25,5 +25,6 @@ setup(
         "bin/idstools-u2json",
         "bin/idstools-rulecat",
         "bin/idstools-u2eve",
+        "bin/idstools-eve2pcap",
     ],
 )
