@@ -8,8 +8,7 @@ Features
 --------
 
 - Snort/Suricata unified2 log file reading.
-- Continuous unified2 directory spool reading with bookmarking (a'la
-  Barnyard2).
+- Continuous unified2 directory spool reading with bookmarking.
 - Parser and mapping for classification.config.
 - Parser and mapping for gen-msg.map and sid-msg.map.
 - Useful utility programs.
@@ -31,6 +30,28 @@ Requirements
 - Python 2.7; Python 3.3 works but is not as well tested.
 - Python 2.6 may work, but is not as well tested.
 - Currently only tested on Linux.
+
+Installation
+------------
+
+Latest Release (Recommended)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+pip install idstools
+
+Latest from Git
+~~~~~~~~~~~~~~~
+
+pip install https://github.com/jasonish/py-idstools/archive/master.zip
+
+Manually
+~~~~~~~~
+
+The tools do not require installation to be used, from a .tar.gz or
+.zip archive the tools can be run directly from the bin directory. Or
+to install:
+
+    python setup.py install
 
 Examples
 --------
@@ -59,11 +80,12 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-Not yet released
-~~~~~~~~~~~~~~~~
+0.5.1
+~~~~~
 
 - New tool: eve2pcap. Converts packets and payloads found in Suricata
   EVE logs to pcap files.
+- Rule parser: handle multi-line rules.
 
 0.5.0
 ~~~~~
