@@ -98,7 +98,7 @@ class Formatter(object):
         packet = {}
         for key in record:
             if key == "data":
-                packet[key] = base64.b64encode(record[key])
+                packet[key] = str(base64.b64encode(record[key]))
             else:
                 packet[key] = record[key]
         return {"packet": packet}
@@ -128,7 +128,7 @@ class Formatter(object):
 
         for key in record:
             if key == "data":
-                data[key] = base64.b64encode(record[key])
+                data[key] = str(base64.b64encode(record[key]))
             else:
                 data[key] = record[key]
 
@@ -307,7 +307,7 @@ def main():
 
     for record in reader:
         try:
-            as_json = json.dumps(formatter.format(record), encoding="latin-1")
+            as_json = json.dumps(formatter.format(record))
             for out in outputs:
                 out.write(as_json)
         except Exception as err:
