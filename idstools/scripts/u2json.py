@@ -195,6 +195,7 @@ command line will be processed.
 
 def rollover_hook(closed, opened):
     """ The rollover hook for the spool reader. Will delete the closed file. """
+    LOG.debug("closed=%s; opened=%s" % (closed, opened))
     LOG.debug("Deleting %s.", closed)
     os.unlink(closed)
 
@@ -239,8 +240,14 @@ def main():
         "--stdout", action="store_true", default=False,
         help="also log to stdout if --output is a file")
     parser.add_argument(
+        "--verbose", action="store_true", default=False,
+        help="be more verbose")
+    parser.add_argument(
         "filenames", nargs="*")
     args = parser.parse_args()
+
+    if args.verbose:
+        LOG.setLevel(logging.DEBUG)
 
     if args.snort_conf:
         load_from_snort_conf(args.snort_conf, classmap, msgmap)
