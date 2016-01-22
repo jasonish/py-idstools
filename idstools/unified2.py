@@ -696,7 +696,7 @@ class SpoolRecordReader(object):
         self.fileobj = open("%s/%s" % (
             self.directory, os.path.basename(filename)), "rb")
         self.reader = RecordReader(self.fileobj)
-        if self.rollover_hook:
+        if self.rollover_hook and closed_filename:
             self.rollover_hook(closed_filename, self.fileobj.name)
 
     def open_next(self):
