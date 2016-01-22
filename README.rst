@@ -80,6 +80,12 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+master
+~~~~~~
+
+- idstools-u2json: fix --delete
+- idstools-u2json: add --verbose flag for debug logging
+
 0.5.1
 ~~~~~
 
