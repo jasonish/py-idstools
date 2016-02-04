@@ -37,6 +37,7 @@ import time
 import hashlib
 import fnmatch
 import subprocess
+import types
 
 try:
     from io import BytesIO
@@ -279,31 +280,33 @@ class Fetch(object):
             sys.stdout.write("\n")
             sys.stdout.flush()
 
-    def run(self):
-        url = self.get_rule_url()
+    def fetch(self, url):
+        logger.info("Fetching %s." % (url))
         tmp_filename = os.path.join(self.args.temp, os.path.basename(url))
         if not self.args.force and os.path.exists(tmp_filename):
             if time.time() - os.stat(tmp_filename).st_mtime < (60 * 15):
                 logger.info(
                     "Last download less than 15 minutes ago. Not fetching.")
-                return self.files_as_dict()
+                return self.files_as_dict(tmp_filename)
             if self.check_checksum(tmp_filename, url):
                 logger.info("Remote checksum has not changed. Not fetching.")
-                return self.files_as_dict()
+                return self.files_as_dict(tmp_filename)
         if not os.path.exists(self.args.temp):
             os.makedirs(self.args.temp)
-        logger.info("Fetching %s." % (url))
         idstools.net.get(
             url, open(tmp_filename, "wb"), progress_hook=self.progress_hook)
         logger.info("Done.")
-        return self.files_as_dict()
+        return self.files_as_dict(tmp_filename)
 
-    def basename(self):
-        return os.path.basename(self.get_rule_url())
+    def run(self):
+        urls = self.get_rule_url()
+        files = {}
+        for url in urls:
+            files.update(self.fetch(url))
+        return files
 
-    def files_as_dict(self):
-        files = idstools.util.archive_to_dict(
-            os.path.join(self.args.temp, self.basename()))
+    def files_as_dict(self, filename):
+        files = idstools.util.archive_to_dict(filename)
 
         # Erase path information.
         for key in files.keys():
@@ -626,7 +629,7 @@ def main():
                         help="Output merged rules file")
     parser.add_argument("--yaml-fragment", metavar="<filename>",
                         help="Output YAML fragment for rule inclusion")
-    parser.add_argument("--url", metavar="<url>",
+    parser.add_argument("--url", metavar="<url>", action="append",
                         help="URL to use instead of auto-generating one")
     parser.add_argument("--local", metavar="<filename>",
                         help="Local rule files or directories")
@@ -654,6 +657,8 @@ def main():
     parser.add_argument("--post-hook", metavar="<command>",
                         help="Command to run after update if modified")
     args = parser.parse_args()
+
+    print(args)
 
     if args.verbose:
         logger.setLevel(logging.DEBUG)
