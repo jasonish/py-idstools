@@ -312,17 +312,26 @@ def main():
 
     formatter = Formatter(msgmap=msgmap, classmap=classmap)
 
-    for record in reader:
-        try:
-            as_json = json.dumps(formatter.format(record))
-            for out in outputs:
-                out.write(as_json)
-        except Exception as err:
-            LOG.error("Failed to encode record as JSON: %s: %s" % (
-                str(err), str(record)))
-        if bookmark:
-            filename, offset = reader.tell()
-            bookmark.update(filename, offset)
+    count = 0
+
+    try:
+        for record in reader:
+            try:
+                as_json = json.dumps(formatter.format(record))
+                for out in outputs:
+                    out.write(as_json)
+                count += 1
+            except Exception as err:
+                LOG.error("Failed to encode record as JSON: %s: %s" % (
+                    str(err), str(record)))
+            if bookmark:
+                filename, offset = reader.tell()
+                bookmark.update(filename, offset)
+    except unified2.UnknownRecordType as err:
+        if count == 0:
+            LOG.error("%s: Is this a unified2 file?" % (err))
+        else:
+            LOG.error(err)
 
 if __name__ == "__main__":
     sys.exit(main())

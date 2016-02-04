@@ -69,6 +69,18 @@ EVENT_APPID     = 111
 EVENT_APPID_IP6 = 112
 APPSTAT         = 113
 
+RECORD_TYPES = [
+    PACKET,
+    EVENT,
+    EVENT_IP6,
+    EVENT_V2,
+    EVENT_IP6_V2,
+    EXTRA_DATA,
+    EVENT_APPID,
+    EVENT_APPID_IP6,
+    APPSTAT,
+]
+
 EXTRA_DATA_TYPE = {
     "ORIG_CLIENT_IP4": 1,
     "ORIG_CLIENT_IP6": 2,
@@ -84,6 +96,12 @@ EXTRA_DATA_TYPE = {
     "IP6_DST_ADDR": 12,
     "NORMALIZED_JS": 13,
 }
+
+class UnknownRecordType(Exception):
+
+    def __init__(self, record_type):
+        super(UnknownRecordType, self).__init__(
+            "Unknown record type: %d" % (record_type))
 
 class Field(object):
     """ A class to represent a field in a unified2 record. Used for
@@ -513,6 +531,8 @@ def read_record(fileobj):
         elif len(buf) < HDR_LEN:
             raise EOFError()
         rtype, rlen = struct.unpack(">LL", buf)
+        if rtype not in RECORD_TYPES:
+            raise UnknownRecordType(rtype)
         buf = fileobj.read(rlen)
         if len(buf) < rlen:
             raise EOFError()
