@@ -85,6 +85,7 @@ master
 
 - idstools-u2json: fix --delete
 - idstools-u2json: add --verbose flag for debug logging
+- idstools-rulecat: allow multiple urls
 
 0.5.1
 ~~~~~
