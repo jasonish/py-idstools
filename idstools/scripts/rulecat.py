@@ -236,22 +236,6 @@ class Fetch(object):
     def __init__(self, args):
         self.args = args
 
-    def get_rule_url(self):
-        if self.args.url:
-            return self.args.url
-        mappings = {}
-        if self.args.etpro:
-            template_url = ET_PRO_URL
-            mappings["code"] = self.args.etpro
-        else:
-            template_url = ET_OPEN_URL
-        suricata_version = idstools.suricata.get_version(self.args.suricata)
-        if not suricata_version or not suricata_version.short:
-            mappings["version"] = ""
-        else:
-            mappings["version"] = "-" + suricata_version.short
-        return template_url % mappings
-
     def check_checksum(self, tmp_filename, url):
         try:
             checksum_url = url + ".md5"
@@ -299,9 +283,8 @@ class Fetch(object):
         return self.extract_files(tmp_filename)
 
     def run(self):
-        urls = self.get_rule_url()
         files = {}
-        for url in urls:
+        for url in self.args.url:
             files.update(self.fetch(url))
         return files
 
@@ -603,6 +586,23 @@ class HashTracker:
                 return True
         return False
 
+def resolve_etpro_url(etpro, suricata_path):
+    mappings = {
+        "code": etpro,
+        "version": ""
+    }
+    suricata_version = idstools.suricata.get_version(suricata_path)
+    if suricata_version.short:
+        mappings["version"] = "-" + suricata_version.short
+    return ET_PRO_URL % mappings
+
+def resolve_etopen_url(suricata_path):
+    mappings = {"version": ""}
+    suricata_version = idstools.suricata.get_version(suricata_path)
+    if suricata_version:
+        mappings["version"] = "-" + suricata_version.short
+    return ET_OPEN_URL % mappings
+
 def main():
 
     conf_filenames = [arg for arg in sys.argv if arg.startswith("@")]
@@ -632,6 +632,7 @@ def main():
     parser.add_argument("--yaml-fragment", metavar="<filename>",
                         help="Output YAML fragment for rule inclusion")
     parser.add_argument("--url", metavar="<url>", action="append",
+                        default=[],
                         help="URL to use instead of auto-generating one")
     parser.add_argument("--local", metavar="<filename>",
                         help="Local rule files or directories")
@@ -654,6 +655,8 @@ def main():
                         help="Dump sample config files to current directory")
     parser.add_argument("--etpro", metavar="<etpro-code>",
                         help="Use ET-Pro rules with provided ET-Pro code")
+    parser.add_argument("--etopen", action="store_true",
+                        help="Use ET-Open rules (default)")
     parser.add_argument("-q", "--quiet", action="store_true", default=False,
                        help="Be quiet, warning and error messages only")
     parser.add_argument("--post-hook", metavar="<command>",
@@ -667,6 +670,12 @@ def main():
 
     if args.dump_sample_configs:
         return dump_sample_configs()
+
+    if args.etpro:
+        args.url.append(resolve_etpro_url(args.etpro, args.suricata))
+    if not args.url or args.etopen:
+        args.url.append(resolve_etopen_url(args.suricata))
+    args.url = set(args.url)
 
     hash_tracker = HashTracker()
 
