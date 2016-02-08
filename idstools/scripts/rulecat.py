@@ -56,7 +56,7 @@ if sys.argv[0] == __file__:
 import idstools.rule
 import idstools.suricata
 import idstools.net
-import idstools.util
+from idstools.util import archive_to_dict
 
 CONF_SAMPLE = """# rulecat.conf
 """
@@ -287,16 +287,16 @@ class Fetch(object):
             if time.time() - os.stat(tmp_filename).st_mtime < (60 * 15):
                 logger.info(
                     "Last download less than 15 minutes ago. Not fetching.")
-                return self.files_as_dict(tmp_filename)
+                return self.extract_files(tmp_filename)
             if self.check_checksum(tmp_filename, url):
                 logger.info("Remote checksum has not changed. Not fetching.")
-                return self.files_as_dict(tmp_filename)
+                return self.extract_files(tmp_filename)
         if not os.path.exists(self.args.temp):
             os.makedirs(self.args.temp)
         idstools.net.get(
             url, open(tmp_filename, "wb"), progress_hook=self.progress_hook)
         logger.info("Done.")
-        return self.files_as_dict(tmp_filename)
+        return self.extract_files(tmp_filename)
 
     def run(self):
         urls = self.get_rule_url()
@@ -305,12 +305,14 @@ class Fetch(object):
             files.update(self.fetch(url))
         return files
 
-    def files_as_dict(self, filename):
-        files = idstools.util.archive_to_dict(filename)
+    def extract_files(self, filename):
+        files = {}
 
-        # Erase path information.
-        for key in files.keys():
-            files[os.path.basename(key)] = files.pop(key)
+        if filename.endswith(".tar.gz"):
+            for (name, content) in archive_to_dict(filename).items():
+                files[os.path.basename(name)] = content
+        else:
+            files[os.path.basename(filename)] = open(filename, "rb").read()
 
         return files
 
@@ -657,8 +659,6 @@ def main():
     parser.add_argument("--post-hook", metavar="<command>",
                         help="Command to run after update if modified")
     args = parser.parse_args()
-
-    print(args)
 
     if args.verbose:
         logger.setLevel(logging.DEBUG)
