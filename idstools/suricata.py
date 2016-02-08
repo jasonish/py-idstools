@@ -58,20 +58,16 @@ def get_version(path=None):
         return None
     output = subprocess.check_output([path, "-V"])
     if output:
-        output = output.strip()
-    else:
-        return None
-    m = re.search("version ((\d+)\.(\d+)\.?(\d+|\w+))", output)
-    if m:
-        full = m.group(1)
-        major = m.group(2)
-        minor = m.group(3)
-        patch = m.group(4)
-        short = "%s.%s" % (major, minor)
-        return SuricataVersion(
-            major=major, minor=minor, patch=patch, short=short, full=full,
-            raw=output)
-    else:
-        return SuricataVersion(
-            major=None, minor=None, patch=None, full=None, short=None,
-            raw=output)
+        m = re.search("version ((\d+)\.(\d+)\.?(\d+|\w+)?)", output.strip())
+        if m:
+            full = m.group(1)
+            major = m.group(2)
+            minor = m.group(3)
+            patch = m.group(4)
+            short = "%s.%s" % (major, minor)
+            return SuricataVersion(
+                major=major, minor=minor, patch=patch, short=short, full=full,
+                raw=output)
+    return SuricataVersion(
+        major=None, minor=None, patch=None, full=None, short=None,
+        raw=output)
