@@ -266,7 +266,7 @@ class Fetch(object):
 
     def fetch(self, url):
         logger.info("Fetching %s." % (url))
-        tmp_filename = os.path.join(self.args.temp, os.path.basename(url))
+        tmp_filename = os.path.join(self.args.temp_dir, os.path.basename(url))
         if not self.args.force and os.path.exists(tmp_filename):
             if time.time() - os.stat(tmp_filename).st_mtime < (60 * 15):
                 logger.info(
@@ -275,8 +275,8 @@ class Fetch(object):
             if self.check_checksum(tmp_filename, url):
                 logger.info("Remote checksum has not changed. Not fetching.")
                 return self.extract_files(tmp_filename)
-        if not os.path.exists(self.args.temp):
-            os.makedirs(self.args.temp)
+        if not os.path.exists(self.args.temp_dir):
+            os.makedirs(self.args.temp_dir)
         idstools.net.get(
             url, open(tmp_filename, "wb"), progress_hook=self.progress_hook)
         logger.info("Done.")
@@ -616,7 +616,7 @@ def main():
     parser = argparse.ArgumentParser(fromfile_prefix_chars="@")
     parser.add_argument("-v", "--verbose", action="store_true", default=False,
                         help="Be more verbose")
-    parser.add_argument("-t", "--temp", default="/var/tmp/idstools-rulecat",
+    parser.add_argument("-t", "--temp-dir", default="/var/tmp/idstools-rulecat",
                         metavar="<directory>",
                         help="Temporary work directory")
     parser.add_argument("--suricata", default=suricata_path,
@@ -626,7 +626,9 @@ def main():
     parser.add_argument("-f", "--force", action="store_true", default=False,
                         help="Force operations that might otherwise be skipped")
     parser.add_argument("--rules-dir", metavar="<directory>",
-                        help="Output rules directory.")
+                        help=argparse.SUPPRESS)
+    parser.add_argument("-o", "--output", metavar="<directory>",
+                        dest="output", help="Output rules directory.")
     parser.add_argument("--merged", default=None, metavar="<filename>",
                         help="Output merged rules file")
     parser.add_argument("--yaml-fragment", metavar="<filename>",
@@ -740,12 +742,12 @@ def main():
     # Fixup flowbits.
     resolve_flowbits(rulemap, disabled_rules)
 
-    if args.rules_dir:
-        if not os.path.exists(args.rules_dir):
-            logger.info("Making directory %s.", args.rules_dir)
-            os.makedirs(args.rules_dir)
-        hash_tracker.add(args.rules_dir)
-        write_to_directory(args.rules_dir, files, rulemap)
+    if args.output:
+        if not os.path.exists(args.output):
+            logger.info("Making directory %s.", args.output)
+            os.makedirs(args.output)
+        hash_tracker.add(args.output)
+        write_to_directory(args.output, files, rulemap)
 
     if args.merged:
         hash_tracker.add(args.merged)

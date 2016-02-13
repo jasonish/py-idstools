@@ -44,7 +44,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'idstools'
-copyright = u'2015, Jason Ish'
+copyright = u'2015-2016, Jason Ish'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -217,8 +217,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'idstools', u'idstools Documentation',
-     [u'Jason Ish'], 1)
+    ('index', 'idstools', u'idstools Documentation', [u'Jason Ish'], 1),
+    ('tools/rulecat', 'idstools-rulecat', u'idstools Rulecat', [], 1)
 ]
 
 # If true, show URL addresses after external links.
