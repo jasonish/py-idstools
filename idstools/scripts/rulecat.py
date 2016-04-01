@@ -123,7 +123,7 @@ logging.basicConfig(
     format="%(message)s")
 logger = logging.getLogger()
 
-ET_PRO_URL = "http://rules.emergingthreatspro.com/%(code)s/suricata%(version)s/etpro.rules.tar.gz"
+ET_PRO_URL = "https://rules.emergingthreatspro.com/%(code)s/suricata%(version)s/etpro.rules.tar.gz"
 
 ET_OPEN_URL = "https://rules.emergingthreats.net/open/suricata%(version)s/emerging.rules.tar.gz"
 
