@@ -80,6 +80,12 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+0.5.3
+~~~~~
+
+- idstools-rulecat: better documentation
+- idstools-rulecat: use ET Pro https URL
+
 0.5.2
 ~~~~~
 
