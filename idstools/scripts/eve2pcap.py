@@ -48,8 +48,14 @@ import ctypes
 import ctypes.util
 
 PCAP_ERRBUF_SIZE = 256
+
 DLT_EN10MB = 1
 DLT_RAW = 12
+
+DLT = {
+    "DN10MB": DLT_EN10MB,
+    "RAW": DLT_RAW,
+}
 
 libpcap_filename = ctypes.util.find_library("pcap")
 if not libpcap_filename:
@@ -107,8 +113,8 @@ class Pcap:
         """Not quite a direct wrapper around pcap_dump_fopen - instead of a
         file pointer, take a file descriptor.
         """
-        fp = self.libc.fdopen(fileno, "w")
-        pcap_dumper_t = self.libpcap.pcap_dump_fopen(self._pcap_t, fp)
+        fp = libc.fdopen(fileno, "w")
+        pcap_dumper_t = libpcap.pcap_dump_fopen(self._pcap_t, fp)
         if not pcap_dumper_t:
             raise Exception(self.pcap_errbuf.value)
         return PcapDumper(pcap_dumper_t)
@@ -178,6 +184,7 @@ def main():
                         help="Output filename")
     parser.add_argument("--payload", action="store_true",
                         help="Convert payload instead of packet")
+    parser.add_argument("--dlt")
     parser.add_argument("filenames", nargs="+")
     args = parser.parse_args()
 
@@ -191,15 +198,25 @@ def main():
               file=sys.stderr)
         return 1
 
+    dlt = None
+
+    if args.dlt:
+        if args.dlt.upper() in DLT:
+            dlt = DLT[args.dlt.upper()]
+        else:
+            print("ERROR: Unknown DLT type: %s" % (args.dlt), file=sys.stderr)
+            return 1
+    elif args.payload:
+        dlt = DLT_RAW
+    else:
+        dlt = DLT_EN10MB
+
     # Bail if writing out to a tty.
     if args.output == "-" and os.isatty(sys.stdout.fileno()):
         print("Cowardly refusing to write output to terminal.", file=sys.stderr)
         return 1
 
-    if args.payload:
-        pcap = Pcap.open_dead(DLT_RAW, 65535)
-    else:
-        pcap = Pcap.open_dead(DLT_EN10MB, 65535)
+    pcap = Pcap.open_dead(dlt, 65535)
     dumper = pcap.dump_open(args.output)
 
     for filename in args.filenames:
@@ -207,7 +224,7 @@ def main():
             for line in fileobj:
                 event = json.loads(line)
                 hdr, packet = None, None
-                if args.payload and "payload" in event:
+                if args.payload:
                     hdr, packet = payload2packet(event)
                 elif "packet" in event:
                     hdr, packet = eve2pcap(event)
