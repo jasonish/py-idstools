@@ -111,3 +111,31 @@ class GroupMatcherTestCase(unittest.TestCase):
         rule = idstools.rule.parse(self.rule_string, "rules/malware.rules")
         matcher = rulecat.GroupMatcher.parse("group: */malware.rules")
         self.assertTrue(matcher.match(rule))
+
+class DropRuleFilterTestCase(unittest.TestCase):
+
+    rule_string = """alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,from_server; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
+
+    def test_enabled_rule(self):
+        rule0 = idstools.rule.parse(self.rule_string, "rules/malware.rules")
+        id_matcher = rulecat.IdRuleMatcher.parse("2020757")
+        self.assertTrue(id_matcher.match(rule0))
+
+        drop_filter = rulecat.DropRuleFilter(id_matcher)
+        rule1 = drop_filter.filter(rule0)
+        self.assertEquals("drop", rule1.action)
+        self.assertTrue(rule1.enabled)
+        self.assertTrue(str(rule1).startswith("drop"))
+
+    def test_disabled_rule(self):
+        rule0 = idstools.rule.parse(
+            "# " + self.rule_string, "rules/malware.rules")
+        id_matcher = rulecat.IdRuleMatcher.parse("2020757")
+        self.assertTrue(id_matcher.match(rule0))
+
+        drop_filter = rulecat.DropRuleFilter(id_matcher)
+        rule1 = drop_filter.filter(rule0)
+        self.assertEquals("drop", rule1.action)
+        self.assertFalse(rule1.enabled)
+        self.assertTrue(str(rule1).startswith("# drop"))
+        

@@ -93,6 +93,19 @@ SAMPLE_MODIFY_CONF = """# modify.conf
 # 2019401 "seconds \d+" "seconds 3600"
 """
 
+SAMPLE_DROP_CONF = """# drop.conf
+#
+# Rules matching specifiers in this file will be converted to drop rules.
+#
+# Examples:
+#
+# 1:2019401
+# 2019401
+#
+# re:heartbleed
+# re:MS(0[7-9]|10)-\d+
+"""
+
 SAMPLE_THRESHOLD_IN = """# threshold.in (rulecat)
 
 # This file contains thresholding configurations that will be turned into
@@ -231,6 +244,20 @@ class ModifyRuleFilter(object):
         pattern = re.compile(tokens[1])
         return cls(matcher, pattern, tokens[2])
 
+class DropRuleFilter(object):
+    """ Filter to modify an idstools rule object to a drop rule. """
+
+    def __init__(self, matcher):
+        self.matcher = matcher
+
+    def match(self, rule):
+        return self.matcher.match(rule)
+
+    def filter(self, rule):
+        drop_rule = idstools.rule.parse(re.sub("^\w+", "drop", rule.raw))
+        drop_rule.enabled = rule.enabled
+        return drop_rule
+
 class Fetch(object):
 
     def __init__(self, args):
@@ -323,6 +350,16 @@ def load_filters(filename):
             filter = ModifyRuleFilter.parse(line)
             if filter:
                 filters.append(filter)
+
+    return filters
+
+def load_drop_filters(filename):
+    
+    matchers = load_matchers(filename)
+    filters = []
+
+    for matcher in matchers:
+        filters.append(DropRuleFilter(matcher))
 
     return filters
 
@@ -469,6 +506,7 @@ def dump_sample_configs():
         "enable.conf": SAMPLE_ENABLE_CONF,
         "disable.conf": SAMPLE_DISABLE_CONF,
         "modify.conf": SAMPLE_MODIFY_CONF,
+        "drop.conf": SAMPLE_DROP_CONF,
         "threshold.in": SAMPLE_THRESHOLD_IN,
     }
 
@@ -642,16 +680,21 @@ def main():
                         help="Generate a sid-msg.map file")
     parser.add_argument("--sid-msg-map-2", metavar="<filename>",
                         help="Generate a v2 sid-msg.map file")
+
     parser.add_argument("--disable", metavar="<filename>",
                         help="Filename of disable rule configuration")
     parser.add_argument("--enable", metavar="<filename>",
                         help="Filename of enable rule configuration")
     parser.add_argument("--modify", metavar="<filename>",
                         help="Filename of rule modification configuration")
+    parser.add_argument("--drop", metavar="<filename>",
+                        help="Filename of drop rules configuration")
+
     parser.add_argument("--threshold-in", metavar="<filename>",
                         help="Filename of rule thresholding configuration")
     parser.add_argument("--threshold-out", metavar="<filename>",
                         help="Output of processed threshold configuration")
+
     parser.add_argument("--dump-sample-configs", action="store_true",
                         default=False,
                         help="Dump sample config files to current directory")
@@ -684,6 +727,7 @@ def main():
     disable_matchers = []
     enable_matchers = []
     modify_filters = []
+    drop_filters = []
 
     if args.disable and os.path.exists(args.disable):
         disable_matchers += load_matchers(args.disable)
@@ -691,6 +735,8 @@ def main():
         enable_matchers += load_matchers(args.enable)
     if args.modify and os.path.exists(args.modify):
         modify_filters += load_filters(args.modify)
+    if args.drop and os.path.exists(args.drop):
+        drop_filters += load_drop_filters(args.drop)
 
     files = Fetch(args).run()
 
@@ -709,9 +755,10 @@ def main():
     # Counts of user enabled and modified rules.
     enable_count = 0
     modify_count = 0
+    drop_count = 0
 
     # List of rules disabled by user. Used for counting, and to log
-    # rules that are re-enabled to meeto flowbit requirements.
+    # rules that are re-enabled to meet flowbit requirements.
     disabled_rules = []
 
     for key, rule in rulemap.items():
@@ -735,9 +782,15 @@ def main():
                 rulemap[rule.id] = filter.filter(rule)
                 modify_count += 1
 
+        for filter in drop_filters:
+            if filter.match(rule):
+                rulemap[rule.id] = filter.filter(rule)
+                drop_count += 1
+
     logger.info("Disabled %d rules." % (len(disabled_rules)))
     logger.info("Enabled %d rules." % (enable_count))
     logger.info("Modified %d rules." % (modify_count))
+    logger.info("Dropped %d rules." % (drop_count))
 
     # Fixup flowbits.
     resolve_flowbits(rulemap, disabled_rules)
