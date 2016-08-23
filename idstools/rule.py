@@ -137,7 +137,7 @@ class Rule(dict):
         self["gid"] = 1
         self["sid"] = None
         self["rev"] = None
-        self["msg"] = None,
+        self["msg"] = None
         self["flowbits"] = []
         self["metadata"] = []
         self["references"] = []
@@ -210,6 +210,10 @@ def parse(buf, group=None):
                 rule.references.append(val)
             else:
                 rule[opt] = val
+
+    if rule["msg"] is None:
+        logger.warn("Rule has no \"msg\": %s" % (buf.strip()))
+        rule["msg"] = ""
 
     rule["raw"] = m.group("raw").strip()
 
@@ -321,7 +325,11 @@ def enable_flowbit_dependencies(rulemap):
 
 def format_sidmsgmap(rule):
     """ Format a rule as a sid-msg.map entry. """
-    return " || ".join([str(rule.sid), rule.msg] + rule.references)
+    try:
+        return " || ".join([str(rule.sid), rule.msg] + rule.references)
+    except:
+        logger.error("Failed to format rule as sid-msg.map: %s" % (str(rule)))
+        return None
 
 def format_sidmsgmap_v2(rule):
     """ Format a rule as a v2 sid-msg.map entry.
@@ -329,7 +337,12 @@ def format_sidmsgmap_v2(rule):
     eg:
     gid || sid || rev || classification || priority || msg || ref0 || refN
     """
-    return " || ".join([
-        str(rule.gid), str(rule.sid), str(rule.rev),
-        "NOCLASS" if rule.classtype is None else rule.classtype,
-        str(rule.priority), rule.msg] + rule.references)
+    try:
+        return " || ".join([
+            str(rule.gid), str(rule.sid), str(rule.rev),
+            "NOCLASS" if rule.classtype is None else rule.classtype,
+            str(rule.priority), rule.msg] + rule.references)
+    except:
+        logger.error("Failed to format rule as sid-msg-v2.map: %s" % (
+            str(rule)))
+        return None

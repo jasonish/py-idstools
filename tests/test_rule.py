@@ -98,3 +98,8 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
 """
         rules = idstools.rule.parse_fileobj(io.StringIO(rule_string))
         self.assertEquals(len(rules), 1)
+
+    def test_parse_nomsg(self):
+        rule_string = u"""alert ip any any -> any any (content:"uid=0|28|root|29|"; classtype:bad-unknown; sid:10000000; rev:1;)"""
+        rule = idstools.rule.parse(rule_string)
+        self.assertEquals("", rule["msg"])

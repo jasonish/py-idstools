@@ -133,7 +133,7 @@ SAMPLE_THRESHOLD_IN = """# threshold.in (rulecat)
 
 logging.basicConfig(
     level=logging.getLevelName(os.environ.get("RULECAT_LOG_LEVEL", "INFO")),
-    format="%(message)s")
+    format="%(levelname)s: %(message)s")
 logger = logging.getLogger()
 
 ET_PRO_URL = "https://rules.emergingthreatspro.com/%(code)s/suricata%(version)s/etpro.rules.tar.gz"
@@ -475,9 +475,13 @@ def write_sid_msg_map(filename, rulemap, version=1):
     with open(filename, "w") as fileobj:
         for rule in rulemap.itervalues():
             if version == 2:
-                print(idstools.rule.format_sidmsgmap_v2(rule), file=fileobj)
+                formatted = idstools.rule.format_sidmsgmap_v2(rule)
+                if formatted:
+                    print(formatted, file=fileobj)
             else:
-                print(idstools.rule.format_sidmsgmap(rule), file=fileobj)
+                formatted = idstools.rule.format_sidmsgmap(rule)
+                if formatted:
+                    print(formatted, file=fileobj)
 
 def build_rule_map(rules):
     """Turn a list of rules into a mapping of rules.
