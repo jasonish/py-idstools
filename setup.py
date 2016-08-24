@@ -28,5 +28,6 @@ setup(
         "bin/idstools-rulecat",
         "bin/idstools-u2eve",
         "bin/idstools-eve2pcap",
+        "bin/idstools-rulemod",
     ],
 )

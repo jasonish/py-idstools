@@ -103,3 +103,48 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
         rule_string = u"""alert ip any any -> any any (content:"uid=0|28|root|29|"; classtype:bad-unknown; sid:10000000; rev:1;)"""
         rule = idstools.rule.parse(rule_string)
         self.assertEquals("", rule["msg"])
+
+    def test_add_option(self):
+        rule_string = u"""alert ip any any -> any any (content:"uid=0|28|root|29|"; classtype:bad-unknown; sid:10000000; rev:1;)"""
+        rule = idstools.rule.parse(rule_string, "local.rules")
+        rule = idstools.rule.add_option(
+            rule, "msg", "\"This is a test description.\"", 0)
+        self.assertEquals("This is a test description.", rule["msg"])
+        self.assertEquals("local.rules", rule["group"])
+
+    def test_remove_option(self):
+        rule_string = u"""alert ip any any -> any any (msg:"TEST MESSAGE"; content:"uid=0|28|root|29|"; classtype:bad-unknown; sid:10000000; rev:1;)"""
+        rule = idstools.rule.parse(rule_string, "local.rules")
+
+        rule = idstools.rule.remove_option(rule, "msg")
+        self.assertEquals("", rule["msg"])
+
+        rule = idstools.rule.remove_option(rule, "classtype")
+        self.assertEquals(None, rule["classtype"])
+
+    def test_remove_tag_option(self):
+        rule_string = u"""alert ip any any -> any any (msg:"TEST RULE"; content:"uid=0|28|root|29|"; tag:session,5,packets; classtype:bad-unknown; sid:10000000; rev:1;)"""
+        rule = idstools.rule.parse(rule_string)
+        self.assertIsNotNone(rule)
+        print(rule["options"])
+
+    def test_scratch(self):
+        rule_string = """alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"ET CURRENT_EVENTS Request to .in FakeAV Campaign June 19 2012 exe or zip"; flow:established,to_server; content:"setup."; fast_pattern:only; http_uri; content:".in|0d 0a|"; flowbits:isset,somebit; flowbits:unset,otherbit; http_header; pcre:"/\/[a-f0-9]{16}\/([a-z0-9]{1,3}\/)?setup\.(exe|zip)$/U"; pcre:"/^Host\x3a\s.+\.in\r?$/Hmi"; metadata:stage,hostile_download; reference:url,isc.sans.edu/diary/+Vulnerabilityqueerprocessbrittleness/13501; classtype:trojan-activity; sid:2014929; rev:1;)"""
+        rule = idstools.rule.parse(rule_string)
+        self.assertEquals(rule_string, str(rule))
+
+        options = []
+        for option in rule["options"]:
+            if option["value"] is None:
+                options.append(option["name"])
+            else:
+                options.append("%s:%s" % (option["name"], option["value"]))
+
+        reassembled = "%s (%s)" % (rule["header"], rule.rebuild_options())
+
+        print("")
+        print("%s" % rule_string)
+        print("%s" % reassembled)
+
+        self.assertEquals(rule_string, reassembled)
+        

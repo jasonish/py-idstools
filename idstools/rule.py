@@ -52,13 +52,16 @@ actions = (
 rule_pattern = re.compile(
     r"^(?P<enabled>#)*\s*"      # Enabled/disabled
     r"(?P<raw>"
+    r"(?P<header>"
     r"(?P<action>%s)\s*"        # Action
     r"[^\s]*\s*"                # Protocol
     r"[^\s]*\s*"                # Source address(es)
     r"[^\s]*\s*"                # Source port
     r"(?P<direction>[-><]+)\s*"	# Direction
     r"[^\s]*\s*"		        # Destination address(es)
-    r"[^\s]*\s*"                # Destination port
+    r"[^\s]*"                   # Destination port
+    r")"                        # End of header.
+    r"\s*"                      # Trailing spaces after header.
     r"\((?P<options>.*)\)\s*" 	# Options
     r")"
     % "|".join(actions))
@@ -73,19 +76,6 @@ decoder_rule_pattern = re.compile(
     r"\((?P<options>.*)\)\s*" 	# Options
     r")"
     % "|".join(actions))
-
-# Regular expressions to pick out options.
-option_patterns = (
-    re.compile("(msg)\s*:\s*\"(.*?)\";"),
-    re.compile("(gid)\s*:\s*(\d+);"),
-    re.compile("(sid)\s*:\s*(\d+);"),
-    re.compile("(rev)\s*:\s*(\d+);"),
-    re.compile("(metadata)\s*:\s*(.*?);"),
-    re.compile("(flowbits)\s*:\s*(.*?);"),
-    re.compile("(reference)\s*:\s*(.*?);"),
-    re.compile("(classtype)\s*:\s*(.*?);"),
-    re.compile("(priority)\s*:\s*(.*?);"),
-)
 
 class Rule(dict):
     """ Class representing a rule.
@@ -143,6 +133,9 @@ class Rule(dict):
         self["references"] = []
         self["classtype"] = None
         self["priority"] = 0
+
+        self["options"] = []
+
         self["raw"] = None
 
     def __getattr__(self, name):
@@ -180,6 +173,40 @@ class Rule(dict):
         """
         return "%s%s" % ("" if self.enabled else "# ", self.raw)
 
+    def rebuild_options(self):
+        """ Rebuild the rule options from the list of options."""
+        options = []
+        for option in self.options:
+            if option["value"] is None:
+                options.append(option["name"])
+            else:
+                options.append("%s:%s" % (option["name"], option["value"]))
+        return "%s;" % "; ".join(options)
+
+def remove_option(rule, name):
+    rule["options"] = [
+        option for option in rule["options"] if option["name"] != name]
+    new_rule_string = "%s%s (%s)" % (
+        "" if rule.enabled else "# ",
+        rule["header"].strip(),
+        rule.rebuild_options());
+    return parse(new_rule_string, rule["group"])
+
+def add_option(rule, name, value, index=None):
+    option = {
+        "name": name,
+        "value": value,
+    }
+    if index is None:
+        rule["options"].append(option)
+    else:
+        rule["options"].insert(index, option)
+    new_rule_string = "%s%s (%s)" % (
+        "" if rule.enabled else "# ",
+        rule["header"].strip(),
+        rule.rebuild_options())
+    return parse(new_rule_string, rule["group"])
+
 def parse(buf, group=None):
     """ Parse a single rule for a string buffer.
 
@@ -196,20 +223,42 @@ def parse(buf, group=None):
                 group=group)
 
     rule["direction"] = m.groupdict().get("direction", None)
+    rule["header"] = m.groupdict().get("header", None)
 
     options = m.group("options")
-    for p in option_patterns:
-        for opt, val in p.findall(options):
-            if opt in ["gid", "sid", "rev"]:
-                rule[opt] = int(val)
-            elif opt == "metadata":
-                rule[opt] = [v.strip() for v in val.split(",")]
-            elif opt == "flowbits":
-                rule.flowbits.append(val)
-            elif opt == "reference":
-                rule.references.append(val)
-            else:
-                rule[opt] = val
+
+    while True:
+        if not options:
+            break
+        index = options.find(";")
+        option = options[:index].strip()
+        options = options[index + 1:].strip()
+
+        if option.find(":") > -1:
+            name, val = [x.strip() for x in option.split(":", 1)]
+        else:
+            name = option
+            val = None
+
+        rule["options"].append({
+            "name": name,
+            "value": val,
+        })
+
+        if name in ["gid", "sid", "rev"]:
+            rule[name] = int(val)
+        elif name == "metadata":
+            rule[name] = [v.strip() for v in val.split(",")]
+        elif name == "flowbits":
+            rule.flowbits.append(val)
+        elif name == "reference":
+            rule.references.append(val)
+        elif name == "msg":
+            if val.startswith('"') and val.endswith('"'):
+                val = val[1:-1]
+            rule[name] = val
+        else:
+            rule[name] = val
 
     if rule["msg"] is None:
         logger.warn("Rule has no \"msg\": %s" % (buf.strip()))
