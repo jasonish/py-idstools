@@ -27,8 +27,7 @@ Programs
 Requirements
 ------------
 
-- Python 2.7; Python 3.3 works but is not as well tested.
-- Python 2.6 may work, but is not as well tested.
+- Python 2.7 or newer.
 - Currently only tested on Linux.
 
 Installation
