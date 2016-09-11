@@ -80,6 +80,13 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+Unreleased
+~~~~~~~~~~
+
+- idstools: handle rules with no msg in rule parser
+- idstools-rulecat: support a drop.conf for setting rules to drop
+- idstools-eve2pcap: allow link type to be set on command line
+
 0.5.3
 ~~~~~
 
