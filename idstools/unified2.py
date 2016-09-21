@@ -187,9 +187,7 @@ EVENT_V2_FIELDS = EVENT_FIELDS + (
     Field("pad2", 2),
 )
 
-EVENT_APPID_FIELDS = EVENT_V2_FIELDS + (
-    Field("appid", APPID_NAME_LEN, "%ds" % (APPID_NAME_LEN)),
-)
+EVENT_APPID_FIELDS = EVENT_V2_FIELDS
 
 # Fields for an IPv6 v2 event.
 EVENT_IP6_V2_FIELDS = EVENT_IP6_FIELDS + (
@@ -198,9 +196,7 @@ EVENT_IP6_V2_FIELDS = EVENT_IP6_FIELDS + (
     Field("pad2", 2),
 )
 
-EVENT_APPID_IP6_FIELDS = EVENT_IP6_FIELDS + (
-    Field("appid", APPID_NAME_LEN, "%ds" % (APPID_NAME_LEN)),
-)
+EVENT_APPID_IP6_FIELDS = EVENT_IP6_FIELDS
 
 # Fields in a UNIFIED_EXTRA_DATA record.
 EXTRA_DATA_FIELDS = (
@@ -344,13 +340,17 @@ class EventDecoder(AbstractDecoder):
 
     def decode(self, buf):
         """Decodes a buffer into an :class:`.Event` object."""
-        values = struct.unpack(self.format, buf)
+        values = struct.unpack(self.format, buf[0:self.fixed_len])
         keys = [field.name for field in self.fields]
         event = dict(zip(keys, values))
         event["source-ip"] = self.decode_ip(event["source-ip.raw"])
         event["destination-ip"] = self.decode_ip(event["destination-ip.raw"])
-        if "appid" in event:
-            event["appid"] = str(event["appid"]).split("\x00")[0]
+
+        # Check for remaining data, the appid.
+        remainder = buf[self.fixed_len:]
+        if remainder:
+            event["appid"] = str(remainder).split("\x00")[0]
+
         return Event(event)
 
     def decode_ip(self, addr):
@@ -536,7 +536,12 @@ def read_record(fileobj):
         buf = fileobj.read(rlen)
         if len(buf) < rlen:
             raise EOFError()
-        return decode_record(rtype, buf)
+        try:
+            return decode_record(rtype, buf)
+        except Exception as err:
+            LOG.error("Failed to decode record of type %d (len=%d): %s" % (
+                rtype, rlen, err))
+            raise err
     except EOFError as err:
         fileobj.seek(offset)
         raise err
