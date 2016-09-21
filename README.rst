@@ -79,8 +79,8 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-Unreleased
-~~~~~~~~~~
+0.5.4
+~~~~~
 
 - idstools: handle rules with no msg in rule parser
 - idstools-rulecat: support a drop.conf for setting rules to drop
