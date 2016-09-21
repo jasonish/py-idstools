@@ -85,6 +85,7 @@ Unreleased
 - idstools: handle rules with no msg in rule parser
 - idstools-rulecat: support a drop.conf for setting rules to drop
 - idstools-eve2pcap: allow link type to be set on command line
+- unified2: handle large appid buffer in newer versions of Snort.
 
 0.5.3
 ~~~~~
