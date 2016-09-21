@@ -37,6 +37,7 @@ import os
 import socket
 import struct
 import string
+import logging
 
 if sys.argv[0] == __file__:
     sys.path.insert(
@@ -48,6 +49,10 @@ except ImportError as err:
     from idstools.compat.argparse import argparse
 
 from idstools import unified2
+
+# Initialize logging.
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+LOG = logging.getLogger()
 
 # Create a list of characters we consider printable.
 not_printable = "\t\r\n\x0b\x0c"
