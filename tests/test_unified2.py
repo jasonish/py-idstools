@@ -94,6 +94,14 @@ class TestReadRecord(unittest.TestCase):
         self.assertEqual("207.25.71.28", record["source-ip"])
         self.assertEqual("10.20.11.123", record["destination-ip"])
 
+    def test_read_ipv6_event(self):
+        fileobj = open("tests/ipv6-alert.unified2", "rb")
+        record = unified2.read_record(fileobj)
+        self.assertEqual("fe80:0000:0000:0000:dacb:8aff:feed:a146",
+                         record["source-ip"])
+        self.assertEqual("fe80:0000:0000:0000:0215:17ff:fe0d:06f7",
+                         record["destination-ip"])
+
 class TestRecordReader(unittest.TestCase):
 
     # A unified2 test file containing 1 event consisting of 17 records.

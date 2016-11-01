@@ -170,8 +170,8 @@ EVENT_IP6_FIELDS = (
     Field("signature-revision", 4),
     Field("classification-id", 4),
     Field("priority", 4),
-    Field("source-ip.raw", 4, "16s"),
-    Field("destination-ip.raw", 4, "16s"),
+    Field("source-ip.raw", 16, "16s"),
+    Field("destination-ip.raw", 16, "16s"),
     Field("sport-itype", 2),
     Field("dport-icode", 2),
     Field("protocol", 1),
@@ -358,7 +358,7 @@ class EventDecoder(AbstractDecoder):
             return socket.inet_ntoa(addr)
         else:
             parts = struct.unpack(">" + "H" * int((len(addr) / 2)), addr)
-            return ":".join("%x" % p for p in parts)
+            return ":".join("%04x" % p for p in parts)
 
 class PacketDecoder(AbstractDecoder):
     """ Decoder for packet type records. """
