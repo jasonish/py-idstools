@@ -79,6 +79,11 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+Unreleased
+~~~~~~~~~~
+
+- unified2: fix reading of ipv6 events
+
 0.5.4
 ~~~~~
 
