@@ -38,6 +38,7 @@ import socket
 import struct
 import string
 import logging
+import re
 
 if sys.argv[0] == __file__:
     sys.path.insert(
@@ -80,6 +81,11 @@ def print_raw(raw):
         lines.append("%s %-48s  %s" % (prefix, as_hex, printable))
     return "\n".join(lines)
 
+def print_address(addr):
+    if len(addr) <= 15:
+        return addr
+    return re.sub(":::+", "::", addr.replace("0000", ""))
+
 def print_event(event):
     rows = (
         (("sensor id", "sensor-id", str),
@@ -93,8 +99,8 @@ def print_event(event):
          ("classification", "classification-id", str),
          ),
         (("priority", "priority", str),
-         ("ip source", "source-ip", str),
-         ("ip destination", "destination-ip", str),
+         ("ip source", "source-ip", print_address),
+         ("ip destination", "destination-ip", print_address),
          ),
         (("src port", "sport-itype", str),
          ("dest port", "dport-icode", str),
