@@ -508,7 +508,7 @@ class ThresholdProcessor:
                             print("", file=fileout)
         logger.info("Generated %d thresholds to %s." % (count, fileout.name))
 
-class HashTracker:
+class FileTracker:
     """Used to check if files are modified.
 
     Usage: Add files with add(filename) prior to modification. Test
@@ -521,28 +521,19 @@ class HashTracker:
         self.hashes = {}
 
     def add(self, filename):
-        checksum = self.get_md5(filename)
+        checksum = self.md5(filename)
         logger.debug("Recording file %s with hash '%s'.", filename, checksum)
         self.hashes[filename] = checksum
 
-    def get_md5(self, filename):
+    def md5(self, filename):
         if not os.path.exists(filename):
             return ""
-        elif os.path.isdir(filename):
-            return self.get_md5_for_directory(filename)
         else:
             return hashlib.md5(open(filename, "rb").read()).hexdigest()
 
-    def get_md5_for_directory(self, directory):
-        checksum = hashlib.md5()
-        for filename in sorted(os.listdir(directory)):
-            path = os.path.join(directory, filename)
-            checksum.update(open(path, "rb").read())
-        return checksum.hexdigest()
-
     def any_modified(self):
         for filename in self.hashes:
-            if self.get_md5(filename) != self.hashes[filename]:
+            if self.md5(filename) != self.hashes[filename]:
                 return True
         return False
 
@@ -644,7 +635,7 @@ def main():
         args.url.append(resolve_etopen_url(args.suricata))
     args.url = set(args.url)
 
-    hash_tracker = HashTracker()
+    file_tracker = FileTracker()
 
     disable_matchers = []
     enable_matchers = []
@@ -721,15 +712,16 @@ def main():
         if not os.path.exists(args.output):
             logger.info("Making directory %s.", args.output)
             os.makedirs(args.output)
-        hash_tracker.add(args.output)
+        for filename in files:
+            file_tracker.add(os.path.join(args.output, filename))
         write_to_directory(args.output, files, rulemap)
 
     if args.merged:
-        hash_tracker.add(args.merged)
+        file_tracker.add(args.merged)
         write_merged(args.merged, rulemap)
 
     if args.yaml_fragment:
-        hash_tracker.add(args.yaml_fragment)
+        file_tracker.add(args.yaml_fragment)
         write_yaml_fragment(args.yaml_fragment, files)
 
     if args.sid_msg_map:
@@ -738,7 +730,7 @@ def main():
         write_sid_msg_map(args.sid_msg_map_2, rulemap, version=2)
 
     if args.threshold_in and args.threshold_out:
-        hash_tracker.add(args.threshold_out)
+        file_tracker.add(args.threshold_out)
         threshold_processor = ThresholdProcessor()
         threshold_processor.process(
             open(args.threshold_in), open(args.threshold_out, "w"), rulemap)
@@ -746,12 +738,12 @@ def main():
     if args.post_hook:
         if args.force:
             logger.info("Running post-hook as force is set.")
-        elif hash_tracker.any_modified():
+        elif file_tracker.any_modified():
             logger.info("Running post-hook as output has been modified.")
         else:
             logger.info("No modification to output files, "
                         "post-hook will not be run.")
-        if args.force or hash_tracker.any_modified():
+        if args.force or file_tracker.any_modified():
             logger.info("Running %s." % (args.post_hook))
             subprocess.Popen(args.post_hook, shell=True).wait()
 
