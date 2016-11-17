@@ -38,6 +38,7 @@ import hashlib
 import fnmatch
 import subprocess
 import types
+import shutil
 
 try:
     from io import BytesIO
@@ -56,80 +57,8 @@ if sys.argv[0] == __file__:
 import idstools.rule
 import idstools.suricata
 import idstools.net
+from idstools.rulecat import configs
 from idstools.util import archive_to_dict
-
-CONF_SAMPLE = """# rulecat.conf
-"""
-
-SAMPLE_ENABLE_CONF = """# enable.conf
-
-# Example of enabling a rule by signature ID (gid is optional).
-# 1:2019401
-# 2019401
-
-# Example of enabling a rule by regular expression.
-# - All regular expression matches are case insensitive.
-# re:hearbleed
-# re:MS(0[7-9]|10)-\d+
-"""
-
-SAMPLE_DISABLE_CONF = """# disable.conf
-
-# Example of disabling a rule by signature ID (gid is optional).
-# 1:2019401
-# 2019401
-
-# Example of disabling a rule by regular expression.
-# - All regular expression matches are case insensitive.
-# re:hearbleed
-# re:MS(0[7-9]|10)-\d+
-"""
-
-SAMPLE_MODIFY_CONF = """# modify.conf
-
-# Format: <sid> "<from>" "<to>"
-
-# Example changing the seconds for rule 2019401 to 3600.
-# 2019401 "seconds \d+" "seconds 3600"
-"""
-
-SAMPLE_DROP_CONF = """# drop.conf
-#
-# Rules matching specifiers in this file will be converted to drop rules.
-#
-# Examples:
-#
-# 1:2019401
-# 2019401
-#
-# re:heartbleed
-# re:MS(0[7-9]|10)-\d+
-"""
-
-SAMPLE_THRESHOLD_IN = """# threshold.in (rulecat)
-
-# This file contains thresholding configurations that will be turned into
-# a Suricata compatible threshold.conf file.
-
-# This file can contain standard threshold.conf configurations:
-#
-# suppress gen_id <gid>, sig_id <sid>
-# suppress gen_id <gid>, sig_id <sid>, track <by_src|by_dst>, ip <ip|subnet>
-# threshold gen_id 0, sig_id 0, type threshold, track by_src, count 10, seconds 10
-# suppress gen_id 1, sig_id 2009557, track by_src, ip 217.110.97.128/25
-
-# Or ones that will be preprocessed...
-
-# Suppress all rules containing "java".
-#
-# suppress re:java
-# suppress re:java, track by_src, ip 217.110.97.128/25
-
-# Threshold all rules containing "java".
-#
-# threshold re:java, type threshold, track by_dst, count 1, seconds 10
-
-"""
 
 logging.basicConfig(
     level=logging.getLevelName(os.environ.get("RULECAT_LOG_LEVEL", "INFO")),
@@ -502,23 +431,12 @@ def build_rule_map(rules):
 
 def dump_sample_configs():
 
-    def write_file(filename, content):
-        logger.info("Writing %s." % (filename))
-        open(filename, "w").write(content)
-
-    files = {
-        "enable.conf": SAMPLE_ENABLE_CONF,
-        "disable.conf": SAMPLE_DISABLE_CONF,
-        "modify.conf": SAMPLE_MODIFY_CONF,
-        "drop.conf": SAMPLE_DROP_CONF,
-        "threshold.in": SAMPLE_THRESHOLD_IN,
-    }
-
-    for filename in files:
+    for filename in configs.filenames:
         if os.path.exists(filename):
             logger.info("File already exists, not dumping %s." % (filename))
         else:
-            write_file(filename, files[filename])
+            logger.info("Creating %s." % (filename))
+            shutil.copy(os.path.join(configs.directory, filename), filename)
 
 def resolve_flowbits(rulemap, disabled_rules):
     flowbit_resolver = idstools.rule.FlowbitResolver()

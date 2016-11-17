@@ -10,6 +10,8 @@ setup(
     author_email="ish@unx.ca",
     packages=[
         "idstools",
+        "idstools.rulecat",
+        "idstools.rulecat.configs",
         "idstools.scripts",
         "idstools.compat",
         "idstools.compat.argparse",
@@ -27,4 +29,7 @@ setup(
         "bin/idstools-u2eve",
         "bin/idstools-eve2pcap",
     ],
+    package_data={
+        "idstools.rulecat.configs": ["*.conf", "*.in"],
+    },
 )
