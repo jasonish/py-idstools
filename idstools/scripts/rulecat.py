@@ -62,12 +62,19 @@ from idstools.util import archive_to_dict
 
 logging.basicConfig(
     level=logging.getLevelName(os.environ.get("RULECAT_LOG_LEVEL", "INFO")),
-    format="%(levelname)s: %(message)s")
+    format="%(asctime)s - <%(levelname)s> - %(message)s")
 logger = logging.getLogger()
 
-ET_PRO_URL = "https://rules.emergingthreatspro.com/%(code)s/suricata%(version)s/etpro.rules.tar.gz"
+# Template URL for Emerging Threats Pro rules.
+ET_PRO_URL = ("https://rules.emergingthreatspro.com/"
+              "%(code)s/"
+              "suricata%(version)s%(enhanced)s/"
+              "etpro.rules.tar.gz")
 
-ET_OPEN_URL = "https://rules.emergingthreats.net/open/suricata%(version)s/emerging.rules.tar.gz"
+# Template URL for Emerging Threats Open rules.
+ET_OPEN_URL = ("https://rules.emergingthreats.net/open/"
+               "suricata%(version)s%(enhanced)s/"
+               "emerging.rules.tar.gz")
 
 class IdRuleMatcher(object):
     """Matcher object to match an idstools rule object by its signature
@@ -537,21 +544,37 @@ class FileTracker:
                 return True
         return False
 
-def resolve_etpro_url(etpro, suricata_path):
+def resolve_etpro_url(etpro, suricata_version):
     mappings = {
         "code": etpro,
-        "version": ""
+        "version": "",
+        "enhanced": "",
     }
-    suricata_version = idstools.suricata.get_version(suricata_path)
-    if suricata_version.short:
-        mappings["version"] = "-" + suricata_version.short
+
+    if not suricata_version:
+        mappings["version"] = "-1.3"
+    elif suricata_version.major < 2 and suricata_version.minor < 3:
+        mappings["version"] = "-1.0"
+    else:
+        mappings["version"] = "-1.3"
+        mappings["enhanced"] = "-enhanced"
+
     return ET_PRO_URL % mappings
 
-def resolve_etopen_url(suricata_path):
-    mappings = {"version": ""}
-    suricata_version = idstools.suricata.get_version(suricata_path)
-    if suricata_version:
-        mappings["version"] = "-" + suricata_version.short
+def resolve_etopen_url(suricata_version):
+    mappings = {
+        "version": "",
+        "enhanced": "",
+    }
+
+    if not suricata_version:
+        mappings["version"] = "-1.3"
+    elif suricata_version.major < 2 and suricata_version.minor < 3:
+        mappings["version"] = "-1.0"
+    else:
+        mappings["version"] = "-1.3"
+        mappings["enhanced"] = "-enhanced"
+
     return ET_OPEN_URL % mappings
 
 def main():
@@ -619,6 +642,7 @@ def main():
                        help="Be quiet, warning and error messages only")
     parser.add_argument("--post-hook", metavar="<command>",
                         help="Command to run after update if modified")
+
     args = parser.parse_args()
 
     if args.verbose:
@@ -629,10 +653,17 @@ def main():
     if args.dump_sample_configs:
         return dump_sample_configs()
 
+    if args.suricata and os.path.exists(args.suricata):
+        suricata_version = idstools.suricata.get_version(args.suricata)
+        logger.info("Found Suricata version %s at %s." % (
+            str(suricata_version.full), args.suricata))
+    else:
+        suricata_version = None
+
     if args.etpro:
-        args.url.append(resolve_etpro_url(args.etpro, args.suricata))
+        args.url.append(resolve_etpro_url(args.etpro, suricata_version))
     if not args.url or args.etopen:
-        args.url.append(resolve_etopen_url(args.suricata))
+        args.url.append(resolve_etopen_url(suricata_version))
     args.url = set(args.url)
 
     file_tracker = FileTracker()
