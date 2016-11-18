@@ -57,7 +57,7 @@ from idstools.util import archive_to_dict
 from idstools.rulecat.loghandler import SuriColourLogHandler
 
 # Initialize logging, use colour if on a tty.
-if os.isatty(sys.stderr.fileno()):
+if len(logging.root.handlers) == 0 and os.isatty(sys.stderr.fileno()):
     logger = logging.getLogger()
     logger.setLevel(level=logging.INFO)
     logger.addHandler(SuriColourLogHandler())
