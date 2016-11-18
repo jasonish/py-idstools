@@ -45,11 +45,6 @@ try:
 except:
     from StringIO import StringIO as BytesIO
 
-try:
-    import progressbar
-except:
-    progressbar = None
-
 if sys.argv[0] == __file__:
     sys.path.insert(
         0, os.path.abspath(os.path.join(__file__, "..", "..", "..")))
