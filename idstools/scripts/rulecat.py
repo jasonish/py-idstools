@@ -54,11 +54,18 @@ import idstools.suricata
 import idstools.net
 from idstools.rulecat import configs
 from idstools.util import archive_to_dict
+from idstools.rulecat.loghandler import SuriColourLogHandler
 
-logging.basicConfig(
-    level=logging.getLevelName(os.environ.get("RULECAT_LOG_LEVEL", "INFO")),
-    format="%(asctime)s - <%(levelname)s> - %(message)s")
-logger = logging.getLogger()
+# Initialize logging, use colour if on a tty.
+if os.isatty(sys.stderr.fileno()):
+    logger = logging.getLogger()
+    logger.setLevel(level=logging.INFO)
+    logger.addHandler(SuriColourLogHandler())
+else:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - <%(levelname)s> - %(message)s")
+    logger = logging.getLogger()
 
 # Template URL for Emerging Threats Pro rules.
 ET_PRO_URL = ("https://rules.emergingthreatspro.com/"
@@ -637,6 +644,8 @@ def main():
                        help="Be quiet, warning and error messages only")
     parser.add_argument("--post-hook", metavar="<command>",
                         help="Command to run after update if modified")
+    parser.add_argument("-T", "--test-command", metavar="<command>",
+                        help="Command to test Suricata configuration")
 
     args = parser.parse_args()
 
@@ -761,17 +770,22 @@ def main():
         threshold_processor.process(
             open(args.threshold_in), open(args.threshold_out, "w"), rulemap)
 
+    if not args.force and not file_tracker.any_modified():
+        logger.info(
+            "No changes detected, will not reload rules or run post-hooks.")
+        return 0
+
+    if args.test_command:
+        logger.info("Testing Suricata configuration with: %s" % (
+            args.test_command))
+        rc = subprocess.Popen(args.test_command, shell=True).wait()
+        if rc != 0:
+            logger.error("Suricata test failed, aborting.")
+            return 1
+
     if args.post_hook:
-        if args.force:
-            logger.info("Running post-hook as force is set.")
-        elif file_tracker.any_modified():
-            logger.info("Running post-hook as output has been modified.")
-        else:
-            logger.info("No modification to output files, "
-                        "post-hook will not be run.")
-        if args.force or file_tracker.any_modified():
-            logger.info("Running %s." % (args.post_hook))
-            subprocess.Popen(args.post_hook, shell=True).wait()
+        logger.info("Running %s." % (args.post_hook))
+        subprocess.Popen(args.post_hook, shell=True).wait()
 
     logger.info("Done.")
 
