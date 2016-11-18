@@ -204,7 +204,7 @@ class Fetch(object):
             checksum_url = url + ".md5"
             local_checksum = hashlib.md5(open(tmp_filename).read()).hexdigest()
             remote_checksum_buf = BytesIO()
-            logger.info("Fetching %s." % (checksum_url))
+            logger.info("Checking %s." % (checksum_url))
             remote_checksum = idstools.net.get(
                 checksum_url, remote_checksum_buf)
             logger.debug("Local checksum=|%s|; remote checksum=|%s|" % (
@@ -228,7 +228,6 @@ class Fetch(object):
             sys.stdout.flush()
 
     def fetch(self, url):
-        logger.info("Fetching %s." % (url))
         tmp_filename = os.path.join(self.args.temp_dir, os.path.basename(url))
         if not self.args.force and os.path.exists(tmp_filename):
             if time.time() - os.stat(tmp_filename).st_mtime < (60 * 15):
@@ -240,6 +239,7 @@ class Fetch(object):
                 return self.extract_files(tmp_filename)
         if not os.path.exists(self.args.temp_dir):
             os.makedirs(self.args.temp_dir)
+        logger.info("Fetching %s." % (url))
         idstools.net.get(
             url, open(tmp_filename, "wb"), progress_hook=self.progress_hook)
         logger.info("Done.")
