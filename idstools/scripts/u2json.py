@@ -238,6 +238,9 @@ def main():
         "--stdout", action="store_true", default=False,
         help="also log to stdout if --output is a file")
     parser.add_argument(
+        "--sort-keys", dest="sort_keys", action="store_true", default=False,
+        help="the output of dictionaries will be sorted by key")
+    parser.add_argument(
         "--verbose", action="store_true", default=False,
         help="be more verbose")
     parser.add_argument(
@@ -315,7 +318,7 @@ def main():
     try:
         for record in reader:
             try:
-                as_json = json.dumps(formatter.format(record))
+                as_json = json.dumps(formatter.format(record), sort_keys=args.sort_keys)
                 for out in outputs:
                     out.write(as_json)
                 count += 1
