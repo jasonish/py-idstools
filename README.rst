@@ -83,6 +83,10 @@ Unreleased
 ~~~~~~~~~~
 
 - unified2: fix reading of ipv6 events
+- idstools-u2json: option to sort the keys
+- u2spewfoo: IPv6 printing fixes
+- idstools-rulecat: use ET "enhanced" rules by default
+- idstools-rulecat: suricata inspired colour logging
 
 0.5.4
 ~~~~~
