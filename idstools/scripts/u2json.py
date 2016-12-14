@@ -96,7 +96,7 @@ class Formatter(object):
         packet = {}
         for key in record:
             if key == "data":
-                packet[key] = str(base64.b64encode(record[key]))
+                packet[key] = base64.b64encode(record[key]).decode("utf-8")
             else:
                 packet[key] = record[key]
         return {"packet": packet}
@@ -126,7 +126,7 @@ class Formatter(object):
 
         for key in record:
             if key == "data":
-                data[key] = str(base64.b64encode(record[key]))
+                data[key] = base64.b64encode(record[key]).decode("utf-8")
             else:
                 data[key] = record[key]
 

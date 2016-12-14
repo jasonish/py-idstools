@@ -137,7 +137,8 @@ class EveFilter(object):
 
         # EVE only includes one packet.
         if event["packets"]:
-            output["packet"] = base64.b64encode(event["packets"][0]["data"])
+            output["packet"] = base64.b64encode(
+                event["packets"][0]["data"]).decode("utf-8")
 
         return output
 
@@ -299,7 +300,7 @@ def main():
 
     for event in reader:
         try:
-            encoded = json.dumps(eve_filter.filter(event), encoding="latin-1")
+            encoded = json.dumps(eve_filter.filter(event))
             for out in outputs:
                 out.write(encoded)
         except Exception as err:
