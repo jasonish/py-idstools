@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-#
 # Copyright (c) 2014-2015 Jason Ish
 # All rights reserved.
 #
