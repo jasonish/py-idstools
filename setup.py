@@ -29,7 +29,4 @@ setup(
         "bin/idstools-u2eve",
         "bin/idstools-eve2pcap",
     ],
-    package_data={
-        "idstools.rulecat.configs": ["*.conf", "*.in"],
-    },
 )

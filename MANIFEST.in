@@ -1,0 +1,4 @@
+include LICENSE
+include idstools/rulecat/configs/*.conf
+include idstools/rulecat/configs/*.in
+
