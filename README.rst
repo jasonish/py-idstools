@@ -79,8 +79,8 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-Unreleased
-~~~~~~~~~~
+0.5.5
+~~~~~
 
 - unified2: fix reading of ipv6 events
 - idstools-u2json: option to sort the keys
