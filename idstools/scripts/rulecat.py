@@ -227,8 +227,13 @@ class Fetch(object):
             sys.stdout.write("\n")
             sys.stdout.flush()
 
+    def basename(self, url):
+        """ Return the base filename of the URL. """
+        filename = os.path.basename(url).split("?", 1)[0]
+        return filename
+
     def fetch(self, url):
-        tmp_filename = os.path.join(self.args.temp_dir, os.path.basename(url))
+        tmp_filename = os.path.join(self.args.temp_dir, self.basename(url))
         if not self.args.force and os.path.exists(tmp_filename):
             if time.time() - os.stat(tmp_filename).st_mtime < (60 * 15):
                 logger.info(
