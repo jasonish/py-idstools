@@ -87,6 +87,7 @@ Unreleased
 - u2spewfoo: IPv6 printing fixes
 - idstools-rulecat: use ET "enhanced" rules by default
 - idstools-rulecat: suricata inspired colour logging
+- idstools-rulecat: handle URLs ending with query parameters
 
 0.5.4
 ~~~~~
