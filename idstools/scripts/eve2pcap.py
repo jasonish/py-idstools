@@ -45,6 +45,13 @@ from datetime import datetime
 import ctypes
 import ctypes.util
 
+try:
+    from dateutil import parser
+except:
+    print("This application require the Python dateutil module.",
+          file=sys.stderr)
+    sys.exit(1)
+
 PCAP_ERRBUF_SIZE = 256
 
 DLT_EN10MB = 1
@@ -130,7 +137,7 @@ class PcapDumper:
         libpcap.pcap_dump_close(self._pcap_dumper_t)
 
 def parse_timestamp(timestamp):
-    dt = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f-0600")
+    dt = parser.parse(timestamp)
     return (int(dt.strftime("%s")), dt.microsecond)
 
 def eve2pcap(event):
