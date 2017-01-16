@@ -139,3 +139,19 @@ class DropRuleFilterTestCase(unittest.TestCase):
         self.assertFalse(rule1.enabled)
         self.assertTrue(str(rule1).startswith("# drop"))
         
+    def test_drop_noalert(self):
+        """ Test the rules with "noalert" are not marked as drop. """
+
+        rule_without_noalert = """alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"ET TROJAN [CrowdStrike] ANCHOR PANDA Torn RAT Beacon Message Header Local"; flow:established, to_server; dsize:16; content:"|00 00 00 11 c8 00 00 00 00 00 00 00 00 00 00 00|"; depth:16; flowbits:set,ET.Torn.toread_header; reference:url,blog.crowdstrike.com/whois-anchor-panda/index.html; classtype:trojan-activity; sid:2016659; rev:2; metadata:created_at 2013_03_22, updated_at 2013_03_22;)"""
+
+        rule_with_noalert = """alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"ET TROJAN [CrowdStrike] ANCHOR PANDA Torn RAT Beacon Message Header Local"; flow:established, to_server; dsize:16; content:"|00 00 00 11 c8 00 00 00 00 00 00 00 00 00 00 00|"; depth:16; flowbits:set,ET.Torn.toread_header; flowbits: noalert; reference:url,blog.crowdstrike.com/whois-anchor-panda/index.html; classtype:trojan-activity; sid:2016659; rev:2; metadata:created_at 2013_03_22, updated_at 2013_03_22;)"""
+
+        rule = idstools.rule.parse(rule_without_noalert)
+        matcher = rulecat.IdRuleMatcher.parse("2016659")
+        filter = rulecat.DropRuleFilter(matcher)
+        self.assertTrue(filter.match(rule))
+
+        rule = idstools.rule.parse(rule_with_noalert)
+        matcher = rulecat.IdRuleMatcher.parse("2016659")
+        filter = rulecat.DropRuleFilter(matcher)
+        self.assertFalse(filter.match(rule))

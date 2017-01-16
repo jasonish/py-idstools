@@ -79,6 +79,11 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+unreleased
+~~~~~~~~~~
+
+- idstools-rulecat: don't convert rules with noalert to drop
+
 0.5.5
 ~~~~~
 
