@@ -724,6 +724,8 @@ def main():
 
     rules = []
     for filename in files:
+        if not filename.endswith(".rules"):
+            continue
         logger.debug("Parsing %s." % (filename))
         rules += idstools.rule.parse_fileobj(
             BytesIO(files[filename]), filename)
