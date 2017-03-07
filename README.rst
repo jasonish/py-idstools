@@ -81,6 +81,10 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+unreleased
+~~~~~~~~~~
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.6...HEAD>`_
+
 0.5.6
 ~~~~~
 - idstools-rulecat: fix issue parsing Suricata version on Python 3
