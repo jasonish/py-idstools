@@ -225,15 +225,19 @@ class Fetch(object):
         return False
 
     def progress_hook(self, content_length, bytes_read):
-        percent = int((bytes_read / float(content_length)) * 100)
+        if not content_length or content_length == 0:
+            percent = 0
+        else:
+            percent = int((bytes_read / float(content_length)) * 100)
         buf = " %3d%% - %-30s" % (
             percent, "%d/%d" % (bytes_read, content_length))
         sys.stdout.write(buf)
         sys.stdout.flush()
         sys.stdout.write("\b" * 38)
-        if bytes_read and bytes_read >= content_length:
-            sys.stdout.write("\n")
-            sys.stdout.flush()
+
+    def progress_hook_finish(self):
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
     def basename(self, url):
         """ Return the base filename of the URL. """
@@ -256,6 +260,7 @@ class Fetch(object):
         logger.info("Fetching %s." % (url))
         idstools.net.get(
             url, open(tmp_filename, "wb"), progress_hook=self.progress_hook)
+        self.progress_hook_finish()
         logger.info("Done.")
         return self.extract_files(tmp_filename)
 
