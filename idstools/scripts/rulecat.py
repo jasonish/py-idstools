@@ -610,6 +610,8 @@ def main():
                         metavar="<path>",
                         help="Path to Suricata program (default: %s)" %
                         suricata_path)
+    parser.add_argument("--suricata-version", metavar="<version>",
+                        help="Override Suricata version")
     parser.add_argument("-f", "--force", action="store_true", default=False,
                         help="Force operations that might otherwise be skipped")
     parser.add_argument("--rules-dir", metavar="<directory>",
@@ -668,7 +670,14 @@ def main():
     if args.dump_sample_configs:
         return dump_sample_configs()
 
-    if args.suricata and os.path.exists(args.suricata):
+    if args.suricata_version:
+        suricata_version = idstools.suricata.parse_version(args.suricata_version)
+        if not suricata_version:
+            logger.error("Failed to parse provided Suricata version: %s" % (
+                suricata_version))
+            return 1
+        logger.info("Forcing Suricata version to %s." % (suricata_version.full))
+    elif args.suricata and os.path.exists(args.suricata):
         suricata_version = idstools.suricata.get_version(args.suricata)
         if suricata_version:
             logger.info("Found Suricata version %s at %s." % (

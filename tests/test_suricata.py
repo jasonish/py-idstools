@@ -54,6 +54,8 @@ class Suricata(unittest.TestCase):
         self.assertEqual(version.major, 3)
         self.assertEqual(version.minor, 1)
         self.assertEqual(version.patch, 3)
+        self.assertEqual(version.full, "3.1.3")
+        self.assertEqual(version.raw, buf)
 
     def test_parse_version_bytes(self):
         """Test parsing the version from a string buffer, as returned from
@@ -65,3 +67,30 @@ class Suricata(unittest.TestCase):
         self.assertEqual(version.major, 3)
         self.assertEqual(version.minor, 1)
         self.assertEqual(version.patch, 3)
+        self.assertEqual(version.full, "3.1.3")
+        self.assertEqual(version.raw, buf)
+
+    def test_parse_version_3_part(self):
+        """Test parsing of a short version like "3.2.1" as may be provided by
+        the user on the command line. """
+        buf = "3.2.1"
+        version = suricata.parse_version(buf)
+        self.assertIsNotNone(version)
+        self.assertEqual(version.major, 3)
+        self.assertEqual(version.minor, 2)
+        self.assertEqual(version.patch, 1)
+        self.assertEqual(version.full, "3.2.1")
+        self.assertEqual(version.raw, "3.2.1")
+
+    def test_parse_version_2_part(self):
+        """Test parsing of a short version like "3.2" as may be provided by
+        the user on the command line. """
+        buf = "3.2"
+        version = suricata.parse_version(buf)
+        self.assertIsNotNone(version)
+        self.assertEqual(version.major, 3)
+        self.assertEqual(version.minor, 2)
+        self.assertEqual(version.patch, 0)
+        self.assertEqual(version.full, "3.2")
+        self.assertEqual(version.raw, "3.2")
+        
