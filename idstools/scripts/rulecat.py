@@ -659,8 +659,14 @@ def main():
                         help="Command to run after update if modified")
     parser.add_argument("-T", "--test-command", metavar="<command>",
                         help="Command to test Suricata configuration")
+    parser.add_argument("-V", "--version", action="store_true", default=False,
+                        help="Display version")
 
     args = parser.parse_args()
+
+    if args.version:
+        print("idstools-rulecat version %s" % idstools.version)
+        return 0
 
     if args.verbose:
         logger.setLevel(logging.DEBUG)
