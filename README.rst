@@ -81,13 +81,13 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-unreleased
-~~~~~~~~~~
+0.5.6
+~~~~~
 - idstools-rulecat: fix issue parsing Suricata version on Python 3
 - idstools-rulecat: don't convert rules with noalert to drop
 - idstools-rulecat: allow suricata version to be set on the command
   line (https://github.com/jasonish/py-idstools/issues/38)
-- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.5...HEAD>`_
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.5...0.5.6>`_
 
 0.5.5
 ~~~~~
