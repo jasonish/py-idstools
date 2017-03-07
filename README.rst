@@ -1,5 +1,5 @@
-py-idstools |Build Status|
-==========================
+py-idstools |build-status| |docs|
+=================================
 
 py-idstools is a collection of Python libraries for working with IDS
 systems (typically Snort and Suricata).
@@ -9,6 +9,7 @@ Features
 
 - Snort/Suricata unified2 log file reading.
 - Continuous unified2 directory spool reading with bookmarking.
+- Snort/Suricata rule parser.
 - Parser and mapping for classification.config.
 - Parser and mapping for gen-msg.map and sid-msg.map.
 - Useful utility programs.
@@ -16,7 +17,8 @@ Features
 Programs
 --------
 
-- rulecat - Basic Suricata rule management tool.
+- rulecat - Basic Suricata rule management tool suitable as a
+      replacement for for Oinkmaster and Pulled Pork.
 - eve2pcap - Convert packets and payloads in eve logs to pcap.
 - u2json - Convert unified2 files or spool directories to JSON.
 - gensidmsgmap - Easily create a sid-msg.map file from rule files,
@@ -46,9 +48,12 @@ pip install https://github.com/jasonish/py-idstools/archive/master.zip
 Manually
 ~~~~~~~~
 
-The tools do not require installation to be used, from a .tar.gz or
-.zip archive the tools can be run directly from the bin directory. Or
-to install:
+The idstools programs do not have to be installed to be used, they can
+be executable directly from the archive directory::
+
+  ./bin/idstools-rulecat
+
+Or to install manually::
 
     python setup.py install
 
@@ -72,9 +77,6 @@ Documentation
 -------------
 
 Further documentation is located at http://idstools.readthedocs.org.
-
-.. |Build Status| image:: https://travis-ci.org/jasonish/py-idstools.png?branch=master
-   :target: https://travis-ci.org/jasonish/py-idstools
 
 Changelog
 ---------
@@ -167,3 +169,11 @@ unreleased
 
 - Support the new appid unified2 event types introduced in Snort
   2.9.7.0.alpha.
+
+.. |build-status| image:: https://travis-ci.org/jasonish/py-idstools.png?branch=master
+   :target: https://travis-ci.org/jasonish/py-idstools
+
+.. |docs| image:: https://readthedocs.org/projects/idstools/badge/?version=latest
+   :alt: Documentation Status
+   :scale: 100%
+   :target: https://idstools.readthedocs.io/en/latest/?badge=latest
