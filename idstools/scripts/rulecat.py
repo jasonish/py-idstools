@@ -670,8 +670,12 @@ def main():
 
     if args.suricata and os.path.exists(args.suricata):
         suricata_version = idstools.suricata.get_version(args.suricata)
-        logger.info("Found Suricata version %s at %s." % (
-            str(suricata_version.full), args.suricata))
+        if suricata_version:
+            logger.info("Found Suricata version %s at %s." % (
+                str(suricata_version.full), args.suricata))
+        else:
+            logger.warn("Failed to get Suricata version.")
+            suricata_version = None
     else:
         suricata_version = None
 

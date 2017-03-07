@@ -84,6 +84,7 @@ Changelog
 unreleased
 ~~~~~~~~~~
 
+- idstools-rulecat: fix issue parsing Suricata version on Python 3
 - idstools-rulecat: don't convert rules with noalert to drop
 - `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.5...HEAD>`_
 

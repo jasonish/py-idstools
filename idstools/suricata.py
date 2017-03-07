@@ -45,6 +45,20 @@ def get_path(program="suricata"):
         if os.path.exists(suricata_path):
             logger.debug("Found %s." % (path))
             return suricata_path
+    return None
+
+def parse_version(buf):
+    m = re.search("version ((\d+)\.(\d+)\.?(\d+|\w+)?)", str(buf).strip())
+    if m:
+        full = m.group(1)
+        major = int(m.group(2))
+        minor = int(m.group(3))
+        patch = int(m.group(4))
+        short = "%s.%s" % (major, minor)
+        return SuricataVersion(
+            major=major, minor=minor, patch=patch, short=short, full=full,
+            raw=buf)
+    return None
 
 def get_version(path=None):
     """Get a SuricataVersion named tuple describing the version.
@@ -58,16 +72,5 @@ def get_version(path=None):
         return None
     output = subprocess.check_output([path, "-V"])
     if output:
-        m = re.search("version ((\d+)\.(\d+)\.?(\d+|\w+)?)", output.strip())
-        if m:
-            full = m.group(1)
-            major = m.group(2)
-            minor = m.group(3)
-            patch = m.group(4)
-            short = "%s.%s" % (major, minor)
-            return SuricataVersion(
-                major=major, minor=minor, patch=patch, short=short, full=full,
-                raw=output)
-    return SuricataVersion(
-        major=None, minor=None, patch=None, full=None, short=None,
-        raw=output)
+        return parse_version(output)
+    return None
