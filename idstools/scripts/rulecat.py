@@ -245,7 +245,8 @@ class Fetch(object):
         if not self.args.force and os.path.exists(tmp_filename):
             if time.time() - os.stat(tmp_filename).st_mtime < (60 * 15):
                 logger.info(
-                    "Last download less than 15 minutes ago. Not fetching.")
+                    "Last download less than 15 minutes ago. Not downloading %s.",
+                    url)
                 return self.extract_files(tmp_filename)
             if self.check_checksum(tmp_filename, url):
                 logger.info("Remote checksum has not changed. Not fetching.")
