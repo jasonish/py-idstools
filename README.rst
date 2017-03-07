@@ -18,7 +18,7 @@ Programs
 --------
 
 - rulecat - Basic Suricata rule management tool suitable as a
-      replacement for for Oinkmaster and Pulled Pork.
+  replacement for for Oinkmaster and Pulled Pork.
 - eve2pcap - Convert packets and payloads in eve logs to pcap.
 - u2json - Convert unified2 files or spool directories to JSON.
 - gensidmsgmap - Easily create a sid-msg.map file from rule files,
@@ -85,16 +85,17 @@ unreleased
 ~~~~~~~~~~
 
 - idstools-rulecat: don't convert rules with noalert to drop
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.5...HEAD>`_
 
 0.5.5
 ~~~~~
-
 - unified2: fix reading of ipv6 events
 - idstools-u2json: option to sort the keys
 - u2spewfoo: IPv6 printing fixes
 - idstools-rulecat: use ET "enhanced" rules by default
 - idstools-rulecat: suricata inspired colour logging
 - idstools-rulecat: handle URLs ending with query parameters
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.4...0.5.5>`_
 
 0.5.4
 ~~~~~
@@ -103,30 +104,30 @@ unreleased
 - idstools-rulecat: support a drop.conf for setting rules to drop
 - idstools-eve2pcap: allow link type to be set on command line
 - unified2: handle large appid buffer in newer versions of Snort.
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.3...0.5.4>`_
 
 0.5.3
 ~~~~~
-
 - idstools-rulecat: better documentation
 - idstools-rulecat: use ET Pro https URL
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.2...0.5.3>`_
 
 0.5.2
 ~~~~~
-
 - idstools-u2json: fix --delete
 - idstools-u2json: add --verbose flag for debug logging
 - idstools-rulecat: allow multiple urls
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.1...0.5.2>`_
 
 0.5.1
 ~~~~~
-
 - New tool: eve2pcap. Converts packets and payloads found in Suricata
   EVE logs to pcap files.
 - Rule parser: handle multi-line rules.
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.0...0.5.1>`_
 
 0.5.0
 ~~~~~
-
 - New tool: idstools-dumpdynamicrules. A wrapper around Snort to dump
   dynamic rule stubs and optionally repack the tarball with the new
   stubs.
@@ -135,40 +136,41 @@ unreleased
   will probably become more of a basic example program.
 - A basic packet decoding module.
 - New tool: rulecat. A basic Suricata rule management tool.
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.4.4...0.5.0>`_
 
 0.4.4
 ~~~~~
-
 - Fix reading of growing file on OS X.
 - Fix error in parsing decoder rules introduced in 0.4.3.
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.4.3...0.4.4>`_
 
 0.4.3
 ~~~~~
-
 - Make the rule direction an accessible field of the rule object.
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.4.2...0.4.3>`_
 
 0.4.2
 ~~~~~
-
 - Fix issue loading signature map files (GitHub issue #2).
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.4.1...0.4.2>`_
 
 0.4.1
 ~~~~~
-
 - Fix IPv6 address unpacking.
 - In u2json, if the protocol number can't be converted to a string,
   encode the number as a string for a consistent JSON data type.
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.4.0...0.4.1>`_
 
 0.4.0
 ~~~~~
-
 - New tool, u2json to convert unified2 files to JSON.
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.3.1...0.4.0>`_
 
 0.3.1
 ~~~~~
-
 - Support the new appid unified2 event types introduced in Snort
   2.9.7.0.alpha.
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.3.0...0.3.1>`_
 
 .. |build-status| image:: https://travis-ci.org/jasonish/py-idstools.png?branch=master
    :target: https://travis-ci.org/jasonish/py-idstools
