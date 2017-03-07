@@ -48,15 +48,15 @@ def get_path(program="suricata"):
     return None
 
 def parse_version(buf):
-    m = re.search("((\d+)\.(\d+)\.?(\d+|\w+)?)", str(buf).strip())
+    m = re.search("((\d+)\.(\d+)(\.(\d+))?(\w+)?)", str(buf).strip())
     if m:
         full = m.group(1)
         major = int(m.group(2))
         minor = int(m.group(3))
-        if not m.group(4):
+        if not m.group(5):
             patch = 0
         else:
-            patch = int(m.group(4))
+            patch = int(m.group(5))
         short = "%s.%s" % (major, minor)
         return SuricataVersion(
             major=major, minor=minor, patch=patch, short=short, full=full,

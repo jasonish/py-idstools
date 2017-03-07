@@ -94,3 +94,12 @@ class Suricata(unittest.TestCase):
         self.assertEqual(version.full, "3.2")
         self.assertEqual(version.raw, "3.2")
         
+    def test_parse_version_dev(self):
+        buf = "This is Suricata version 4.0dev (rev 0fc9003)"
+        version = suricata.parse_version(buf)
+        self.assertIsNotNone(version)
+        self.assertEqual(version.major, 4)
+        self.assertEqual(version.minor, 0)
+        self.assertEqual(version.patch, 0)
+        self.assertEqual(version.full, "4.0dev")
+        self.assertEqual(version.raw, buf)
