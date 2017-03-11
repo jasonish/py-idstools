@@ -49,6 +49,9 @@ class SuriColourLogHandler(logging.StreamHandler):
         if record.levelname == "ERROR":
             level_prefix = self.REDB
             message_prefix = self.REDB
+        elif record.levelname == "WARNING":
+            level_prefix = self.ORANGE
+            message_prefix = self.ORANGE
         else:
             level_prefix = self.YELLOW
             message_prefix = ""
