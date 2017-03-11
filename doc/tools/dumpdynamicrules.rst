@@ -1,5 +1,5 @@
-dumpdynamicrules
-================
+dumpdynamicrules - Snort SO stub generator helper
+=================================================
 
 .. automodule:: idstools.scripts.dumpdynamicrules
 

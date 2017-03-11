@@ -1,5 +1,5 @@
-gensidmsgmap
-============
+gensidmsgmap - sid-msg.map generator
+====================================
 
 .. automodule:: idstools.scripts.gensidmsgmap
 

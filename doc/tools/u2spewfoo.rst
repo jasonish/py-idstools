@@ -1,5 +1,5 @@
-u2spewfoo
-=========
+u2spewfoo - A python/idstools implementation of u2spewfoo
+=========================================================
 
 .. automodule:: idstools.scripts.u2spewfoo
 

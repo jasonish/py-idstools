@@ -1,5 +1,5 @@
-eve2pcap
-========
+eve2pcap - Convert packets/payloads in eve logs to pcap
+=======================================================
 
 .. automodule:: idstools.scripts.eve2pcap
 

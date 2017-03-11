@@ -1,5 +1,5 @@
-rulecat
-=======
+rulecat - A Suricata rule update tool
+=====================================
 
 .. automodule:: idstools.scripts.rulecat
 

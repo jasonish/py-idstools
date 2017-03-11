@@ -1,5 +1,5 @@
-u2fast
-======
+u2fast - Unified2 to fast style printer
+=======================================
 
 .. automodule:: idstools.scripts.u2fast
 

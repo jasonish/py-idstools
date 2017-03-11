@@ -1,5 +1,5 @@
-u2eve
-=====
+u2eve - Unified2 to Suricata eve events
+=======================================
 
 .. automodule:: idstools.scripts.u2eve
 

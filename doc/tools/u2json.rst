@@ -1,5 +1,5 @@
-u2json
-======
+u2json - A unified2 to JSON converter
+=====================================
 
 .. automodule:: idstools.scripts.u2json
 
