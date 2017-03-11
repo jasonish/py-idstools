@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Jason Ish
+# Copyright (c) 2015-2017 Jason Ish
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -599,6 +599,12 @@ def resolve_etopen_url(suricata_version):
 
     return ET_OPEN_URL % mappings
 
+def ignore_file(ignore_files, filename):
+    for name in ignore_files:
+        if name == filename:
+            return True
+    return False
+
 def main():
 
     conf_filenames = [arg for arg in sys.argv if arg.startswith("@")]
@@ -649,6 +655,10 @@ def main():
                         help="Filename of rule modification configuration")
     parser.add_argument("--drop", metavar="<filename>",
                         help="Filename of drop rules configuration")
+
+    parser.add_argument("--ignore", metavar="<filename>", action="append",
+                        default=[],
+                        help="Filenames to ignore")
 
     parser.add_argument("--threshold-in", metavar="<filename>",
                         help="Filename of rule thresholding configuration")
@@ -733,6 +743,9 @@ def main():
     rules = []
     for filename in files:
         if not filename.endswith(".rules"):
+            continue
+        if ignore_file(args.ignore, filename):
+            logger.info("Ignoring file %s" % (filename))
             continue
         logger.debug("Parsing %s." % (filename))
         rules += idstools.rule.parse_fileobj(
