@@ -83,6 +83,7 @@ Changelog
 
 unreleased
 ~~~~~~~~~~
+- More python 3 fixups.
 - `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.6...HEAD>`_
 
 0.5.6
