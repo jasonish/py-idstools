@@ -36,6 +36,14 @@ idstools.scripts.rulecat module
     :undoc-members:
     :show-inheritance:
 
+idstools.scripts.rulemod module
+-------------------------------
+
+.. automodule:: idstools.scripts.rulemod
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 idstools.scripts.u2eve module
 -----------------------------
 

@@ -35,7 +35,13 @@ Options
 .. option:: --suricata=<path>
 
    The path to the Suricata program used to determine which version of
-   the ET pro rules to download if not explicitly set in a --url.
+   the ET pro rules to download if not explicitly set in a ``--url``
+   argument.
+
+.. option:: --suricata-version <version>
+
+   Set the Suricata version to a specific version instead of checking
+   the version of Suricata on the path.
 
 .. option:: --force
 
@@ -43,10 +49,15 @@ Options
    be due to just recently downloaded, or the remote checksum matching
    the cached copy.
 
-.. option:: -o
+.. option:: -o, --output
 
    The directory where rule individual rules files will be written
    to. One of ``-o`` or ``--merged`` is required.
+
+.. option:: --merged=<filename>
+
+   Write a single file containing all rules. This can be used in
+   addition to ``-o`` or instead of ``-o``.
 
 .. option:: --yaml-fragment=<filename.yaml>
 
@@ -54,15 +65,45 @@ Options
    all downloaded rule files listed for inclusion in your
    *suricata.yaml*.
 
-.. option:: --merged=<filename>
-
-   Write a single file containing all rules. This can be used in
-   addition to ``-o`` or instead of ``-o``.
-
 .. option:: --url=<url>
 
    A URL to download rules from. This option can be used multiple
    times.
+
+.. option:: --sid-msg-map=<filename>
+
+   Output a v1 style sid-msg.map file.
+
+.. option:: --sid-msg-map-2=<filename>
+
+   Output a v2 style sid-msg.map file.
+
+.. option:: --disable=<disable.conf>
+
+   Specify the configuration file for disabling rules.
+
+.. option:: --enable=<enable.conf>
+
+   Specify the configuration file for enabling rules.
+
+.. option:: --modify=<modify.conf>
+
+   Specify the configuration file for rule modifications.
+
+.. option:: --drop=<drop.conf>
+
+   Specify the configuration file for rules to change to drop.
+
+.. option:: --ignore=<filename>
+
+   Filenames to ignore. This only deals with the base filename for now
+   such as ``emering-deleted.rules``, NOT
+   ``rules/emerging-deleted.rules``.
+
+   This argument may be specified multiple times.
+
+   Alternatively the **group** matcher may be used in the file passed
+   to ``--disable``.
 
 .. option:: --etopen
 
@@ -77,14 +118,6 @@ Options
 
    Download the ET pro ruleset using the provided code.
 
-.. option:: --sid-msg-map=<filename>
-
-   Output a v1 style sid-msg.map file.
-
-.. option:: --sid-msg-map-2=<filename>
-
-   Output a v2 style sid-msg.map file.
-
 .. option:: -q, --quiet
 
    Run quietly. Only warning and error message will be displayed.
@@ -93,18 +126,6 @@ Options
 
    Output sample configuration files for the ``--disable``,
    ``--enable``, ``--modify`` and ``--threshold-in`` commands.
-
-.. option:: --disable=<disable.conf>
-
-   Specify the configuration file for disabling rules.
-
-.. option:: --enable=<enable.conf>
-
-   Specify the configuration file for enabling rules.
-
-.. option:: --modify=<modify.conf>
-
-   Specify the configuration file for rule modifications.
 
 .. option:: --threshold-in=<threshold.conf.in>
 
@@ -123,15 +144,19 @@ Options
 
    will tell Suricata to reload its rules.
 
+.. option:: -V, --version
+
+   Display the version of **idstools-rulecat**.
+
 Examples
 --------
 
-Download ET open rules for the version of Suricata found on the path,
+Download ET Open rules for the version of Suricata found on the path,
 saving the rules in /etc/suricata/rules::
 
     idstools-rulecat -o /etc/suricata/rules
 
-Download ET pro rules for the version of Suricata found on the path,
+Download ET Pro rules for the version of Suricata found on the path,
 saving the rules in /etc/suricata/rules::
 
     idstools-rulecat --etpro XXXXXXXXXXXXXXXX -o /etc/suricata/rules

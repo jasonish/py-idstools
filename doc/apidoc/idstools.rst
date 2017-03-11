@@ -6,6 +6,7 @@ Subpackages
 
 .. toctree::
 
+    idstools.rulecat
     idstools.scripts
 
 Submodules
