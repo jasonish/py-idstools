@@ -25,12 +25,27 @@
 
 from __future__ import print_function
 
+import os
 import unittest
 import shlex
 import re
 
 import idstools.rule
 from idstools.scripts import rulecat
+
+class TestFetch(unittest.TestCase):
+
+    def test_check_checksum(self):
+        """Test that we detect when the checksum are the same. This is mainly
+        to catch issues between Python 2 and 3.
+        """
+        fetch = rulecat.Fetch(None)
+        url = "file://%s/emerging.rules.tar.gz" % (
+            os.path.dirname(os.path.realpath(__file__)))
+        local_file = "%s/emerging.rules.tar.gz" % (
+            os.path.dirname(os.path.realpath(__file__)))
+        r = fetch.check_checksum(local_file, url)
+        self.assertTrue(r)
 
 class ThresholdProcessorTestCase(unittest.TestCase):
 

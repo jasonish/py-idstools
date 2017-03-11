@@ -40,6 +40,7 @@ import shutil
 
 try:
     from io import BytesIO
+    from io import StringIO
 except:
     from StringIO import StringIO as BytesIO
 
@@ -210,14 +211,15 @@ class Fetch(object):
     def check_checksum(self, tmp_filename, url):
         try:
             checksum_url = url + ".md5"
-            local_checksum = hashlib.md5(open(tmp_filename).read()).hexdigest()
+            local_checksum = hashlib.md5(
+                open(tmp_filename, "rb").read()).hexdigest().strip()
             remote_checksum_buf = BytesIO()
             logger.info("Checking %s." % (checksum_url))
-            remote_checksum = idstools.net.get(
-                checksum_url, remote_checksum_buf)
+            idstools.net.get(checksum_url, remote_checksum_buf)
+            remote_checksum = remote_checksum_buf.getvalue().decode().strip()
             logger.debug("Local checksum=|%s|; remote checksum=|%s|" % (
-                local_checksum.strip(), remote_checksum_buf.getvalue().strip()))
-            if local_checksum.strip() == remote_checksum_buf.getvalue().strip():
+                local_checksum, remote_checksum))
+            if local_checksum == remote_checksum:
                 os.utime(tmp_filename, None)
                 return True
         except Exception as err:
