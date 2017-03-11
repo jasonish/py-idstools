@@ -197,6 +197,29 @@ calling ``idstools-rulecat`` with no arguments. Otherwise you can
 point *idstools-rulecat* at a configuration with the command
 ``idstools-rulecat @/path/to/rulecat.conf``.
 
+Example Configuration Files
+---------------------------
+
+Example Configuration to Enable Rules (--enable)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../../idstools/rulecat/configs/enable.conf
+
+Example Configuration to Enable Disable (--disable)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../../idstools/rulecat/configs/disable.conf
+
+Example Configuration to convert Rules to Drop (--drop)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../../idstools/rulecat/configs/drop.conf
+
+Example Configuration to modify Rules (--modify)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../../idstools/rulecat/configs/modify.conf
+
 Source
 ------
 
