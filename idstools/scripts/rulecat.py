@@ -338,19 +338,16 @@ def load_matchers(filename):
 
     return matchers
 
-def load_local_files(local, files):
+def load_local(local, files):
     """Load local files into the files dict."""
     if os.path.isdir(local):
         for dirpath, dirnames, filenames in os.walk(local):
             for filename in filenames:
                 if filename.endswith(".rules"):
                     path = os.path.join(local, filename)
-                    if filename in files:
-                        logger.warn(
-                            "Local file %s overrides existing file of "
-                            "same name." % (path))
-                    files[filename] = open(path).read()
+                    load_local(path, files)
     else:
+        logger.info("Loading local file %s" % (local))
         filename = os.path.basename(local)
         if filename in files:
             logger.warn(
@@ -640,7 +637,8 @@ def main():
     parser.add_argument("--url", metavar="<url>", action="append",
                         default=[],
                         help="URL to use instead of auto-generating one")
-    parser.add_argument("--local", metavar="<filename>",
+    parser.add_argument("--local", metavar="<filename>", action="append",
+                        default=[],
                         help="Local rule files or directories")
     parser.add_argument("--sid-msg-map", metavar="<filename>",
                         help="Generate a sid-msg.map file")
@@ -737,8 +735,8 @@ def main():
 
     files = Fetch(args).run()
 
-    if args.local:
-        load_local_files(args.local, files)
+    for path in args.local:
+        load_local(path, files)
 
     rules = []
     for filename in files:

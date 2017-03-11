@@ -70,6 +70,12 @@ Options
    A URL to download rules from. This option can be used multiple
    times.
 
+.. option:: --local=<filename or directory>
+
+   A path to a filename or directory of local rule files to
+   include. May be specified multiple times and should not include
+   files in the output path.
+
 .. option:: --sid-msg-map=<filename>
 
    Output a v1 style sid-msg.map file.
