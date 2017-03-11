@@ -89,14 +89,15 @@ class IdRuleMatcher(object):
         return self.generatorId == rule.gid and self.signatureId == rule.sid
 
     @classmethod
-    def parse(cls, match):
+    def parse(cls, buf):
+        logger.debug("Parsing ID matcher: %s" % (buf))
         try:
-            signatureId = int(match)
+            signatureId = int(buf)
             return cls(1, signatureId)
         except:
             pass
         try:
-            generatorString, signatureString = match.split(":")
+            generatorString, signatureString = buf.split(":")
             generatorId = int(generatorString)
             signatureId = int(signatureString)
             return cls(generatorId, signatureId)
@@ -117,10 +118,11 @@ class GroupMatcher(object):
         return False
 
     @classmethod
-    def parse(cls, match):
-        if match.startswith("group:"):
+    def parse(cls, buf):
+        if buf.startswith("group:"):
             try:
-                group = match.split(":", 1)[1]
+                logger.debug("Parsing group matcher: %s" % (buf))
+                group = buf.split(":", 1)[1]
                 return cls(group.strip())
             except:
                 pass
@@ -142,9 +144,8 @@ class ReRuleMatcher(object):
     def parse(cls, buf):
         if buf.startswith("re:"):
             try:
+                logger.debug("Parsing regex matcher: %s" % (buf))
                 patternstr = buf.split(":", 1)[1].strip()
-                logger.debug(
-                    "Compiling regular expression match: %s" % (patternstr))
                 pattern = re.compile(patternstr, re.I)
                 return cls(pattern)
             except:
