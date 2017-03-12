@@ -4,19 +4,8 @@ py-idstools |build-status| |docs|
 py-idstools is a collection of Python libraries for working with IDS
 systems (typically Snort and Suricata).
 
-Features
---------
-
-- Snort/Suricata unified2 log file reading.
-- Continuous unified2 directory spool reading with bookmarking.
-- Snort/Suricata rule parser.
-- Parser and mapping for classification.config.
-- Parser and mapping for gen-msg.map and sid-msg.map.
-- Useful utility programs.
-
-Programs
---------
-
+Included Programs
+-----------------
 - rulecat - Basic Suricata rule management tool suitable as a
   replacement for for Oinkmaster and Pulled Pork.
 - eve2pcap - Convert packets and payloads in eve logs to pcap.
@@ -25,6 +14,15 @@ Programs
   directories or a rule tarball.
 - dumpdynamicrules - Helper for dumping Snort SO dynamic rule stubs.
 - u2eve - Convert unified2 files to EVE compatible JSON.
+
+Library Features
+----------------
+
+- Snort/Suricata unified2 log file parsing.
+- Continuous unified2 directory spool reading with bookmarking.
+- Snort/Suricata rule parser.
+- Parser and lookup maps for classification.config.
+- Parser and lookup maps for gen-msg.map and sid-msg.map.
 
 Requirements
 ------------
@@ -55,7 +53,7 @@ be executable directly from the archive directory::
 
 Or to install manually::
 
-    python setup.py install
+  python setup.py install
 
 Examples
 --------
@@ -66,12 +64,48 @@ Reading a Unified2 Spool Directory
 The following code snippet will "tail" a unified log directory
 aggregating records into events::
 
-    from idstools import unified2
+  from idstools import unified2
 
-    reader = unified2.SpoolEventReader("/var/log/snort",
-        "unified2.log", follow=True)
-    for event in reader:
-        print(event)
+  reader = unified2.SpoolEventReader("/var/log/snort",
+      "unified2.log", follow=True)
+  for event in reader:
+      print(event)
+
+See the `idstools unified2
+<http://idstools.readthedocs.io/en/latest/unified2.html>`_
+documentation for more information on read and parsing unified2 files.
+
+Parse Suricata/Snort Rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following code snippet will parse all the rules in a rule file::
+
+  from idstools import rule
+
+  for rule in rule.parse_file(sys.argv[1]):
+      print("[%d:%d:%d] %s" % (
+          rule.gid, rule.sid, rule.rev, rule.msg))
+
+In addition to parsing `files
+<http://idstools.readthedocs.io/en/latest/apidoc/idstools.html#idstools.rule.parse_file>`_,
+`file objects
+<http://idstools.readthedocs.io/en/latest/apidoc/idstools.html#idstools.rule.parse_fileobj>`_
+and `strings
+<http://idstools.readthedocs.io/en/latest/apidoc/idstools.html#idstools.rule.parse>`_
+containing individual rules can be parsed.
+
+Update Suricata Rules
+~~~~~~~~~~~~~~~~~~~~~
+
+The following command will update your Suricata rules with the latest
+Emerging Threats Open ruleset for the version of Snort you have
+installed::
+
+  idstools-rulecat -o /etc/suricata/rules
+
+See the `idstools-rulecat documentation
+<http://idstools.readthedocs.io/en/latest/tools/rulecat.html>`_ for
+more examples and options.
 
 Documentation
 -------------

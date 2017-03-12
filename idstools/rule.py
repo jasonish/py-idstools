@@ -78,44 +78,33 @@ decoder_rule_pattern = re.compile(
     % "|".join(actions))
 
 class Rule(dict):
-    """ Class representing a rule.
+    """Class representing a rule.
 
     The Rule class is a class that also acts like a dictionary.
 
     Dictionary fields:
 
     - **group**: The group the rule belongs to, typically the filename.
-
     - **enabled**: True if rule is enabled (uncommented), False is
-        disabled (commented)
-
+      disabled (commented)
     - **action**: The action of the rule (alert, pass, etc) as a
-        string
-
+      string
     - **direction**: The direction string of the rule.
-
     - **gid**: The gid of the rule as an integer
-
     - **sid**: The sid of the rule as an integer
-
     - **rev**: The revision of the rule as an integer
-
     - **msg**: The rule message as a string
-
     - **flowbits**: List of flowbit options in the rule
-
     - **metadata**: Metadata values as a list
-
     - **references**: References as a list
-
     - **classtype**: The classification type
-
     - **priority**: The rule priority, 0 if not provided
-
     - **raw**: The raw rule as read from the file or buffer
 
     :param enabled: Optional parameter to set the enabled state of the rule
     :param action: Optional parameter to set the action of the rule
+    :param group: Optional parameter to set the group (filename) of the rule
+
     """
 
     def __init__(self, enabled=None, action=None, group=None):
