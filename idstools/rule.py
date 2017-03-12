@@ -141,6 +141,8 @@ class Rule(dict):
 
     @property
     def idstr(self):
+        """Return the gid and sid of the rule as a string formatted like:
+        '[GID:SID]'"""
         return "[%s:%s]" % (str(self.gid), str(self.sid))
 
     def brief(self):

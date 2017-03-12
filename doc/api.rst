@@ -1,5 +1,5 @@
-API
-===
+API - Auto Generated API Documentation
+======================================
 
 .. toctree::
    :maxdepth: 6

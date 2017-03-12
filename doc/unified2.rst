@@ -84,7 +84,6 @@ Packet
 .. autoclass:: idstools.unified2.Packet
    :noindex:
 
-
 ExtraData
 ^^^^^^^^^
 

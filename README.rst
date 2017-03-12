@@ -87,11 +87,11 @@ The following code snippet will parse all the rules in a rule file::
           rule.gid, rule.sid, rule.rev, rule.msg))
 
 In addition to parsing `files
-<http://idstools.readthedocs.io/en/latest/apidoc/idstools.html#idstools.rule.parse_file>`_,
+<http://idstools.readthedocs.io/en/latest/apidoc/idstools.rule.html#idstools.rule.parse_file>`_,
 `file objects
-<http://idstools.readthedocs.io/en/latest/apidoc/idstools.html#idstools.rule.parse_fileobj>`_
+<http://idstools.readthedocs.io/en/latest/apidoc/idstools.rule.html#idstools.rule.parse_fileobj>`_
 and `strings
-<http://idstools.readthedocs.io/en/latest/apidoc/idstools.html#idstools.rule.parse>`_
+<http://idstools.readthedocs.io/en/latest/apidoc/idstools.rule.html#idstools.rule.parse>`_
 containing individual rules can be parsed.
 
 Update Suricata Rules
