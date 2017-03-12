@@ -84,17 +84,16 @@ def calculate_flow_id(event):
     flow_id = event["protocol"] << 24
 
     if len(event["source-ip.raw"]) == 4:
-        flow_id = flow_id ^ \
-           struct.unpack(">L", event["source-ip.raw"])[0] ^ \
+        flow_id += struct.unpack(">L", event["source-ip.raw"])[0] + \
            struct.unpack(">L", event["destination-ip.raw"])[0]
     else:
         for part in struct.unpack(">LLLL", event["source-ip.raw"]):
-            flow_id = flow_id ^ part
+            flow_id += part
         for part in struct.unpack(">LLLL", event["destination-ip.raw"]):
-            flow_id = flow_id ^ part
+            flow_id += part
 
-    if "src_port" in event and "dest_port" in event:
-        flow_id = flow_id ^ event["src_port"] ^ event["dest_port"]
+    if "sport-itype" in event and "dport-icode" in event:
+        flow_id += event["sport-itype"] + event["dport-icode"]
 
     return flow_id
 
