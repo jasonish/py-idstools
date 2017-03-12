@@ -136,8 +136,12 @@ class EveFilter(object):
 
         # EVE only includes one packet.
         if event["packets"]:
+            packet = event["packets"][0]
             output["packet"] = base64.b64encode(
                 event["packets"][0]["data"]).decode("utf-8")
+            output["packet_info"] = {
+                "linktype": packet["linktype"],
+            }
 
         return output
 
