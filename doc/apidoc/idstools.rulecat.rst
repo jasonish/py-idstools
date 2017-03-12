@@ -11,14 +11,9 @@ Subpackages
 Submodules
 ----------
 
-idstools.rulecat.loghandler module
-----------------------------------
+.. toctree::
 
-.. automodule:: idstools.rulecat.loghandler
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   idstools.rulecat.loghandler
 
 Module contents
 ---------------
