@@ -117,6 +117,7 @@ Changelog
 
 unreleased
 ~~~~~~~~~~
+- idstools-u2eve - output packet records
 - idstools-rulecat: allow --local to be specified multiple times
 - idstools-rulecat: --ignore option to ignore filenames
 - More python 3 fixups.

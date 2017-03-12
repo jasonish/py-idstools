@@ -23,7 +23,8 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Read unified2 log files and output events as Suricata EVE JSON."""
+"""Read unified2 log files and output events as Suricata EVE JSON (or
+as close as possible)."""
 
 from __future__ import print_function
 
@@ -104,11 +105,16 @@ class EveFilter(object):
         self.msgmap = msgmap
         self.classmap = classmap
 
-    def filter(self, event):
+    def format_event(self, event):
         output = OrderedDict()
         output["timestamp"] = render_timestamp(
             event["event-second"], event["event-microsecond"])
         output["sensor_id"] = event["sensor-id"]
+
+        # These are Snort only.
+        output["event_id"] = event["event-id"]
+        output["event_second"] = event["event-second"]
+
         output["event_type"] = "alert"
         output["src_ip"] = event["source-ip"]
         if event["protocol"] in [socket.IPPROTO_UDP, socket.IPPROTO_TCP]:
@@ -135,15 +141,37 @@ class EveFilter(object):
         output["alert"] = alert
 
         # EVE only includes one packet.
-        if event["packets"]:
-            packet = event["packets"][0]
-            output["packet"] = base64.b64encode(
-                event["packets"][0]["data"]).decode("utf-8")
+        if event["packet"]:
+            packet = event["packet"]
+            output["packet"] = base64.b64encode(packet["data"]).decode("utf-8")
             output["packet_info"] = {
                 "linktype": packet["linktype"],
             }
 
         return output
+
+    def format_packet(self, packet):
+        output = OrderedDict()
+        output["timestamp"] = render_timestamp(
+            packet["packet-second"], packet["packet-microsecond"])
+        output["sensor_id"] = packet["sensor-id"]
+
+        # Snort only values, but needed to correlate the packet with
+        # the event.
+        output["event_id"] = packet["event-id"]
+        output["event_second"] = packet["event-second"]
+
+        output["packet"] = base64.b64encode(packet["data"]).decode("utf-8")
+        output["packet_info"] = {
+            "linktype": packet["linktype"],
+        }
+        return output
+
+    def filter(self, event):
+        if isinstance(event, unified2.Event):
+            return self.format_event(event)
+        elif isinstance(event, unified2.Packet):
+            return self.format_packet(event)
 
     def resolve_classification(self, event, default=None):
         if self.classmap:
@@ -210,6 +238,17 @@ epilog = """If --directory and --prefix are provided files will be
 read from the specified 'spool' directory.  Otherwise files on the
 command line will be processed.
 """
+
+class Writer:
+
+    def __init__(self, outputs, formatter):
+        self.outputs = outputs
+        self.formatter = formatter
+
+    def write(self, event):
+        encoded = json.dumps(self.formatter.filter(event))
+        for output in self.outputs:
+            output.write(encoded)
 
 def main():
 
@@ -288,6 +327,8 @@ def main():
     else:
         outputs.append(OutputWrapper("-", sys.stdout))
 
+    writer = Writer(outputs, eve_filter)
+
     if args.directory and args.prefix:
         reader = unified2.SpoolEventReader(
             directory=args.directory,
@@ -296,19 +337,32 @@ def main():
             delete=args.delete,
             bookmark=args.bookmark)
     elif args.filenames:
-        reader = unified2.FileEventReader(*args.filenames)
+        reader = unified2.FileRecordReader(*args.filenames)
     else:
         print("nothing to do.")
         return
 
-    for event in reader:
-        try:
-            encoded = json.dumps(eve_filter.filter(event))
-            for out in outputs:
-                out.write(encoded)
-        except Exception as err:
-            LOG.error("Failed to encode record as JSON: %s: %s" % (
-                str(err), str(event)))
+    event = None
+    for record in reader:
+        if isinstance(record, unified2.Event):
+            if event is not None:
+                writer.write(event)
+            event = record
+        elif isinstance(record, unified2.ExtraData):
+            if not event:
+                continue
+            event["extra-data"].append(record)
+        elif isinstance(record, unified2.Packet):
+            if event and "packet" in event:
+                writer.write(event)
+                event = None
+            if event is None:
+                # Write packet...
+                writer.write(record)
+            else:
+                event["packet"] = record
+    if event:
+        writer.write(event)
 
 if __name__ == "__main__":
     sys.exit(main())
