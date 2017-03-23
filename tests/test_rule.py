@@ -52,6 +52,27 @@ class RuleTestCase(unittest.TestCase):
         self.assertEquals(rule.flowbits[1], "unset,otherbit")
         self.assertEquals(rule.classtype, "trojan-activity")
 
+    def test_parse2(self):
+        # Some mods have been made to this rule (flowbits) for the
+        # purpose of testing.
+        rule = idstools.rule.parse("""alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"ET CURRENT_EVENTS Request to .in FakeAV Campaign June 19 2012 exe or zip"; flow:established,to_server; content:"setup."; fast_pattern:only; http_uri; content:".in|0d 0a|"; flowbits:isset,somebit; flowbits:unset,otherbit; http_header; pcre:"/\/[a-f0-9]{16}\/([a-z0-9]{1,3}\/)?setup\.(exe|zip)$/U"; pcre:"/^Host\x3a\s.+\.in\r?$/Hmi"; metadata:stage,hostile_download; reference:url,isc.sans.edu/diary/+Vulnerabilityqueerprocessbrittleness/13501; classtype:trojan-activity; sid:2014929; rev:1;)""", msg_metadata=idstools.rule.ET_METADATA)
+        self.assertEqual(rule.enabled, True)
+        self.assertEqual(rule.action, "alert")
+        self.assertEqual(rule.direction, "->")
+        self.assertEqual(rule.sid, 2014929)
+        self.assertEqual(rule.rev, 1)
+        self.assertEqual(rule.msg, "ET CURRENT_EVENTS Request to .in FakeAV Campaign June 19 2012 exe or zip")
+        self.assertEqual(len(rule.metadata), 2)
+        self.assertEqual(rule.metadata[0], "stage")
+        self.assertEqual(rule.metadata[1], "hostile_download")
+        self.assertEqual(len(rule.flowbits), 2)
+        self.assertEquals(rule.flowbits[0], "isset,somebit")
+        self.assertEquals(rule.flowbits[1], "unset,otherbit")
+        self.assertEquals(rule.classtype, "trojan-activity")
+        self.assertEqual(rule.ruleset, "ET")
+        self.assertEqual(rule.category, "CURRENT_EVENTS")
+        self.assertEqual(rule.msg_type, idstools.rule.ET_METADATA)
+
     def test_disable_rule(self):
         rule_buf = """# alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)"""
         rule = idstools.rule.parse(rule_buf)
@@ -147,4 +168,21 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
         print("%s" % reassembled)
 
         self.assertEquals(rule_string, reassembled)
-        
+
+    def test_parse_msg_ET(self):
+        parsed_msg = idstools.rule.parse_msg("ET CURRENT_EVENTS Request to .in FakeAV Campaign June 19 2012 exe or zip", idstools.rule.ET_METADATA)
+        self.assertEqual(parsed_msg["msg_type"], idstools.rule.ET_METADATA)
+        self.assertEqual(parsed_msg["ruleset"], "ET")
+        self.assertEqual(parsed_msg["category"], "CURRENT_EVENTS")
+
+    def test_parse_msg_SNORT(self):
+        parsed_msg = idstools.rule.parse_msg("DELETED BLACKLIST DNS request for known malware domain devid.info", idstools.rule.SNORT_METADATA)
+        self.assertEqual(parsed_msg["msg_type"], idstools.rule.SNORT_METADATA)
+        self.assertTrue(parsed_msg["deleted"])
+        self.assertEqual(parsed_msg["category"], "BLACKLIST")
+        parsed_msg = idstools.rule.parse_msg("MALWARE-CNC Win.Backdoor.ZxShell connection incoming attempt", idstools.rule.SNORT_METADATA)
+        self.assertEqual(parsed_msg["msg_type"], idstools.rule.SNORT_METADATA)
+        self.assertFalse(parsed_msg["deleted"])
+        self.assertEqual(parsed_msg["category"], "MALWARE")
+        self.assertEqual(parsed_msg["sub_category"], "CNC")
+

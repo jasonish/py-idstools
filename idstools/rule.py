@@ -77,6 +77,10 @@ decoder_rule_pattern = re.compile(
     r")"
     % "|".join(actions))
 
+# Format used for encapsulate some metatadata in msg field
+ET_METADATA    = "ET"
+SNORT_METADATA = "SNORT"
+
 class Rule(dict):
     """Class representing a rule.
 
@@ -198,7 +202,53 @@ def add_option(rule, name, value, index=None):
         rule.rebuild_options())
     return parse(new_rule_string, rule["group"])
 
-def parse(buf, group=None):
+def parse_msg(rule, msg_type):
+    """ Parse metadata from rule msg field. Accepts just the msg field but also a rule object.
+
+    :param rule: A string representing the rule msg field or a parsed Rule object
+    :param msg_type: either ET_METADATA or SNORT_METADATA
+
+    :returns: A dict with the extracted metadata, if a Rule object was passed it will be updated with this data
+    """
+    if type(rule) == Rule:
+        msg = rule.msg
+    elif type(rule) == type(str()):
+        msg = rule
+    else:
+        return
+
+    tokens = msg.split()
+    if not len(tokens):
+        return
+
+    metadata = {}
+    if msg_type == ET_METADATA and len(tokens) >= 2:
+        # Parse ET like msg structure
+        # RULESET CATEGORY DESC
+        metadata["ruleset"] = tokens[0]
+        metadata["category"] = tokens[1]
+        metadata["msg_type"] = ET_METADATA
+
+    if msg_type == SNORT_METADATA:
+        # Parse SNORT like msg structure
+        # CATEGORY-SUBCATEGORY DESC
+        # DELETED CATEGORY-SUBCATEGORY DESC
+        metadata["deleted"] = tokens[0] == "DELETED"
+        if metadata["deleted"]:
+            tokens.pop(0)
+        category = tokens[0]
+        if "-" in category:
+            subcategories = category.split("-")
+            category = subcategories[0]
+            metadata["sub_category"] = subcategories[1]
+        metadata["category"] = category
+        metadata["msg_type"] = SNORT_METADATA
+
+    if type(rule) == Rule:
+        rule.update(metadata)
+    return metadata
+
+def parse(buf, group=None, msg_metadata=None):
     """ Parse a single rule for a string buffer.
 
     :param buf: A string buffer containing a single Snort-like rule
@@ -248,6 +298,8 @@ def parse(buf, group=None):
             if val.startswith('"') and val.endswith('"'):
                 val = val[1:-1]
             rule[name] = val
+            if msg_metadata:
+                parse_msg(rule, msg_metadata)
         else:
             rule[name] = val
 
@@ -259,7 +311,7 @@ def parse(buf, group=None):
 
     return rule
 
-def parse_fileobj(fileobj, group=None):
+def parse_fileobj(fileobj, group=None, msg_metadata=None):
     """ Parse multiple rules from a file like object.
 
     Note: At this time rules must exist on one line.
@@ -280,7 +332,7 @@ def parse_fileobj(fileobj, group=None):
             buf = "%s%s " % (buf, line.rstrip()[0:-1])
             continue
         try:
-            rule = parse(buf + line, group)
+            rule = parse(buf + line, group, msg_metadata)
             if rule:
                 rules.append(rule)
         except:
@@ -289,7 +341,7 @@ def parse_fileobj(fileobj, group=None):
         buf = ""
     return rules
 
-def parse_file(filename, group=None):
+def parse_file(filename, group=None, msg_metadata=None):
     """ Parse multiple rules from the provided filename.
 
     :param filename: Name of file to parse rules from
@@ -297,7 +349,7 @@ def parse_file(filename, group=None):
     :returns: A list of :py:class:`.Rule` instances, one for each rule parsed
     """
     with open(filename) as fileobj:
-        return parse_fileobj(fileobj, group)
+        return parse_fileobj(fileobj, group, msg_metadata)
 
 class FlowbitResolver(object):
 
