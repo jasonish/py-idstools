@@ -251,9 +251,10 @@ class Event(dict):
         self["packets"] = []
         self["extra-data"] = []
 
-        # Only v2 events have MPLS and VLAN ids.
+        # Only v2 events have mpls, vlan, pad2.
         self["mpls-label"] = None
         self["vlan-id"] = None
+        self["pad2"] = None
 
         # Only v3/appid events have an appid.
         self["appid"] = None
