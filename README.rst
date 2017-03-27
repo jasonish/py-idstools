@@ -127,6 +127,10 @@ unreleased
 - idstools-rulecat: allow --local to be specified multiple times
 - idstools-rulecat: --ignore option to ignore filenames
 - More python 3 fixups.
+- unified2 - deprecate event readers, use record readers instead
+  (https://github.com/jasonish/py-idstools/issues/14)
+- u2json: --packet-hex and --printable to print raw buffers as printable
+  chars and hex in addition to base64.
 - `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.6...HEAD>`_
 
 0.5.6

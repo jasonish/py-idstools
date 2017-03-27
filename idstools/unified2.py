@@ -82,9 +82,9 @@ RECORD_TYPES = [
 ]
 
 EXTRA_DATA_TYPE = {
-    "ORIG_CLIENT_IP4": 1,
-    "ORIG_CLIENT_IP6": 2,
-    "UNUSED0": 3,
+    "XFF_IP4": 1,
+    "XFF_IP6": 2,
+    "REVIEWED_BY": 3,
     "GZIP_DATA": 4,
     "SMTP_FILENAME": 5,
     "SMTP_MAIL_FROM": 6,
