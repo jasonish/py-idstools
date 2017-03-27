@@ -205,15 +205,17 @@ class OutputWrapper(object):
         self.fileobj = fileobj
 
         if self.fileobj is None:
-            self.reopen()
             self.isfile = True
+            self.reopen()
         else:
             self.isfile = False
 
     def reopen(self):
+        if not self.isfile:
+            return
         if self.fileobj:
             self.fileobj.close()
-        self.fileobj = open(self.filename, "ab")
+        self.fileobj = open(self.filename, "a")
 
     def write(self, buf):
         if self.isfile:
