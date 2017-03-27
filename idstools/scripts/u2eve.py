@@ -153,6 +153,19 @@ class EveFilter(object):
                 "linktype": packet["linktype"],
             }
 
+        if event["extra-data"]:
+            output["snort_extra_data"] = []
+            for ed in event["extra-data"]:
+                if ed["event-type"] in unified2.EXTRA_DATA_TYPE_MAP:
+                    name = unified2.EXTRA_DATA_TYPE_MAP[ed["event-type"]]
+                else:
+                    name = "unknown"
+                output["snort_extra_data"].append(OrderedDict(
+                    [("type", name.lower()),
+                     ("type_id", ed["event-type"]),
+                     ("data_printable", util.format_printable(ed["data"]),
+                    )]))
+
         return output
 
     def format_packet(self, packet):
@@ -309,7 +322,7 @@ def main():
         "--delete", action="store_true", default=False,
         help="delete spool files")
     parser.add_argument(
-        "--output", metavar="<filename>",
+        "-o", "--output", metavar="<filename>",
         help="output filename (eg: /var/log/snort/alerts.json")
     parser.add_argument(
         "--stdout", action="store_true", default=False,

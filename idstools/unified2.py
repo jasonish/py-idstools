@@ -97,6 +97,22 @@ EXTRA_DATA_TYPE = {
     "NORMALIZED_JS": 13,
 }
 
+EXTRA_DATA_TYPE_MAP = {
+    1: "XFF_IP4",
+    2: "XFF_IP6",
+    3: "REVIEWED_BY",
+    4: "GZIP_DATA",
+    5: "SMTP_FILENAME",
+    6: "SMTP_MAIL_FROM",
+    7: "SMTP_RCPT_TO",
+    8: "SMTP_HEADERS",
+    9: "HTTP_URI",
+    10: "HTTP_HOSTNAME",
+    11: "IP6_SRC_ADDR",
+    12: "IP6_DST_ADDR",
+    13: "NORMALIZED_JS",
+}
+
 class UnknownRecordType(Exception):
 
     def __init__(self, record_type):
