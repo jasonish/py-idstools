@@ -62,14 +62,20 @@ Reading a Unified2 Spool Directory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following code snippet will "tail" a unified log directory
-aggregating records into events::
+returning each record as a dict-like object::
 
   from idstools import unified2
 
-  reader = unified2.SpoolEventReader("/var/log/snort",
+  reader = unified2.SpoolRecordReader("/var/log/snort",
       "unified2.log", follow=True)
-  for event in reader:
-      print(event)
+  for record in reader:
+      if isinstance(record, unified2.Event):
+          print("Event:")
+      elif isinstance(record, unified2.Packet):
+          print("Packet:")
+      elif isinstance(record, unified2.ExtraData):
+          print("Extra-Data:")
+      print(record)
 
 See the `idstools unified2
 <http://idstools.readthedocs.io/en/latest/unified2.html>`_

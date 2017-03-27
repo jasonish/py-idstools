@@ -250,6 +250,20 @@ class Writer:
         for output in self.outputs:
             output.write(encoded)
 
+class RolloverHandler(object):
+
+    def __init__(self, delete):
+        self.delete = delete
+
+    def on_rollover(self, closed, opened):
+        if closed:
+            LOG.info("Closed file %s, opened %s", closed, opened)
+            if self.delete:
+                LOG.info("Deleting %s", closed)
+                os.unlink(closed)
+        elif opened:
+            LOG.info("Opened file %s", opened)
+
 def main():
 
     msgmap = maps.SignatureMap()
@@ -329,14 +343,26 @@ def main():
 
     writer = Writer(outputs, eve_filter)
 
+    bookmark = None
+
     if args.directory and args.prefix:
-        reader = unified2.SpoolEventReader(
+        init_filename, init_offset = None, None
+        if args.bookmark:
+            bookmark = unified2.Unified2Bookmark(
+                args.directory, args.prefix)
+            init_filename, init_offset = bookmark.get()
+        rollover_handler = RolloverHandler(args.delete)
+        reader = unified2.SpoolRecordReader(
             directory=args.directory,
             prefix=args.prefix,
             follow=args.follow,
-            delete=args.delete,
-            bookmark=args.bookmark)
+            init_filename=init_filename,
+            init_offset=init_offset,
+            rollover_hook=rollover_handler.on_rollover)
     elif args.filenames:
+        if args.bookmark:
+            LOG.error("Bookmarking not supported in file mode, exiting.")
+            return 1
         reader = unified2.FileRecordReader(*args.filenames)
     else:
         print("nothing to do.")
@@ -347,6 +373,9 @@ def main():
         if isinstance(record, unified2.Event):
             if event is not None:
                 writer.write(event)
+                if args.bookmark and bookmark:
+                    location = reader.tell()
+                    bookmark.update(*location)
             event = record
         elif isinstance(record, unified2.ExtraData):
             if not event:
@@ -355,10 +384,16 @@ def main():
         elif isinstance(record, unified2.Packet):
             if event and "packet" in event:
                 writer.write(event)
+                if args.bookmark and bookmark:
+                    location = reader.tell()
+                    bookmark.update(*location)
                 event = None
             if event is None:
                 # Write packet...
                 writer.write(record)
+                if args.bookmark and bookmark:
+                    location = reader.tell()
+                    bookmark.update(*location)
             else:
                 event["packet"] = record
     if event:

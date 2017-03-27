@@ -209,7 +209,8 @@ EXTRA_DATA_FIELDS = (
 
 class Event(dict):
     """Event represents a unified2 event record with a dict-like
-    interface.
+    interface. The unified2 file format specifies multiple types of
+    event records, idstools normalizes them into a single type.
 
     Fields:
 
@@ -233,14 +234,14 @@ class Event(dict):
     * mpls-label
     * vlan-id
 
-    Methods that return events rather than single records will also
-    populate the fields *packets* and *extra-data*.  These fields are
-    lists of the :class:`.Packet` and :class:`.ExtraData` records
-    associated with the event.
+    **Deprecated**: Methods that return events rather than single
+    records will also populate the fields *packets* and *extra-data*.
+    These fields are lists of the :class:`.Packet` and
+    :class:`.ExtraData` records associated with the event.
 
     """
 
-    template = {
+    _template = {
         "sensor-id": None,
         "event-id": None,
         "event-second": None,
@@ -266,7 +267,7 @@ class Event(dict):
 
     def __init__(self, event):
 
-        self.update(self.template)
+        self.update(self._template)
         self.update(event)
 
         # Create fields to hold extra data and packets associated with
@@ -403,12 +404,17 @@ DECODERS = {
 }
 
 class Aggregator(object):
-    """A class implementing something like the aggregator pattern to
+    """**Deprecated: Applications requiring the aggregation of packets
+    and extra data with an event should implement their own aggregation
+    logic.**
+
+    A class implementing something like the aggregator pattern to
     aggregate records until an event can be built.
 
     """
 
     def __init__(self):
+        LOG.warn("idstools.unified2.Aggregator has been deprecated")
         self.queue = collections.deque()
 
     def add(self, record):
@@ -639,7 +645,10 @@ class FileRecordReader(object):
         return iter(self.next, None)
 
 class FileEventReader(object):
-    """FileEventReader reads records from one or more filenames and
+    """**Deprecated: Event readers have been deprecated due to the
+    deprecation of the Aggregator.**
+
+    FileEventReader reads records from one or more filenames and
     aggregates them into events.
 
     :param files...: One or more files to read events from.
@@ -654,6 +663,7 @@ class FileEventReader(object):
     """
 
     def __init__(self, *files):
+        LOG.warn("idstools.unified2.FileEventReader has been deprecated")
         self.reader = FileRecordReader(*files)
         self.aggregator = Aggregator()
 
@@ -830,7 +840,10 @@ class SpoolRecordReader(object):
         return iter(self.next, None)
 
 class SpoolEventReader(object):
-    """SpoolEventReader reads records from a unified2 spool directory
+    """**Deprecated: Event readers have been deprecated due to the
+    deprecation of the Aggregator.**
+
+    SpoolEventReader reads records from a unified2 spool directory
     and aggregates them into events.
 
     Required parameters:
@@ -857,6 +870,7 @@ class SpoolEventReader(object):
 
     def __init__(self, directory, prefix, follow=False, delete=False,
                  bookmark=False):
+        LOG.warn("idstools.unified2.SpoolEventReader has been deprecated")
 
         self.follow = follow
         self.delete = delete
