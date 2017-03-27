@@ -44,6 +44,11 @@ try:
 except ImportError as err:
     from idstools.compat.argparse import argparse
 
+try:
+    from collections import OrderedDict
+except ImportError as err:
+    from idstools.compat.ordereddict import OrderedDict
+
 from idstools import unified2
 from idstools import maps
 from idstools import util
@@ -98,7 +103,7 @@ class Formatter(object):
                 continue
             else:
                 event[key] = record[key]
-        return {"event": event}
+        return OrderedDict([("type", "event"), ("event", event)])
 
     def format_packet(self, record):
         packet = {}
@@ -112,7 +117,7 @@ class Formatter(object):
                     packet["data-hex"] = self.format_hex(record[key])
             else:
                 packet[key] = record[key]
-        return {"packet": packet}
+        return OrderedDict([("type", "packet"), ("packet", packet)])
 
     def format_hex(self, data):
         hexbytes = []
@@ -159,7 +164,8 @@ class Formatter(object):
             else:
                 data[key] = record[key]
 
-        return {"extra-data": data}
+        return OrderedDict([("type", self.key("extra-data")),
+                            (self.key("extra-data"), data)])
 
     def format(self, record):
         if isinstance(record, unified2.Event):
