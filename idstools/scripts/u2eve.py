@@ -55,6 +55,7 @@ except ImportError as err:
 
 from idstools import unified2
 from idstools import maps
+from idstools import util
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 LOG = logging.getLogger()
@@ -101,9 +102,10 @@ def calculate_flow_id(event):
 class EveFilter(object):
 
     def __init__(
-            self, msgmap=None, classmap=None):
+            self, msgmap=None, classmap=None, packet_printable=False):
         self.msgmap = msgmap
         self.classmap = classmap
+        self.packet_printable = packet_printable
 
     def format_event(self, event):
         output = OrderedDict()
@@ -144,6 +146,9 @@ class EveFilter(object):
         if event["packet"]:
             packet = event["packet"]
             output["packet"] = base64.b64encode(packet["data"]).decode("utf-8")
+            if self.packet_printable:
+                output["packet_printable"] = util.format_printable(
+                    packet["data"])
             output["packet_info"] = {
                 "linktype": packet["linktype"],
             }
@@ -162,6 +167,8 @@ class EveFilter(object):
         output["event_second"] = packet["event-second"]
 
         output["packet"] = base64.b64encode(packet["data"]).decode("utf-8")
+        if self.packet_printable:
+            output["packet_printable"] = util.format_printable(packet["data"])
         output["packet_info"] = {
             "linktype": packet["linktype"],
         }
@@ -306,6 +313,9 @@ def main():
         "--stdout", action="store_true", default=False,
         help="also log to stdout if --output is a file")
     parser.add_argument(
+        "--packet-printable", action="store_true", default=False,
+        help="add packet_printable field to alert records")
+    parser.add_argument(
         "filenames", nargs="*")
     args = parser.parse_args()
 
@@ -330,7 +340,8 @@ def main():
     else:
         LOG.info("Loaded %s classifications.", classmap.size())
 
-    eve_filter = EveFilter(msgmap, classmap)
+    eve_filter = EveFilter(
+        msgmap, classmap, packet_printable=args.packet_printable)
 
     outputs = []
 

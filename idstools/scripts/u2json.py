@@ -46,6 +46,7 @@ except ImportError as err:
 
 from idstools import unified2
 from idstools import maps
+from idstools import util
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 LOG = logging.getLogger()
@@ -105,22 +106,13 @@ class Formatter(object):
             if key == "data":
                 packet["data"] = base64.b64encode(record[key]).decode("utf-8")
                 if self.packet_printable:
-                    packet["data-printable"] = self.format_printable(
+                    packet["data-printable"] = util.format_printable(
                         record[key])
                 if self.packet_hex:
                     packet["data-hex"] = self.format_hex(record[key])
             else:
                 packet[key] = record[key]
         return {"packet": packet}
-
-    def format_printable(self, data):
-        chars = []
-        for byte in data:
-            if byte in string.printable:
-                chars.append(byte)
-            else:
-                chars.append(".")
-        return "".join(chars)
 
     def format_hex(self, data):
         hexbytes = []
@@ -163,8 +155,7 @@ class Formatter(object):
             if key == "data":
                 data["data"] = base64.b64encode(record[key]).decode("utf-8")
                 if self.extra_printable:
-                    data["data-printable"] = self.format_printable(
-                        record[key])
+                    data["data-printable"] = util.format_printable(record[key])
             else:
                 data[key] = record[key]
 
@@ -369,13 +360,15 @@ def main():
     try:
         for record in reader:
             try:
-                as_json = json.dumps(formatter.format(record), sort_keys=args.sort_keys)
+                as_json = json.dumps(
+                    formatter.format(record), sort_keys=args.sort_keys)
                 for out in outputs:
                     out.write(as_json)
                 count += 1
             except Exception as err:
                 LOG.error("Failed to encode record as JSON: %s: %s" % (
                     str(err), str(record)))
+                raise
             if bookmark:
                 filename, offset = reader.tell()
                 bookmark.update(filename, offset)

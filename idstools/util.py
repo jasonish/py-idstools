@@ -25,6 +25,7 @@
 
 """ Module for utility functions that don't really fit anywhere else. """
 
+import sys
 import hashlib
 import socket
 import struct
@@ -34,6 +35,7 @@ import shutil
 import subprocess
 import os
 import fnmatch
+import string
 
 def md5_hexdigest(filename):
     """ Compute the MD5 checksum for the contents of the provided filename.
@@ -79,3 +81,25 @@ def archive_to_dict(filename, include="*"):
                 content = open(path, "rb").read()
                 files[path[len(tempdir) + 1:]] = content
     return files
+
+def format_printable(data):
+    """Given a buffer, return a string with the printable characters. A
+    '.' will be used for all non-printable characters."""
+
+    chars = []
+
+    if sys.version_info.major == 2:
+        for byte in data:
+            if byte in string.printable:
+                chars.append(byte)
+            else:
+                chars.append(".")
+    else:
+        # Python 3.
+        for byte in data:
+            if chr(byte) in string.printable:
+                chars.append(chr(byte))
+            else:
+                chars.append(".")
+
+    return "".join(chars)

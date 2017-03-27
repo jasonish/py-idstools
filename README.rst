@@ -131,6 +131,7 @@ unreleased
   (https://github.com/jasonish/py-idstools/issues/14)
 - u2json: --packet-hex and --printable to print raw buffers as printable
   chars and hex in addition to base64.
+- u2eve: --packet-printable to include a "packet_printable" field
 - `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.6...HEAD>`_
 
 0.5.6
