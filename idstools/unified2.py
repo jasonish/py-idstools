@@ -187,16 +187,12 @@ EVENT_V2_FIELDS = EVENT_FIELDS + (
     Field("pad2", 2),
 )
 
-EVENT_APPID_FIELDS = EVENT_V2_FIELDS
-
 # Fields for an IPv6 v2 event.
-EVENT_IP6_V2_FIELDS = EVENT_IP6_FIELDS + (
+EVENT_V2_IP6_FIELDS = EVENT_IP6_FIELDS + (
     Field("mpls-label", 4),
     Field("vlan-id", 2),
     Field("pad2", 2),
 )
-
-EVENT_APPID_IP6_FIELDS = EVENT_IP6_FIELDS
 
 # Fields in a UNIFIED_EXTRA_DATA record.
 EXTRA_DATA_FIELDS = (
@@ -244,22 +240,39 @@ class Event(dict):
 
     """
 
+    template = {
+        "sensor-id": None,
+        "event-id": None,
+        "event-second": None,
+        "event-microsecond": None,
+        "signature-id": None,
+        "generator-id": None,
+        "signature-revision": None,
+        "classification-id": None,
+        "priority": None,
+        "source-ip.raw": b"",
+        "destination-ip.raw": b"",
+        "sport-itype": None,
+        "dport-icode": None,
+        "protocol": None,
+        "impact-flag": None,
+        "impact": None,
+        "blocked": None,
+        "mpls-label": None,
+        "vlan-id": None,
+        "pad2": None,
+        "appid": None,
+    }
+
     def __init__(self, event):
+
+        self.update(self.template)
+        self.update(event)
 
         # Create fields to hold extra data and packets associated with
         # this event.
         self["packets"] = []
         self["extra-data"] = []
-
-        # Only v2 events have mpls, vlan, pad2.
-        self["mpls-label"] = None
-        self["vlan-id"] = None
-        self["pad2"] = None
-
-        # Only v3/appid events have an appid.
-        self["appid"] = None
-
-        self.update(event)
 
 class Packet(dict):
     """Packet represents a unified2 packet record with a dict-like interface.
@@ -382,9 +395,9 @@ DECODERS = {
     EVENT:           EventDecoder(EVENT_FIELDS),
     EVENT_IP6:       EventDecoder(EVENT_IP6_FIELDS),
     EVENT_V2:        EventDecoder(EVENT_V2_FIELDS),
-    EVENT_IP6_V2:    EventDecoder(EVENT_IP6_V2_FIELDS),
-    EVENT_APPID:     EventDecoder(EVENT_APPID_FIELDS),
-    EVENT_APPID_IP6: EventDecoder(EVENT_APPID_IP6_FIELDS),
+    EVENT_IP6_V2:    EventDecoder(EVENT_V2_IP6_FIELDS),
+    EVENT_APPID:     EventDecoder(EVENT_V2_FIELDS),
+    EVENT_APPID_IP6: EventDecoder(EVENT_V2_IP6_FIELDS),
     PACKET:          PacketDecoder(PACKET_FIELDS),
     EXTRA_DATA:      ExtraDataDecoder(EXTRA_DATA_FIELDS),
 }
