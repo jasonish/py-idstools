@@ -120,9 +120,10 @@ class Formatter(object):
         return OrderedDict([("type", "packet"), ("packet", packet)])
 
     def format_hex(self, data):
-        hexbytes = []
-        for byte in data:
-            hexbytes.append("%02x" % ord(byte))
+        if sys.version_info.major < 3:
+            hexbytes = ["%02x" % ord(byte) for byte in data]
+        else:
+            hexbytes = ["%02x" % byte for byte in data]
         return " ".join(hexbytes)
 
     def format_extra_data(self, record):
