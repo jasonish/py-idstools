@@ -102,10 +102,12 @@ def calculate_flow_id(event):
 class EveFilter(object):
 
     def __init__(
-            self, msgmap=None, classmap=None, packet_printable=False):
+            self, msgmap=None, classmap=None, packet_printable=False,
+            packet_hex=False):
         self.msgmap = msgmap
         self.classmap = classmap
         self.packet_printable = packet_printable
+        self.packet_hex = packet_hex
 
     def format_event(self, event):
         output = OrderedDict()
@@ -149,6 +151,8 @@ class EveFilter(object):
             if self.packet_printable:
                 output["packet_printable"] = util.format_printable(
                     packet["data"])
+            if self.packet_hex:
+                output["packet_hex"] = self.format_hex(packet["data"])
             output["packet_info"] = {
                 "linktype": packet["linktype"],
             }
@@ -182,6 +186,8 @@ class EveFilter(object):
         output["packet"] = base64.b64encode(packet["data"]).decode("utf-8")
         if self.packet_printable:
             output["packet_printable"] = util.format_printable(packet["data"])
+        if self.packet_hex:
+            output["packet_hex"] = self.format_hex(packet["data"])
         output["packet_info"] = {
             "linktype": packet["linktype"],
         }
@@ -210,6 +216,13 @@ class EveFilter(object):
 
     def getprotobynumber(self, protocol):
         return proto_map.get(protocol, str(protocol))
+
+    def format_hex(self, data):
+        if sys.version_info.major < 3:
+            hexbytes = ["%02x" % ord(byte) for byte in data]
+        else:
+            hexbytes = ["%02x" % byte for byte in data]
+        return " ".join(hexbytes)
 
 class OutputWrapper(object):
 
@@ -329,7 +342,10 @@ def main():
         help="also log to stdout if --output is a file")
     parser.add_argument(
         "--packet-printable", action="store_true", default=False,
-        help="add packet_printable field to alert records")
+        help="add packet_printable field to events")
+    parser.add_argument(
+        "--packet-hex", action="store_true", default=False,
+        help="add packet_hex field to events")
     parser.add_argument(
         "filenames", nargs="*")
     args = parser.parse_args()
@@ -356,7 +372,8 @@ def main():
         LOG.info("Loaded %s classifications.", classmap.size())
 
     eve_filter = EveFilter(
-        msgmap, classmap, packet_printable=args.packet_printable)
+        msgmap, classmap, packet_printable=args.packet_printable,
+        packet_hex=args.packet_hex)
 
     outputs = []
 
