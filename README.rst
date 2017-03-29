@@ -121,8 +121,8 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-unreleased
-~~~~~~~~~~
+0.6.0
+~~~~~
 - idstools-u2eve - output packet records
 - idstools-rulecat: allow --local to be specified multiple times
 - idstools-rulecat: --ignore option to ignore filenames
@@ -133,7 +133,7 @@ unreleased
   chars and hex in addition to base64.
 - u2eve: --packet-printable to include a "packet_printable" field
 - u2eve: include Snort extra-data with printable data.
-- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.6...HEAD>`_
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.6...0.6.0>`_
 
 0.5.6
 ~~~~~
