@@ -34,8 +34,10 @@ import atexit
 import shutil
 import subprocess
 import os
+import os.path
 import fnmatch
 import string
+from zipfile import ZipFile
 
 def md5_hexdigest(filename):
     """ Compute the MD5 checksum for the contents of the provided filename.
@@ -80,6 +82,12 @@ def archive_to_dict(filename, include="*"):
                     continue
                 content = open(path, "rb").read()
                 files[path[len(tempdir) + 1:]] = content
+    elif filename.endswith(".zip"):
+        with ZipFile(filename) as reader:
+            for name in reader.namelist():
+                if name.endswith("/"):
+                    continue
+                files[name] = reader.read(name)
     return files
 
 def format_printable(data):

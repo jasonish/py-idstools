@@ -247,8 +247,19 @@ class Fetch(object):
         filename = os.path.basename(url).split("?", 1)[0]
         return filename
 
+    def get_tmp_filename(self, url):
+        url_hash = hashlib.md5(url).hexdigest()
+        basename = self.basename(url)
+        if basename.endswith(".tar.gz"):
+            ext = ".tar.gz"
+        else:
+            ext = os.path.splitext(basename)[1]
+        tmp_filename = os.path.join(self.args.temp_dir, "%s%s" % (
+            url_hash, ext))
+        return tmp_filename
+
     def fetch(self, url):
-        tmp_filename = os.path.join(self.args.temp_dir, self.basename(url))
+        tmp_filename = self.get_tmp_filename(url)
         if not self.args.force and os.path.exists(tmp_filename):
             if time.time() - os.stat(tmp_filename).st_mtime < (60 * 15):
                 logger.info(
@@ -278,9 +289,12 @@ class Fetch(object):
 
         if filename.endswith(".tar.gz"):
             for (name, content) in archive_to_dict(filename).items():
-                files[os.path.basename(name)] = content
+                files[name] = content
+        elif filename.endswith(".zip"):
+            for (name, content) in archive_to_dict(filename).items():
+                files[name] = content
         else:
-            files[os.path.basename(filename)] = open(filename, "rb").read()
+            files[filename] = open(filename, "rb").read()
 
         return files
 
