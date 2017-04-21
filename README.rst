@@ -121,6 +121,11 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+unreleased
+~~~~~~~~~~
+- idstools-rulecat: handle zip archive files
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.0...HEAD>`_
+
 0.6.0
 ~~~~~
 - idstools-u2eve - output packet records
