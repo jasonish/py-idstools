@@ -148,3 +148,16 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
 
         self.assertEquals(rule_string, reassembled)
         
+    def test_parse_message_with_semicon(self):
+        rule_string = u"""alert ip any any -> any any (msg:"TEST RULE\; and some"; content:"uid=0|28|root|29|"; tag:session,5,packets; classtype:bad-unknown; sid:10000000; rev:1;)"""
+        rule = idstools.rule.parse(rule_string)
+        self.assertIsNotNone(rule)
+        self.assertEquals(rule.msg, "TEST RULE\; and some")
+
+        # Look for the expected content.
+        found=False
+        for o in rule.options:
+            if o["name"] == "content" and o["value"] == '"uid=0|28|root|29|"':
+                found=True
+                break
+        self.assertTrue(found)

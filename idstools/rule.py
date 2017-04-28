@@ -198,6 +198,17 @@ def add_option(rule, name, value, index=None):
         rule.rebuild_options())
     return parse(new_rule_string, rule["group"])
 
+def find_opt_end(options):
+    """ Find the end of an option (;) handling escapes. """
+    i = 0
+    while i < len(options):
+        if options[i] == "\\":
+            i += 1
+        elif options[i] == ";":
+            return i
+        i += 1
+    return i
+
 def parse(buf, group=None):
     """ Parse a single rule for a string buffer.
 
@@ -221,7 +232,7 @@ def parse(buf, group=None):
     while True:
         if not options:
             break
-        index = options.find(";")
+        index = find_opt_end(options)
         option = options[:index].strip()
         options = options[index + 1:].strip()
 
