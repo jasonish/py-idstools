@@ -814,7 +814,8 @@ def main():
             logger.info("Making directory %s.", args.output)
             os.makedirs(args.output)
         for filename in files:
-            file_tracker.add(os.path.join(args.output, filename))
+            file_tracker.add(
+                os.path.join(args.output, os.path.basename(filename)))
         write_to_directory(args.output, files, rulemap)
 
     if args.merged:
