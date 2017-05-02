@@ -371,6 +371,20 @@ def load_local(local, files):
 
 def write_to_directory(directory, files, rulemap):
     logger.info("Writing rule files to %s." % (directory))
+
+    if not args.quiet:
+        previous_rulemap = {}
+        for filename in files:
+            outpath = os.path.join(
+                directory, os.path.basename(filename))
+            if os.path.exists(outpath):
+                previous_rulemap.update(build_rule_map(
+                    idstools.rule.parse_fileobj(open(outpath))))
+        report = build_report(previous_rulemap, rulemap)
+        logger.info("Writing to %s: added: %d; removed %d; modified: %d" % (
+            directory, len(report["added"]), len(report["removed"]),
+            len(report["modified"])))
+
     for filename in sorted(files):
         outpath = os.path.join(
             directory, os.path.basename(filename))
@@ -415,15 +429,16 @@ def build_report(prev_rulemap, rulemap):
 
 def write_merged(filename, rulemap):
 
-    prev_rulemap = {}
-    if os.path.exists(filename):
-        prev_rulemap = build_rule_map(
-            idstools.rule.parse_fileobj(open(filename)))
-    report = build_report(prev_rulemap, rulemap)
+    if not args.quiet:
+        prev_rulemap = {}
+        if os.path.exists(filename):
+            prev_rulemap = build_rule_map(
+                idstools.rule.parse_fileobj(open(filename)))
+        report = build_report(prev_rulemap, rulemap)
+        logger.info("Writing %s: added: %d; removed %d; modified: %d" % (
+            filename, len(report["added"]), len(report["removed"]),
+            len(report["modified"])))
 
-    logger.info("Writing %s: added: %d; removed %d; modified: %d" % (
-        filename, len(report["added"]), len(report["removed"]),
-        len(report["modified"])))
     with open(filename, "w") as fileobj:
         for rule in rulemap:
             print(str(rulemap[rule]), file=fileobj)
@@ -617,6 +632,7 @@ def ignore_file(ignore_files, filename):
     return False
 
 def main():
+    global args
 
     conf_filenames = [arg for arg in sys.argv if arg.startswith("@")]
     if not conf_filenames:
