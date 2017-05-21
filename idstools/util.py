@@ -72,9 +72,9 @@ def archive_to_dict(filename, include="*"):
     if filename.endswith(".tar.gz"):
         # This is faster than using the Python libs.
         tempdir = mktempdir(delete_on_exit=True)
-        subprocess.Popen(
+        subprocess.check_call(
             "gunzip -c %s | tar xf -" % (filename),
-            cwd=tempdir, shell=True).wait()
+            cwd=tempdir, shell=True)
         for dirpath, dirnames, filenames in os.walk(tempdir):
             for filename in filenames:
                 path = os.path.join(dirpath, filename)
