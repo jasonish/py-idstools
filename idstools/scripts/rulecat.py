@@ -248,7 +248,7 @@ class Fetch(object):
         return filename
 
     def get_tmp_filename(self, url):
-        url_hash = hashlib.md5(url).hexdigest()
+        url_hash = hashlib.md5(url.encode()).hexdigest()
         basename = self.basename(url)
         if basename.endswith(".tar.gz"):
             ext = ".tar.gz"
@@ -394,12 +394,14 @@ def write_to_directory(directory, files, rulemap):
         else:
             content = []
             for line in BytesIO(files[filename]):
+                if type(line) == type(b""):
+                    line = line.decode("utf-8")
                 rule = idstools.rule.parse(line)
                 if not rule:
                     content.append(line.strip())
                 else:
-                    content.append(str(rulemap[rule.id]))
-            open(outpath, "wb").write("\n".join(content))
+                    content.append(rulemap[rule.id].format())
+            open(outpath, "wb").write("\n".join(content).encode("utf-8"))
 
 def build_report(prev_rulemap, rulemap):
     """Build a report of changes between 2 rulemaps.
@@ -416,12 +418,14 @@ def build_report(prev_rulemap, rulemap):
         "modified": []
     }
 
-    for rule in rulemap.itervalues():
+    for key in rulemap:
+        rule = rulemap[key]
         if not rule.id in prev_rulemap:
             report["added"].append(rule)
-        elif str(rule) != str(prev_rulemap[rule.id]):
+        elif rule.format() != prev_rulemap[rule.id].format():
             report["modified"].append(rule)
-    for rule in prev_rulemap.itervalues():
+    for key in prev_rulemap:
+        rule = prev_rulemap[key]
         if not rule.id in rulemap:
             report["removed"].append(rule)
 

@@ -162,7 +162,10 @@ class Rule(dict):
 
         If the rule is disabled it will be returned as commented out.
         """
-        return "%s%s" % ("" if self.enabled else "# ", self.raw)
+        return self.format()
+
+    def format(self):
+        return u"%s%s" % (u"" if self.enabled else u"# ", self.raw)
 
     def rebuild_options(self):
         """ Rebuild the rule options from the list of options."""
@@ -216,6 +219,10 @@ def parse(buf, group=None):
 
     :returns: An instance of of :py:class:`.Rule` representing the parsed rule
     """
+
+    if type(buf) == type(b""):
+        buf = buf.decode("utf-8")
+
     m = rule_pattern.match(buf) or decoder_rule_pattern.match(buf)
     if not m:
         return

@@ -127,6 +127,7 @@ unreleased
 - rules: handle msg with escaped semicolons
 - rulecat: don't generate report summary if its not going to be logged
   anyways (https://github.com/jasonish/py-idstools/issues/49)
+- rulecat: Python 3 fixes
 - `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.0...HEAD>`_
 
 0.6.0
