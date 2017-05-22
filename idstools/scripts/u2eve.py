@@ -412,35 +412,49 @@ def main():
         return
 
     event = None
-    for record in reader:
-        if isinstance(record, unified2.Event):
-            if event is not None:
-                writer.write(event)
-                if args.bookmark and bookmark:
-                    location = reader.tell()
-                    bookmark.update(*location)
-            event = record
-        elif isinstance(record, unified2.ExtraData):
-            if not event:
-                continue
-            event["extra-data"].append(record)
-        elif isinstance(record, unified2.Packet):
-            if event and "packet" in event:
-                writer.write(event)
-                if args.bookmark and bookmark:
-                    location = reader.tell()
-                    bookmark.update(*location)
+    last_record_time = time.time()
+    queue = []
+
+    while True:
+        flush = False
+        record = reader._next()
+        if not record:
+            if event and time.time() - last_record_time > 1.0:
+                queue.append(event)
                 event = None
-            if event is None:
-                # Write packet...
-                writer.write(record)
-                if args.bookmark and bookmark:
-                    location = reader.tell()
-                    bookmark.update(*location)
+                flush = True
             else:
-                event["packet"] = record
-    if event:
-        writer.write(event)
+                time.sleep(0.01)
+        else:
+
+            last_record_time = time.time()
+
+            if isinstance(record, unified2.Event):
+                if event is not None:
+                    queue.append(event)
+                    flush = True
+                event = record
+            elif isinstance(record, unified2.ExtraData):
+                if not event:
+                    continue
+                event["extra-data"].append(record)
+            elif isinstance(record, unified2.Packet):
+                if not event:
+                    queue.append(record)
+                    flush = True
+                else:
+                    if "packet" in event:
+                        queue.append(record)
+                    else:
+                        event["packet"] = record
+
+        if flush:
+            for record in queue:
+                writer.write(record)
+            if args.bookmark and bookmark:
+                location = reader.tell()
+                bookmark.update(*location)
+            queue = []
 
 if __name__ == "__main__":
     sys.exit(main())
