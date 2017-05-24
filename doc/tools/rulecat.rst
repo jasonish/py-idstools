@@ -76,6 +76,14 @@ Options
    include. May be specified multiple times and should not include
    files in the output path.
 
+   If the path is a directory all files ending in *.rules* will be
+   loaded.
+
+   Wildcards are accepted but to avoid shell expansion the argument
+   must be quoted, for example::
+
+     --local '/etc/suricata/custom-*.rules'
+
 .. option:: --sid-msg-map=<filename>
 
    Output a v1 style sid-msg.map file.

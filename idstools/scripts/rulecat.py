@@ -37,6 +37,7 @@ import fnmatch
 import subprocess
 import types
 import shutil
+import glob
 
 try:
     from io import BytesIO
@@ -361,13 +362,17 @@ def load_local(local, files):
                     path = os.path.join(local, filename)
                     load_local(path, files)
     else:
-        logger.info("Loading local file %s" % (local))
-        filename = os.path.basename(local)
-        if filename in files:
-            logger.warn(
-                "Local file %s overrides existing file of same name." % (
-                    local))
-        files[filename] = open(local).read()
+        local_files = glob.glob(local)
+        if len(local_files) == 0:
+            local_files.append(local)
+        for filename in local_files:
+            logger.info("Loading local file %s" % (filename))
+            basename = os.path.basename(filename)
+            if basename in files:
+                logger.warn(
+                    "Local file %s overrides existing file of same name." % (
+                        filename))
+            files[basename] = open(filename).read()
 
 def write_to_directory(directory, files, rulemap):
     logger.info("Writing rule files to %s." % (directory))
@@ -443,9 +448,9 @@ def write_merged(filename, rulemap):
             filename, len(report["added"]), len(report["removed"]),
             len(report["modified"])))
 
-    with open(filename, "w") as fileobj:
+    with open(filename, "wb") as fileobj:
         for rule in rulemap:
-            print(str(rulemap[rule]), file=fileobj)
+            print("%s" % rulemap[rule].format().encode("utf-8"), file=fileobj)
 
 def write_yaml_fragment(filename, files):
     logger.info(
