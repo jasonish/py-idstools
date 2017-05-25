@@ -121,18 +121,18 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-unreleased
-~~~~~~~~~~
+0.6.1 - 2017-05-25
+~~~~~~~~~~~~~~~~~~
 - idstools-rulecat: handle zip archive files
 - rules: handle msg with escaped semicolons
 - rulecat: don't generate report summary if its not going to be logged
   anyways (https://github.com/jasonish/py-idstools/issues/49)
 - rulecat: Python 3 fixes
 - rules: speed up parsing
-- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.0...HEAD>`_
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.0...0.6.1>`_
 
-0.6.0
-~~~~~
+0.6.0 - 2017-03-29
+~~~~~~~~~~~~~~~~~~
 - idstools-u2eve - output packet records
 - idstools-rulecat: allow --local to be specified multiple times
 - idstools-rulecat: --ignore option to ignore filenames
