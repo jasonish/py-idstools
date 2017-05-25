@@ -148,7 +148,7 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
 
         self.assertEquals(rule_string, reassembled)
         
-    def test_parse_message_with_semicon(self):
+    def test_parse_message_with_semicolon(self):
         rule_string = u"""alert ip any any -> any any (msg:"TEST RULE\; and some"; content:"uid=0|28|root|29|"; tag:session,5,packets; classtype:bad-unknown; sid:10000000; rev:1;)"""
         rule = idstools.rule.parse(rule_string)
         self.assertIsNotNone(rule)
@@ -161,3 +161,11 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
                 found=True
                 break
         self.assertTrue(found)
+
+    def test_parse_message_with_colon(self):
+        rule_string = u"""alert tcp 93.174.88.0/21 any -> $HOME_NET any (msg:"SN: Inbound TCP traffic from suspect network (AS29073 - NL)"; flags:S; reference:url,https://suspect-networks.io/networks/cidr/13/; threshold: type limit, track by_dst, seconds 30, count 1; classtype:misc-attack; sid:71918985; rev:1;)"""
+        rule = idstools.rule.parse(rule_string)
+        self.assertIsNotNone(rule)
+        self.assertEquals(
+            rule.msg,
+            "SN: Inbound TCP traffic from suspect network (AS29073 - NL)")
