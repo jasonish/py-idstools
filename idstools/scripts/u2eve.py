@@ -417,14 +417,21 @@ def main():
 
     while True:
         flush = False
-        record = reader._next()
+        record = reader.next()
+        done = False
         if not record:
             if event and time.time() - last_record_time > 1.0:
                 queue.append(event)
                 event = None
                 flush = True
             else:
-                time.sleep(0.01)
+                if args.follow:
+                    time.sleep(0.01)
+                else:
+                    if event:
+                        queue.append(event)
+                    flush = True
+                    done = True
         else:
 
             last_record_time = time.time()
@@ -455,6 +462,9 @@ def main():
                 location = reader.tell()
                 bookmark.update(*location)
             queue = []
+
+        if done:
+            break
 
 if __name__ == "__main__":
     sys.exit(main())

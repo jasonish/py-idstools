@@ -800,7 +800,7 @@ class SpoolRecordReader(object):
             return (self.fileobj.name, self.fileobj.tell())
         return None, None
 
-    def _next(self):
+    def next(self):
         """Return the next decoded unified2 record from the spool
         directory.
         """
@@ -831,7 +831,7 @@ class SpoolRecordReader(object):
                 else:
                     return None
 
-    def next(self):
+    def iter_next(self):
         """Return the next record or None if EOF.
 
         If in follow mode and EOF, this method will sleep and
@@ -843,7 +843,7 @@ class SpoolRecordReader(object):
 
         """
         while True:
-            record = self._next()
+            record = self.next()
             if record:
                 return record
             if not self.follow:
@@ -853,7 +853,7 @@ class SpoolRecordReader(object):
                 time.sleep(0.01)
 
     def __iter__(self):
-        return iter(self.next, None)
+        return iter(self.iter_next, None)
 
 class SpoolEventReader(object):
     """**Deprecated: Event readers have been deprecated due to the
