@@ -203,14 +203,14 @@ def add_option(rule, name, value, index=None):
 
 def find_opt_end(options):
     """ Find the end of an option (;) handling escapes. """
-    i = 0
-    while i < len(options):
-        if options[i] == "\\":
-            i += 1
-        elif options[i] == ";":
-            return i
-        i += 1
-    return i
+    offset = 0
+
+    while True:
+        i = options[offset:].find(";")
+        if options[offset + i - 1] == "\\":
+            offset += 2
+        else:
+            return offset + i
 
 def parse(buf, group=None):
     """ Parse a single rule for a string buffer.
