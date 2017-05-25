@@ -38,13 +38,7 @@ import subprocess
 import types
 import shutil
 import glob
-import mimetypes
-
-try:
-    from io import BytesIO
-    from io import StringIO
-except:
-    from StringIO import StringIO as BytesIO
+import io
 
 if sys.argv[0] == __file__:
     sys.path.insert(
@@ -216,7 +210,7 @@ class Fetch(object):
             checksum_url = url + ".md5"
             local_checksum = hashlib.md5(
                 open(tmp_filename, "rb").read()).hexdigest().strip()
-            remote_checksum_buf = BytesIO()
+            remote_checksum_buf = io.BytesIO()
             logger.info("Checking %s." % (checksum_url))
             idstools.net.get(checksum_url, remote_checksum_buf)
             remote_checksum = remote_checksum_buf.getvalue().decode().strip()
@@ -367,41 +361,7 @@ def load_local(local, files):
                 logger.warn(
                     "Local file %s overrides existing file of same name." % (
                         filename))
-            files[basename] = open(filename).read()
-
-def write_to_directory(directory, files, rulemap):
-    logger.info("Writing rule files to %s." % (directory))
-
-    if not args.quiet:
-        previous_rulemap = {}
-        for filename in files:
-            outpath = os.path.join(
-                directory, os.path.basename(filename))
-            if os.path.exists(outpath):
-                previous_rulemap.update(build_rule_map(
-                    idstools.rule.parse_fileobj(open(outpath))))
-        report = build_report(previous_rulemap, rulemap)
-        logger.info("Writing to %s: added: %d; removed %d; modified: %d" % (
-            directory, len(report["added"]), len(report["removed"]),
-            len(report["modified"])))
-
-    for filename in sorted(files):
-        outpath = os.path.join(
-            directory, os.path.basename(filename))
-        logger.debug("Writing %s." % outpath)
-        if not filename.endswith(".rules"):
-            open(outpath, "wb").write(files[filename])
-        else:
-            content = []
-            for line in BytesIO(files[filename]):
-                if type(line) == type(b""):
-                    line = line.decode("utf-8")
-                rule = idstools.rule.parse(line)
-                if not rule:
-                    content.append(line.strip())
-                else:
-                    content.append(rulemap[rule.id].format())
-            open(outpath, "wb").write("\n".join(content).encode("utf-8"))
+            files[basename] = open(filename, "rb").read()
 
 def build_report(prev_rulemap, rulemap):
     """Build a report of changes between 2 rulemaps.
@@ -445,7 +405,42 @@ def write_merged(filename, rulemap):
 
     with open(filename, "wb") as fileobj:
         for rule in rulemap:
-            print("%s" % rulemap[rule].format().encode("utf-8"), file=fileobj)
+            fileobj.write(rulemap[rule].format().encode("utf-8"))
+            fileobj.write(u"\n".encode("utf-8"))
+
+def write_to_directory(directory, files, rulemap):
+    logger.info("Writing rule files to %s." % (directory))
+
+    if not args.quiet:
+        previous_rulemap = {}
+        for filename in files:
+            outpath = os.path.join(
+                directory, os.path.basename(filename))
+            if os.path.exists(outpath):
+                previous_rulemap.update(build_rule_map(
+                    idstools.rule.parse_fileobj(open(outpath))))
+        report = build_report(previous_rulemap, rulemap)
+        logger.info("Writing to %s: added: %d; removed %d; modified: %d" % (
+            directory, len(report["added"]), len(report["removed"]),
+            len(report["modified"])))
+
+    for filename in sorted(files):
+        outpath = os.path.join(
+            directory, os.path.basename(filename))
+        logger.debug("Writing %s." % outpath)
+        if not filename.endswith(".rules"):
+            open(outpath, "wb").write(files[filename])
+        else:
+            content = []
+            for line in io.BytesIO(files[filename]):
+                if type(line) == type(b""):
+                    line = line.decode("utf-8")
+                rule = idstools.rule.parse(line)
+                if not rule:
+                    content.append(line.strip())
+                else:
+                    content.append(rulemap[rule.id].format())
+            open(outpath, "wb").write("\n".join(content).encode("utf-8"))
 
 def write_yaml_fragment(filename, files):
     logger.info(
@@ -460,16 +455,19 @@ def write_yaml_fragment(filename, files):
 
 def write_sid_msg_map(filename, rulemap, version=1):
     logger.info("Writing %s." % (filename))
-    with open(filename, "w") as fileobj:
-        for rule in rulemap.itervalues():
+    with open(filename, "wb") as fileobj:
+        for key in rulemap:
+            rule = rulemap[key]
             if version == 2:
                 formatted = idstools.rule.format_sidmsgmap_v2(rule)
                 if formatted:
-                    print(formatted, file=fileobj)
+                    fileobj.write(formatted.encode("utf-8"))
+                    fileobj.write(u"\n".encode())
             else:
                 formatted = idstools.rule.format_sidmsgmap(rule)
                 if formatted:
-                    print(formatted, file=fileobj)
+                    fileobj.write(formatted.encode("utf-8"))
+                    fileobj.write(u"\n".encode())
 
 def build_rule_map(rules):
     """Turn a list of rules into a mapping of rules.
@@ -560,7 +558,7 @@ class ThresholdProcessor:
             else:
                 for rule in rulemap.values():
                     if rule.enabled:
-                        if pattern.search(str(rule)):
+                        if pattern.search(rule.format()):
                             count += 1
                             print("# %s" % (rule.brief()), file=fileout)
                             print(self.replace(line, rule), file=fileout)
@@ -781,7 +779,7 @@ def main():
             continue
         logger.debug("Parsing %s." % (filename))
         rules += idstools.rule.parse_fileobj(
-            BytesIO(files[filename]), filename)
+            io.BytesIO(files[filename]), filename)
 
     rulemap = build_rule_map(rules)
     logger.info("Loaded %d rules." % (len(rules)))
