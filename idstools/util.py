@@ -32,12 +32,7 @@ import struct
 import tempfile
 import atexit
 import shutil
-import subprocess
-import os
-import os.path
-import fnmatch
 import string
-from zipfile import ZipFile
 
 def md5_hexdigest(filename):
     """ Compute the MD5 checksum for the contents of the provided filename.
@@ -61,34 +56,6 @@ def mktempdir(delete_on_exit=True):
     if delete_on_exit:
         atexit.register(shutil.rmtree, tmpdir, ignore_errors=True)
     return tmpdir
-
-def archive_to_dict(filename, include="*"):
-    """Convert an archive file (eg: .tar.gz) to a dict of filenames and
-    their content.
-
-    Useful for working with rules."""
-
-    files = {}
-    if filename.endswith(".tar.gz"):
-        # This is faster than using the Python libs.
-        tempdir = mktempdir(delete_on_exit=True)
-        subprocess.check_call(
-            "gunzip -c %s | tar xf -" % (filename),
-            cwd=tempdir, shell=True)
-        for dirpath, dirnames, filenames in os.walk(tempdir):
-            for filename in filenames:
-                path = os.path.join(dirpath, filename)
-                if include and not fnmatch.fnmatch(path, include):
-                    continue
-                content = open(path, "rb").read()
-                files[path[len(tempdir) + 1:]] = content
-    elif filename.endswith(".zip"):
-        with ZipFile(filename) as reader:
-            for name in reader.namelist():
-                if name.endswith("/"):
-                    continue
-                files[name] = reader.read(name)
-    return files
 
 def format_printable(data):
     """Given a buffer, return a string with the printable characters. A

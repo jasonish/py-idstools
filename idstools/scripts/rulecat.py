@@ -38,6 +38,7 @@ import subprocess
 import types
 import shutil
 import glob
+import mimetypes
 
 try:
     from io import BytesIO
@@ -53,8 +54,8 @@ import idstools.rule
 import idstools.suricata
 import idstools.net
 from idstools.rulecat import configs
-from idstools.util import archive_to_dict
 from idstools.rulecat.loghandler import SuriColourLogHandler
+from idstools.rulecat import extract
 
 # Initialize logging, use colour if on a tty.
 if len(logging.root.handlers) == 0 and os.isatty(sys.stderr.fileno()):
@@ -286,17 +287,11 @@ class Fetch(object):
         return files
 
     def extract_files(self, filename):
-        files = {}
-
-        if filename.endswith(".tar.gz"):
-            for (name, content) in archive_to_dict(filename).items():
-                files[name] = content
-        elif filename.endswith(".zip"):
-            for (name, content) in archive_to_dict(filename).items():
-                files[name] = content
-        else:
-            files[filename] = open(filename, "rb").read()
-
+        files = extract.try_extract(filename)
+        if files is None:
+            files = {
+                filename: open(filename, "rb").read(),
+            }
         return files
 
 def parse_rule_match(match):

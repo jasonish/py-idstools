@@ -32,6 +32,32 @@ import re
 
 import idstools.rule
 from idstools.scripts import rulecat
+import idstools.rulecat.extract
+
+class TestRulecat(unittest.TestCase):
+
+    def test_extract_tar(self):
+        files = idstools.rulecat.extract.extract_tar(
+            "tests/emerging.rules.tar.gz")
+        self.assertTrue(len(files) > 0)
+
+    def test_extract_zip(self):
+        files = idstools.rulecat.extract.extract_zip(
+            "tests/emerging.rules.zip")
+        self.assertTrue(len(files) > 0)
+
+    def test_try_extract(self):
+        files = idstools.rulecat.extract.try_extract(
+            "tests/emerging.rules.zip")
+        self.assertTrue(len(files) > 0)
+
+        files = idstools.rulecat.extract.try_extract(
+            "tests/emerging.rules.tar.gz")
+        self.assertTrue(len(files) > 0)
+
+        files = idstools.rulecat.extract.try_extract(
+            "tests/emerging-current_events.rules")
+        self.assertIsNone(files)
 
 class TestFetch(unittest.TestCase):
 
