@@ -238,21 +238,16 @@ class Fetch(object):
         sys.stdout.write("\n")
         sys.stdout.flush()
 
-    def basename(self, url):
+    def url_basename(self, url):
         """ Return the base filename of the URL. """
         filename = os.path.basename(url).split("?", 1)[0]
         return filename
 
     def get_tmp_filename(self, url):
-        url_hash = hashlib.md5(url.encode()).hexdigest()
-        basename = self.basename(url)
-        if basename.endswith(".tar.gz"):
-            ext = ".tar.gz"
-        else:
-            ext = os.path.splitext(basename)[1]
-        tmp_filename = os.path.join(self.args.temp_dir, "%s%s" % (
-            url_hash, ext))
-        return tmp_filename
+        url_hash = hashlib.md5(url.encode("utf-8")).hexdigest()
+        return os.path.join(
+            self.args.temp_dir,
+            "%s-%s" % (url_hash, self.url_basename(url)))
 
     def fetch(self, url):
         tmp_filename = self.get_tmp_filename(url)
@@ -282,10 +277,13 @@ class Fetch(object):
 
     def extract_files(self, filename):
         files = extract.try_extract(filename)
-        if files is None:
-            files = {
-                filename: open(filename, "rb").read(),
-            }
+        if files:
+            return files
+
+        # The file is not an archive, treat it as an individual file.
+        basename = os.path.basename(filename).split("-", 1)[1]
+        files = {}
+        files[basename] = open(filename, "rb").read()
         return files
 
 def parse_rule_match(match):
