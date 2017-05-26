@@ -40,6 +40,7 @@ from __future__ import print_function
 import sys
 import re
 import logging
+import io
 
 logger = logging.getLogger(__name__)
 
@@ -314,7 +315,7 @@ def parse_file(filename, group=None):
 
     :returns: A list of :py:class:`.Rule` instances, one for each rule parsed
     """
-    with open(filename) as fileobj:
+    with io.open(filename, encoding="utf-8") as fileobj:
         return parse_fileobj(fileobj, group)
 
 class FlowbitResolver(object):

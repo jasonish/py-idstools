@@ -397,16 +397,16 @@ def write_merged(filename, rulemap):
         prev_rulemap = {}
         if os.path.exists(filename):
             prev_rulemap = build_rule_map(
-                idstools.rule.parse_fileobj(open(filename)))
+                idstools.rule.parse_file(filename))
         report = build_report(prev_rulemap, rulemap)
         logger.info("Writing %s: added: %d; removed %d; modified: %d" % (
             filename, len(report["added"]), len(report["removed"]),
             len(report["modified"])))
-
-    with open(filename, "wb") as fileobj:
+    
+    with io.open(filename, encoding="utf-8", mode="w") as fileobj:
         for rule in rulemap:
-            fileobj.write(rulemap[rule].format().encode("utf-8"))
-            fileobj.write(u"\n".encode("utf-8"))
+            fileobj.write(rulemap[rule].format())
+            fileobj.write(u"\n")
 
 def write_to_directory(directory, files, rulemap):
     logger.info("Writing rule files to %s." % (directory))
@@ -418,7 +418,7 @@ def write_to_directory(directory, files, rulemap):
                 directory, os.path.basename(filename))
             if os.path.exists(outpath):
                 previous_rulemap.update(build_rule_map(
-                    idstools.rule.parse_fileobj(open(outpath))))
+                    idstools.rule.parse_file(outpath)))
         report = build_report(previous_rulemap, rulemap)
         logger.info("Writing to %s: added: %d; removed %d; modified: %d" % (
             directory, len(report["added"]), len(report["removed"]),
@@ -432,15 +432,14 @@ def write_to_directory(directory, files, rulemap):
             open(outpath, "wb").write(files[filename])
         else:
             content = []
-            for line in io.BytesIO(files[filename]):
-                if type(line) == type(b""):
-                    line = line.decode("utf-8")
+            for line in io.StringIO(files[filename].decode("utf-8")):
                 rule = idstools.rule.parse(line)
                 if not rule:
                     content.append(line.strip())
                 else:
                     content.append(rulemap[rule.id].format())
-            open(outpath, "wb").write("\n".join(content).encode("utf-8"))
+            io.open(outpath, encoding="utf-8", mode="w").write(
+                u"\n".join(content))
 
 def write_yaml_fragment(filename, files):
     logger.info(
@@ -455,19 +454,17 @@ def write_yaml_fragment(filename, files):
 
 def write_sid_msg_map(filename, rulemap, version=1):
     logger.info("Writing %s." % (filename))
-    with open(filename, "wb") as fileobj:
+    with io.open(filename, encoding="utf-8", mode="w") as fileobj:
         for key in rulemap:
             rule = rulemap[key]
             if version == 2:
                 formatted = idstools.rule.format_sidmsgmap_v2(rule)
                 if formatted:
-                    fileobj.write(formatted.encode("utf-8"))
-                    fileobj.write(u"\n".encode())
+                    print(formatted, file=fileobj)
             else:
                 formatted = idstools.rule.format_sidmsgmap(rule)
                 if formatted:
-                    fileobj.write(formatted.encode("utf-8"))
-                    fileobj.write(u"\n".encode())
+                    print(formatted, file=fileobj)
 
 def build_rule_map(rules):
     """Turn a list of rules into a mapping of rules.

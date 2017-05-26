@@ -86,6 +86,9 @@ class RuleTestCase(unittest.TestCase):
         rules = idstools.rule.parse_file(tmp.name)
         self.assertEquals(2, len(rules))
 
+    def test_parse_file_with_unicode(self):
+        rules = idstools.rule.parse_file("./tests/rule-with-unicode.rules")
+
     def test_parse_decoder_rule(self):
         rule_string = """alert ( msg:"DECODE_NOT_IPV4_DGRAM"; sid:1; gid:116; rev:1; metadata:rule-type decode; classtype:protocol-command-decode;)"""
         rule = idstools.rule.parse(rule_string)
