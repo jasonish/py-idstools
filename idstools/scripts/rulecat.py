@@ -397,18 +397,21 @@ def write_merged(filename, rulemap):
             prev_rulemap = build_rule_map(
                 idstools.rule.parse_file(filename))
         report = build_report(prev_rulemap, rulemap)
-        logger.info("Writing %s: added: %d; removed %d; modified: %d" % (
-            filename, len(report["added"]), len(report["removed"]),
-            len(report["modified"])))
+        enabled = len([rule for rule in rulemap.values() if rule.enabled])
+        logger.info("Writing rules to %s: total: %d; enabled: %d; "
+                    "added: %d; removed %d; modified: %d" % (
+                        filename,
+                        len(rulemap),
+                        enabled,
+                        len(report["added"]),
+                        len(report["removed"]),
+                        len(report["modified"])))
     
     with io.open(filename, encoding="utf-8", mode="w") as fileobj:
         for rule in rulemap:
-            fileobj.write(rulemap[rule].format())
-            fileobj.write(u"\n")
+            print(rulemap[rule].format(), file=fileobj)
 
 def write_to_directory(directory, files, rulemap):
-    logger.info("Writing rule files to %s." % (directory))
-
     if not args.quiet:
         previous_rulemap = {}
         for filename in files:
@@ -418,9 +421,15 @@ def write_to_directory(directory, files, rulemap):
                 previous_rulemap.update(build_rule_map(
                     idstools.rule.parse_file(outpath)))
         report = build_report(previous_rulemap, rulemap)
-        logger.info("Writing to %s: added: %d; removed %d; modified: %d" % (
-            directory, len(report["added"]), len(report["removed"]),
-            len(report["modified"])))
+        enabled = len([rule for rule in rulemap.values() if rule.enabled])
+        logger.info("Writing rule files to directory %s: total: %d; "
+                    "enabled: %d; added: %d; removed %d; modified: %d" % (
+                        directory,
+                        len(rulemap),
+                        enabled,
+                        len(report["added"]),
+                        len(report["removed"]),
+                        len(report["modified"])))
 
     for filename in sorted(files):
         outpath = os.path.join(
