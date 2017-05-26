@@ -510,7 +510,7 @@ def resolve_flowbits(rulemap, disabled_rules):
         logger.debug("Found %d required flowbits.", len(flowbits))
         required_rules = flowbit_resolver.get_required_rules(rulemap, flowbits)
         logger.debug(
-            "Found %d rules to enable to fullfull flowbit requirements",
+            "Found %d rules to enable to for flowbit requirements",
             len(required_rules))
         if not required_rules:
             logger.debug("All required rules enabled.")
