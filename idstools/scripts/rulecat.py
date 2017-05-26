@@ -731,6 +731,10 @@ def main():
     if args.quiet:
         logger.setLevel(logging.WARNING)
 
+    logger.debug("This is idstools-rulecat version %s; Python: %s" % (
+        idstools.version,
+        sys.version.replace("\n", "- ")))
+
     if args.dump_sample_configs:
         return dump_sample_configs()
 
