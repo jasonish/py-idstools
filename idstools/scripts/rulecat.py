@@ -635,8 +635,8 @@ def resolve_etopen_url(suricata_version):
     return ET_OPEN_URL % mappings
 
 def ignore_file(ignore_files, filename):
-    for name in ignore_files:
-        if name == filename:
+    for pattern in ignore_files:
+        if fnmatch.fnmatch(os.path.basename(filename), pattern):
             return True
     return False
 
@@ -695,7 +695,9 @@ def main():
 
     parser.add_argument("--ignore", metavar="<filename>", action="append",
                         default=[],
-                        help="Filenames to ignore")
+                        help="Filenames to ignore (default: *deleted.rules)")
+    parser.add_argument("--no-ignore", action="store_true", default=False,
+                        help="Disables the ignore option.")
 
     parser.add_argument("--threshold-in", metavar="<filename>",
                         help="Filename of rule thresholding configuration")
@@ -731,6 +733,13 @@ def main():
 
     if args.dump_sample_configs:
         return dump_sample_configs()
+
+    # If --no-ignore was provided, make sure args.ignore is
+    # empty. Otherwise if no ignores are provided, set a sane default.
+    if args.no_ignore:
+        args.ignore = []
+    elif len(args.ignore) == 0:
+        args.ignore.append("*deleted.rules")
 
     if args.suricata_version:
         suricata_version = idstools.suricata.parse_version(args.suricata_version)
@@ -774,15 +783,18 @@ def main():
 
     files = Fetch(args).run()
 
+    # Remove ignored files.
+    for filename in list(files.keys()):
+        if ignore_file(args.ignore, filename):
+            logger.info("Ignoring file %s" % (filename))
+            del(files[filename])
+
     for path in args.local:
         load_local(path, files)
 
     rules = []
     for filename in files:
         if not filename.endswith(".rules"):
-            continue
-        if ignore_file(args.ignore, filename):
-            logger.info("Ignoring file %s" % (filename))
             continue
         logger.debug("Parsing %s." % (filename))
         rules += idstools.rule.parse_fileobj(
