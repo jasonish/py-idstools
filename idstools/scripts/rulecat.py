@@ -264,8 +264,11 @@ class Fetch(object):
             os.makedirs(self.args.temp_dir)
         logger.info("Fetching %s." % (url))
         idstools.net.get(
-            url, open(tmp_filename, "wb"), progress_hook=self.progress_hook)
-        self.progress_hook_finish()
+            url,
+            open(tmp_filename, "wb"),
+            progress_hook=self.progress_hook if not self.args.quiet else None)
+        if not self.args.quiet:
+            self.progress_hook_finish()
         logger.info("Done.")
         return self.extract_files(tmp_filename)
 
