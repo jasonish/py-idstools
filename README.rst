@@ -121,6 +121,17 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+unreleased
+~~~~~~~~~~
+- rulecat: ignore *deleted.rules by default. Provide --no-ignore
+  option to disable default ignores without having to add a new
+  ignore.
+- rulecat: suppress progress bar if quiet
+- rulecat: fix output filenaming for downloads that are a single rule
+  file
+- rulecat: more python3/unicode fixes
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.1...HEAD>`_
+
 0.6.1 - 2017-05-25
 ~~~~~~~~~~~~~~~~~~
 - idstools-rulecat: handle zip archive files
