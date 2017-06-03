@@ -73,6 +73,18 @@ ET_OPEN_URL = ("https://rules.emergingthreats.net/open/"
                "suricata%(version)s%(enhanced)s/"
                "emerging.rules.tar.gz")
 
+class AllRuleMatcher(object):
+    """Matcher object to match all rules. """
+
+    def match(self, rule):
+        return True
+
+    @classmethod
+    def parse(cls, buf):
+        if buf.strip() == "*":
+            return cls()
+        return None
+
 class IdRuleMatcher(object):
     """Matcher object to match an idstools rule object by its signature
     ID."""
@@ -99,6 +111,26 @@ class IdRuleMatcher(object):
             return cls(generatorId, signatureId)
         except:
             pass
+        return None
+
+class FilenameMatcher(object):
+    """Matcher object to match a rule by its filename. This is similar to
+    a group but has no specifier prefix.
+    """
+
+    def __init__(self, filename):
+        self.filename = filename
+
+    def match(self, rule):
+        if hasattr(rule, "group") and \
+           os.path.basename(rule.group) == self.filename:
+            return True
+        return False
+
+    @classmethod
+    def parse(cls, buf):
+        if buf.strip().endswith(".rules"):
+            return cls(buf.strip())
         return None
 
 class GroupMatcher(object):
@@ -165,18 +197,26 @@ class ModifyRuleFilter(object):
 
     def filter(self, rule):
         return idstools.rule.parse(
-            self.pattern.sub(self.repl, str(rule)), rule.group)
+            self.pattern.sub(self.repl, rule.format()), rule.group)
 
     @classmethod
     def parse(cls, buf):
         tokens = shlex.split(buf)
-        if len(tokens) != 3:
+        if len(tokens) == 3:
+            matchstring, a, b = tokens
+        elif len(tokens) > 3 and tokens[0] == "modifysid":
+            matchstring, a, b = tokens[1], tokens[2], tokens[4]
+        else:
             raise Exception("Bad number of arguments.")
-        matcher = parse_rule_match(tokens[0])
+        matcher = parse_rule_match(matchstring)
         if not matcher:
             raise Exception("Bad match string: %s" % (tokens[0]))
-        pattern = re.compile(tokens[1])
-        return cls(matcher, pattern, tokens[2])
+        pattern = re.compile(a)
+
+        # Convert Oinkmaster backticks to Python.
+        b = re.sub("\$\{(\d+)\}", "\\\\\\1", b)
+
+        return cls(matcher, pattern, b)
 
 class DropRuleFilter(object):
     """ Filter to modify an idstools rule object to a drop rule. """
@@ -290,15 +330,26 @@ class Fetch(object):
         return files
 
 def parse_rule_match(match):
+    matcher = AllRuleMatcher.parse(match)
+    if matcher:
+        return matcher
+
     matcher = IdRuleMatcher.parse(match)
     if matcher:
         return matcher
+
     matcher = ReRuleMatcher.parse(match)
     if matcher:
         return matcher
+
     matcher = GroupMatcher.parse(match)
     if matcher:
         return matcher
+
+    matcher = FilenameMatcher.parse(match)
+    if matcher:
+        return matcher
+
     return None
 
 def load_filters(filename):
@@ -313,6 +364,8 @@ def load_filters(filename):
             filter = ModifyRuleFilter.parse(line)
             if filter:
                 filters.append(filter)
+            else:
+                log.error("Failed to parse modify filter: %s" % (line))
 
     return filters
 
@@ -830,17 +883,19 @@ def main():
                 rule.enabled = True
                 enable_count += 1
 
-        # Unlike enable and disable, modify returns a new instance of
-        # the rule.
-        for filter in modify_filters:
-            if filter.match(rule):
-                rulemap[rule.id] = filter.filter(rule)
-                modify_count += 1
-
         for filter in drop_filters:
             if filter.match(rule):
                 rulemap[rule.id] = filter.filter(rule)
                 drop_count += 1
+
+    # Apply modify filters.
+    for fltr in modify_filters:
+        for key, rule in rulemap.items():
+            if fltr.match(rule):
+                new_rule = fltr.filter(rule)
+                if new_rule.format() != rule.format():
+                    rulemap[rule.id] = new_rule
+                    modify_count += 1
 
     logger.info("Disabled %d rules." % (len(disabled_rules)))
     logger.info("Enabled %d rules." % (enable_count))

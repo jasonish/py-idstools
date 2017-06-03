@@ -260,13 +260,51 @@ class ModifyRuleFilterTestCase(unittest.TestCase):
         expected = """drop http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,to_client; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
         self.assertEqual(str(rule1), expected)
 
+    def test_drop_to_alert(self):
+        rule_in = idstools.rule.parse(self.rule_string)
+        self.assertIsNotNone(rule_in)
+
+        f = rulecat.ModifyRuleFilter.parse(
+            'emerging-trojan.rules "^alert" "drop"')
+        self.assertIsNotNone(f)
+
+        rule_out = f.filter(rule_in)
+        self.assertTrue(rule_out.format().startswith("drop"))
+
+    def test_oinkmaster_backticks(self):
+        f = rulecat.ModifyRuleFilter.parse(
+            '* "^drop(.*)noalert(.*)" "alert${1}noalert${2}"')
+        rule_in ="""drop http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,to_client; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; noalert; classtype:trojan-activity; sid:2020757; rev:2;)"""
+        rule_out = f.filter(idstools.rule.parse(rule_in))
+        self.assertEqual("""alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,to_client; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; noalert; classtype:trojan-activity; sid:2020757; rev:2;)""", rule_out.format())
+
+    def test_oinkmaster_backticks_not_noalert(self):
+        f = rulecat.ModifyRuleFilter.parse(
+            'modifysid * "^drop(.*)noalert(.*)" | "alert${1}noalert${2}"')
+        rule_in ="""drop http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,to_client; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
+        rule_out = f.filter(idstools.rule.parse(rule_in))
+        self.assertEqual(rule_in, rule_out.format())
+
 class GroupMatcherTestCase(unittest.TestCase):
 
     rule_string = """alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,from_server; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
 
     def test_match(self):
         rule = idstools.rule.parse(self.rule_string, "rules/malware.rules")
-        matcher = rulecat.GroupMatcher.parse("group: */malware.rules")
+        matcher = rulecat.parse_rule_match("group: */malware.rules")
+        self.assertEquals(
+            matcher.__class__, idstools.scripts.rulecat.GroupMatcher)
+        self.assertTrue(matcher.match(rule))
+
+class FilenameMatcherTestCase(unittest.TestCase):
+
+    rule_string = """alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,from_server; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
+
+    def test_match(self):
+        rule = idstools.rule.parse(self.rule_string, "rules/trojan.rules")
+        matcher = rulecat.parse_rule_match("trojan.rules")
+        self.assertEquals(
+            matcher.__class__, idstools.scripts.rulecat.FilenameMatcher)
         self.assertTrue(matcher.match(rule))
 
 class DropRuleFilterTestCase(unittest.TestCase):
