@@ -51,7 +51,7 @@ actions = (
 # Compiled regular expression to detect a rule and break out some of
 # its parts.
 rule_pattern = re.compile(
-    r"^(?P<enabled>#)*\s*"      # Enabled/disabled
+    r"^(?P<enabled>#)*[\s#]*"      # Enabled/disabled
     r"(?P<raw>"
     r"(?P<header>"
     r"(?P<action>%s)\s*"        # Action
@@ -71,9 +71,9 @@ rule_pattern = re.compile(
 # construct the general rule re to pick this up, but its much faster
 # this way.
 decoder_rule_pattern = re.compile(
-    r"^(?P<enabled>#)*\s*"	# Enabled/disabled
+    r"^(?P<enabled>#)*[\s#]*"	# Enabled/disabled
     r"(?P<raw>"
-    r"(?P<action>%s)\s*"	# Action
+    r"(?P<action>%s)\s*"	    # Action
     r"\((?P<options>.*)\)\s*" 	# Options
     r")"
     % "|".join(actions))

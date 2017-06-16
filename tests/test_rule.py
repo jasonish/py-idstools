@@ -59,6 +59,18 @@ class RuleTestCase(unittest.TestCase):
         self.assertEquals(rule.raw, """alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)""")
         self.assertEquals(str(rule), rule_buf)
 
+    def test_parse_rule_double_commented(self):
+        rule_buf = """## alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)"""
+        rule = idstools.rule.parse(rule_buf)
+        self.assertFalse(rule.enabled)
+        self.assertEquals(rule.raw, """alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)""")
+
+    def test_parse_rule_comments_and_spaces(self):
+        rule_buf = """## #alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)"""
+        rule = idstools.rule.parse(rule_buf)
+        self.assertFalse(rule.enabled)
+        self.assertEquals(rule.raw, """alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)""")
+
     def test_toggle_rule(self):
         rule_buf = """# alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)"""
         rule = idstools.rule.parse(rule_buf)
