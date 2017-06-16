@@ -351,6 +351,8 @@ class FlowbitResolver(object):
         required = []
 
         for rule in [rule for rule in rulemap.values()]:
+            if not rule:
+                continue
             for option, value in map(self.parse_flowbit, rule.flowbits):
                 if option in self.setters and value in flowbits:
                     if rule.enabled and not include_enabled:
@@ -361,7 +363,7 @@ class FlowbitResolver(object):
 
     def get_required_flowbits(self, rules):
         required_flowbits = set()
-        for rule in [rule for rule in rules.values() if rule.enabled]:
+        for rule in [rule for rule in rules.values() if rule and rule.enabled]:
             for option, value in map(self.parse_flowbit, rule.flowbits):
                 if option in self.getters:
                     required_flowbits.add(value)

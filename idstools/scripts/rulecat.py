@@ -196,8 +196,13 @@ class ModifyRuleFilter(object):
         return self.matcher.match(rule)
 
     def filter(self, rule):
-        return idstools.rule.parse(
-            self.pattern.sub(self.repl, rule.format()), rule.group)
+        modified_rule = self.pattern.sub(self.repl, rule.format())
+        parsed = idstools.rule.parse(modified_rule, rule.group)
+        if parsed is None:
+            logger.error("Modification of rule %s results in invalid rule: %s",
+                         rule.idstr, modified_rule)
+            return rule
+        return parsed
 
     @classmethod
     def parse(cls, buf):
@@ -893,7 +898,7 @@ def main():
         for key, rule in rulemap.items():
             if fltr.match(rule):
                 new_rule = fltr.filter(rule)
-                if new_rule.format() != rule.format():
+                if new_rule and new_rule.format() != rule.format():
                     rulemap[rule.id] = new_rule
                     modify_count += 1
 
