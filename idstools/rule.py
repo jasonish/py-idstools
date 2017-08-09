@@ -258,7 +258,9 @@ def parse(buf, group=None):
         if name in ["gid", "sid", "rev"]:
             rule[name] = int(val)
         elif name == "metadata":
-            rule[name] = [v.strip() for v in val.split(",")]
+            if not name in rule:
+                rule[name] = []
+            rule[name] += [v.strip() for v in val.split(",")]
         elif name == "flowbits":
             rule.flowbits.append(val)
         elif name == "reference":

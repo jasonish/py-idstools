@@ -130,6 +130,9 @@ unreleased
 - rulecat: fix output filenaming for downloads that are a single rule
   file
 - rulecat: more python3/unicode fixes
+- rule parser: if metadata is specified more than once, append to the
+  existing metadata list instead of replacing it
+  (https://github.com/jasonish/py-idstools/issues/57)
 - `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.1...HEAD>`_
 
 0.6.1 - 2017-05-25
