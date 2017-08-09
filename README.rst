@@ -121,8 +121,8 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-unreleased
-~~~~~~~~~~
+0.6.2 - 2017-08-09
+~~~~~~~~~~~~~~~~~~
 - rulecat: ignore *deleted.rules by default. Provide --no-ignore
   option to disable default ignores without having to add a new
   ignore.
@@ -133,7 +133,7 @@ unreleased
 - rule parser: if metadata is specified more than once, append to the
   existing metadata list instead of replacing it
   (https://github.com/jasonish/py-idstools/issues/57)
-- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.1...HEAD>`_
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.1...0.6.2>`_
 
 0.6.1 - 2017-05-25
 ~~~~~~~~~~~~~~~~~~
