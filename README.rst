@@ -36,12 +36,17 @@ Installation
 Latest Release (Recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-pip install idstools
+    pip install idstools
+
+or on Fedora and CentOS (with EPEL):
+
+    yum install python-idstools
+
 
 Latest from Git
 ~~~~~~~~~~~~~~~
 
-pip install https://github.com/jasonish/py-idstools/archive/master.zip
+    pip install https://github.com/jasonish/py-idstools/archive/master.zip
 
 Manually
 ~~~~~~~~
