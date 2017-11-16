@@ -69,6 +69,8 @@ else:
     has_libpcap = True
     libpcap = ctypes.cdll.LoadLibrary(libpcap_filename)
     libpcap.pcap_geterr.restype = ctypes.c_char_p
+    libpcap.pcap_open_dead.restype = ctypes.POINTER(ctypes.c_void_p)
+    libpcap.pcap_dump_open.restype = ctypes.POINTER(ctypes.c_void_p)
     pcap_errbuf = ctypes.create_string_buffer(PCAP_ERRBUF_SIZE)
     libc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("c"))
 

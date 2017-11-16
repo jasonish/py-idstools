@@ -126,6 +126,10 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+unreleased
+~~~~~~~~~~
+- eve2pcap: fix segfault when calling libpcap functions.
+
 0.6.2 - 2017-08-09
 ~~~~~~~~~~~~~~~~~~
 - rulecat: ignore *deleted.rules by default. Provide --no-ignore
