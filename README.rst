@@ -129,6 +129,8 @@ Changelog
 unreleased
 ~~~~~~~~~~
 - eve2pcap: fix segfault when calling libpcap functions.
+- rulecat: for Emerging Threat rule URLs, use the Suricata version as found
+- rulecat: default to Suricata 4.0 if it can't be found.
 
 0.6.2 - 2017-08-09
 ~~~~~~~~~~~~~~~~~~
