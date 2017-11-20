@@ -22,12 +22,14 @@ setup(
         'License :: OSI Approved :: BSD License',
     ],
     scripts = [
+        "bin/idstools-dumpdynamicrules",
+        "bin/idstools-eve2pcap",
         "bin/idstools-gensidmsgmap",
+        "bin/idstools-rulecat",
+        "bin/idstools-rulemod",
+        "bin/idstools-u2eve",
         "bin/idstools-u2fast",
         "bin/idstools-u2json",
-        "bin/idstools-rulecat",
-        "bin/idstools-u2eve",
-        "bin/idstools-eve2pcap",
-        "bin/idstools-rulemod",
+        "bin/idstools-u2spewfoo",
     ],
 )
