@@ -273,7 +273,6 @@ def parse(buf, group=None):
             rule[name] = val
 
     if rule["msg"] is None:
-        logger.warn("Rule has no \"msg\": %s" % (buf.strip()))
         rule["msg"] = ""
 
     rule["raw"] = m.group("raw").strip()
