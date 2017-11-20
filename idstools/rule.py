@@ -241,6 +241,8 @@ def parse(buf, group=None):
         if not options:
             break
         index = find_opt_end(options)
+        if index < 0:
+            raise Exception("end of option not found")
         option = options[:index].strip()
         options = options[index + 1:].strip()
 

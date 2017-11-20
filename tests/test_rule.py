@@ -193,3 +193,7 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
         self.assertIsNotNone(rule)
         self.assertTrue("former_category TROJAN" in rule.metadata)
         self.assertTrue("updated_at 2017_08_08" in rule.metadata)
+
+    def test_metadata_missing_semicolon(self):
+        rule_buf = u""" alert icmp any any -> $HOME_NET any (msg:"ICMP test detected"; gid:0; sid:10000001; rev:1; classtype: icmp-event; metadata:policy balanced-ips drop, policy connectivity-ips drop, policy security-ips drop)"""
+        self.assertRaises(Exception, idstools.rule.parse, rule_buf)
