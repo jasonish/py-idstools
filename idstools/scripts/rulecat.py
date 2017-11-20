@@ -62,6 +62,9 @@ else:
         format="%(asctime)s - <%(levelname)s> - %(message)s")
     logger = logging.getLogger()
 
+# If Suricata is not found, default to this version.
+DEFAULT_SURICATA_VERSION = "4.0"
+
 # Template URL for Emerging Threats Pro rules.
 ET_PRO_URL = ("https://rules.emergingthreatspro.com/"
               "%(code)s/"
@@ -793,6 +796,8 @@ def main():
     elif len(args.ignore) == 0:
         args.ignore.append("*deleted.rules")
 
+    suricata_version = None
+
     if args.suricata_version:
         suricata_version = idstools.suricata.parse_version(args.suricata_version)
         if not suricata_version:
@@ -806,10 +811,11 @@ def main():
             logger.info("Found Suricata version %s at %s." % (
                 str(suricata_version.full), args.suricata))
         else:
-            logger.warn("Failed to get Suricata version.")
-            suricata_version = None
-    else:
-        suricata_version = None
+            logger.warn("Failed to get Suricata version, using %s",
+                        DEFAULT_SURICATA_VERSION)
+    if suricata_version is None:
+        suricata_version = idstools.suricata.parse_version(
+            DEFAULT_SURICATA_VERSION)
 
     if args.etpro:
         args.url.append(resolve_etpro_url(args.etpro, suricata_version))
