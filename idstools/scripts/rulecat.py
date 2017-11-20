@@ -65,12 +65,12 @@ else:
 # Template URL for Emerging Threats Pro rules.
 ET_PRO_URL = ("https://rules.emergingthreatspro.com/"
               "%(code)s/"
-              "suricata%(version)s%(enhanced)s/"
+              "suricata%(version)s/"
               "etpro.rules.tar.gz")
 
 # Template URL for Emerging Threats Open rules.
 ET_OPEN_URL = ("https://rules.emergingthreats.net/open/"
-               "suricata%(version)s%(enhanced)s/"
+               "suricata%(version)s/"
                "emerging.rules.tar.gz")
 
 class AllRuleMatcher(object):
@@ -663,32 +663,22 @@ def resolve_etpro_url(etpro, suricata_version):
     mappings = {
         "code": etpro,
         "version": "",
-        "enhanced": "",
     }
 
-    if not suricata_version:
-        mappings["version"] = "-1.3"
-    elif suricata_version.major < 2 and suricata_version.minor < 3:
-        mappings["version"] = "-1.0"
-    else:
-        mappings["version"] = "-1.3"
-        mappings["enhanced"] = "-enhanced"
+    mappings["version"] = "-%d.%d.%d" % (suricata_version.major,
+                                      suricata_version.minor,
+                                      suricata_version.patch)
 
     return ET_PRO_URL % mappings
 
 def resolve_etopen_url(suricata_version):
     mappings = {
         "version": "",
-        "enhanced": "",
     }
 
-    if not suricata_version:
-        mappings["version"] = "-1.3"
-    elif suricata_version.major < 2 and suricata_version.minor < 3:
-        mappings["version"] = "-1.0"
-    else:
-        mappings["version"] = "-1.3"
-        mappings["enhanced"] = "-enhanced"
+    mappings["version"] = "-%d.%d.%d" % (suricata_version.major,
+                                         suricata_version.minor,
+                                         suricata_version.patch)
 
     return ET_OPEN_URL % mappings
 
