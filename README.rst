@@ -126,8 +126,8 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-unreleased
-~~~~~~~~~~
+0.6.3 - 2017-11-20
+~~~~~~~~~~~~~~~~~~
 - eve2pcap: fix segfault when calling libpcap functions.
 - rulecat: for Emerging Threat rule URLs, use the Suricata version as found
 - rulecat: default to Suricata 4.0 if it can't be found.
