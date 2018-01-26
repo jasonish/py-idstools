@@ -197,3 +197,8 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
     def test_metadata_missing_semicolon(self):
         rule_buf = u""" alert icmp any any -> $HOME_NET any (msg:"ICMP test detected"; gid:0; sid:10000001; rev:1; classtype: icmp-event; metadata:policy balanced-ips drop, policy connectivity-ips drop, policy security-ips drop)"""
         self.assertRaises(Exception, idstools.rule.parse, rule_buf)
+
+    def test_parse(self):
+        rs = u"""alert any [1.1.1.1, !2.2.2.2] any -> any [1,2,3] (msg:"TEST"; sid:1; rev:1;)"""
+        rule = idstools.rule.parse(rs)
+        self.assertIsNotNone(rule)
