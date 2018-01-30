@@ -25,6 +25,7 @@
 
 from __future__ import print_function
 
+import sys
 import os
 import unittest
 import shlex
@@ -35,24 +36,6 @@ import shutil
 import idstools.rule
 from idstools.scripts import rulecat
 import idstools.rulecat.extract
-
-def has_python2():
-    r = subprocess.call(
-        ["python2", "--version"],
-        stderr=open("/dev/null", "wb"),
-        stdout=open("/dev/null", "wb"))
-    if r == 0:
-        return True
-    return False
-
-def has_python3():
-    r = subprocess.call(
-        ["python3", "--version"],
-        stderr=open("/dev/null", "wb"),
-        stdout=open("/dev/null", "wb"))
-    if r == 0:
-        return True
-    return False
 
 class TestRulecat(unittest.TestCase):
 
@@ -79,8 +62,7 @@ class TestRulecat(unittest.TestCase):
             "tests/emerging-current_events.rules")
         self.assertIsNone(files)
 
-    @unittest.skipIf(not has_python2(), "python2 not available")
-    def test_run_python2(self):
+    def test_run(self):
         old_path = os.getcwd()
         try:
             os.chdir(os.path.dirname(os.path.realpath(__file__)))
@@ -88,45 +70,7 @@ class TestRulecat(unittest.TestCase):
                 shutil.rmtree("tmp")
             os.makedirs("./tmp")
             subprocess.check_call(
-                ["/usr/bin/env", "python2",
-                 "../bin/idstools-rulecat",
-                 "--url",
-                 "file://%s/emerging.rules.tar.gz" % (
-                     os.getcwd()),
-                 "--local", "./rule-with-unicode.rules",
-                 "--temp-dir", "./tmp",
-                 "--force",
-                 "--merged", "./tmp/merged.rules",
-                 "--output", "./tmp/rules/",
-                 "--yaml-fragment", "./tmp/suricata-rules.yaml",
-                 "--sid-msg-map", "./tmp/sid-msg.map",
-                 "--sid-msg-map-2", "./tmp/sid-msg-v2.map",
-                ],
-                stdout=open("./tmp/stdout", "wb"),
-                stderr=open("./tmp/stderr", "wb"),
-            )
-            shutil.rmtree("tmp")
-        except:
-            if os.path.exists("./tmp/stdout"):
-                print("STDOUT")
-                print(open("./tmp/stdout").read())
-            if os.path.exists("./tmp/stderr"):
-                print("STDERR")
-                print(open("./tmp/stderr").read())
-            raise
-        finally:
-            os.chdir(old_path)
-
-    @unittest.skipIf(not has_python3(), "python3 not available")
-    def test_run_python3(self):
-        old_path = os.getcwd()
-        try:
-            os.chdir(os.path.dirname(os.path.realpath(__file__)))
-            if os.path.exists("./tmp"):
-                shutil.rmtree("tmp")
-            os.makedirs("./tmp")
-            subprocess.check_call(
-                ["/usr/bin/env", "python2",
+                [sys.executable,
                  "../bin/idstools-rulecat",
                  "--url",
                  "file://%s/emerging.rules.tar.gz" % (
