@@ -110,7 +110,8 @@ class Pcap:
     def dump_open(self, filename):
         if filename == "-":
             return self.dump_fopen(sys.stdout.fileno())
-        pcap_dumper_t = libpcap.pcap_dump_open(self._pcap_t, filename)
+        pcap_dumper_t = libpcap.pcap_dump_open(
+            self._pcap_t, ctypes.c_char_p(filename.encode()))
         if not pcap_dumper_t:
             raise Exception(self.get_err().decode())
         return PcapDumper(pcap_dumper_t)
