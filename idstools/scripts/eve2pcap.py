@@ -229,6 +229,7 @@ def main():
     pcap = Pcap.open_dead(dlt, 65535)
     dumper = pcap.dump_open(args.output)
 
+    count = 0
     for filename in args.filenames:
         with open(filename) as fileobj:
             for line in fileobj:
@@ -240,9 +241,12 @@ def main():
                     hdr, packet = eve2pcap(event)
                 if hdr and packet:
                     dumper.dump(hdr, ctypes.c_char_p(packet))
+                    count +=1
 
     dumper.close()
-    
+
+    print("%d eve records converted to pcap." % (count), file=sys.stderr)
+
     return 0
 
 if __name__ == "__main__":

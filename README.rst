@@ -130,6 +130,7 @@ unreleased
 ~~~~~~~~~~
 - eve2pcap: fix displaying of errors from libpcap
 - eve2pcap: python3 fixes
+- eve2pcap: print number of packets converted on exit
 - rules: fix parsing of rules where the address or port list has a space
 - `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.3...HEAD>`_
 
