@@ -128,6 +128,7 @@ Changelog
 
 unreleased
 ~~~~~~~~~~
+- eve2pcap: fix displaying of errors from libpcap
 - rules: fix parsing of rules where the address or port list has a space
 - `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.3...HEAD>`_
 

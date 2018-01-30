@@ -104,7 +104,7 @@ class Pcap:
     def open_dead(cls, linktype, snaplen):
         pcap_t = libpcap.pcap_open_dead(linktype, snaplen)
         if not pcap_t:
-            raise Exception(pcap_errbuf.value)
+            raise Exception(self.get_err().decode())
         return cls(pcap_t)
 
     def dump_open(self, filename):
@@ -112,8 +112,7 @@ class Pcap:
             return self.dump_fopen(sys.stdout.fileno())
         pcap_dumper_t = libpcap.pcap_dump_open(self._pcap_t, filename)
         if not pcap_dumper_t:
-            print(pcap_errbuf.value)
-            raise Exception(pcap_errbuf.value)
+            raise Exception(self.get_err().decode())
         return PcapDumper(pcap_dumper_t)
 
     def dump_fopen(self, fileno):
@@ -123,8 +122,11 @@ class Pcap:
         fp = libc.fdopen(fileno, "w")
         pcap_dumper_t = libpcap.pcap_dump_fopen(self._pcap_t, fp)
         if not pcap_dumper_t:
-            raise Exception(self.pcap_errbuf.value)
+            raise Exception(self.get_err())
         return PcapDumper(pcap_dumper_t)
+
+    def get_err(self):
+        return libpcap.pcap_geterr(self._pcap_t)
 
 class PcapDumper:
     """ Minimal wrapper around pcap_dumper_t. """
