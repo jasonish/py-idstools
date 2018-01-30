@@ -126,6 +126,11 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
+unreleased
+~~~~~~~~~~
+- rules: fix parsing of rules where the address or port list has a space
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.3...HEAD>`_
+
 0.6.3 - 2017-11-20
 ~~~~~~~~~~~~~~~~~~
 - eve2pcap: fix segfault when calling libpcap functions.
@@ -133,6 +138,7 @@ Changelog
 - rulecat: default to Suricata 4.0 if it can't be found.
 - rule parser: fix case where rule option does not end in ; and is
   last option (https://github.com/jasonish/py-idstools/issues/58)
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.2...0.6.3>`_
 
 0.6.2 - 2017-08-09
 ~~~~~~~~~~~~~~~~~~
