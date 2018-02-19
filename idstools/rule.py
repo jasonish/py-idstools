@@ -44,6 +44,13 @@ import io
 
 logger = logging.getLogger(__name__)
 
+# Compile an re pattern for basic rule matching.
+rule_pattern = re.compile(r"^(?P<enabled>#)*[\s#]*"
+                r"(?P<raw>"
+                r"(?P<header>[^()]+)"
+                r"\((?P<options>.*)\)"
+                r"$)")
+
 # Rule actions we expect to see.
 actions = (
     "alert", "log", "pass", "activate", "dynamic", "drop", "reject", "sdrop")
@@ -195,13 +202,7 @@ def parse(buf, group=None):
         buf = buf.decode("utf-8")
     buf = buf.strip()
 
-    pattern = (r"^(?P<enabled>#)*[\s#]*"
-               r"(?P<raw>"
-               r"(?P<header>[^()]+)"
-               r"\((?P<options>.*)\)"
-               r"$)"
-    )
-    m = re.match(pattern, buf)
+    m = rule_pattern.match(buf)
     if not m:
         return None
 
