@@ -36,12 +36,17 @@ Installation
 Latest Release (Recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-pip install idstools
+    pip install idstools
+
+or on Fedora and CentOS (with EPEL):
+
+    yum install python-idstools
+
 
 Latest from Git
 ~~~~~~~~~~~~~~~
 
-pip install https://github.com/jasonish/py-idstools/archive/master.zip
+    pip install https://github.com/jasonish/py-idstools/archive/master.zip
 
 Manually
 ~~~~~~~~
@@ -62,14 +67,20 @@ Reading a Unified2 Spool Directory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following code snippet will "tail" a unified log directory
-aggregating records into events::
+returning each record as a dict-like object::
 
   from idstools import unified2
 
-  reader = unified2.SpoolEventReader("/var/log/snort",
+  reader = unified2.SpoolRecordReader("/var/log/snort",
       "unified2.log", follow=True)
-  for event in reader:
-      print(event)
+  for record in reader:
+      if isinstance(record, unified2.Event):
+          print("Event:")
+      elif isinstance(record, unified2.Packet):
+          print("Packet:")
+      elif isinstance(record, unified2.ExtraData):
+          print("Extra-Data:")
+      print(record)
 
 See the `idstools unified2
 <http://idstools.readthedocs.io/en/latest/unified2.html>`_
@@ -117,11 +128,58 @@ Changelog
 
 unreleased
 ~~~~~~~~~~
+- eve2pcap: fix displaying of errors from libpcap
+- eve2pcap: python3 fixes
+- eve2pcap: print number of packets converted on exit
+- rules: fix parsing of rules where the address or port list has a space
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.3...HEAD>`_
+
+0.6.3 - 2017-11-20
+~~~~~~~~~~~~~~~~~~
+- eve2pcap: fix segfault when calling libpcap functions.
+- rulecat: for Emerging Threat rule URLs, use the Suricata version as found
+- rulecat: default to Suricata 4.0 if it can't be found.
+- rule parser: fix case where rule option does not end in ; and is
+  last option (https://github.com/jasonish/py-idstools/issues/58)
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.2...0.6.3>`_
+
+0.6.2 - 2017-08-09
+~~~~~~~~~~~~~~~~~~
+- rulecat: ignore *deleted.rules by default. Provide --no-ignore
+  option to disable default ignores without having to add a new
+  ignore.
+- rulecat: suppress progress bar if quiet
+- rulecat: fix output filenaming for downloads that are a single rule
+  file
+- rulecat: more python3/unicode fixes
+- rule parser: if metadata is specified more than once, append to the
+  existing metadata list instead of replacing it
+  (https://github.com/jasonish/py-idstools/issues/57)
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.1...0.6.2>`_
+
+0.6.1 - 2017-05-25
+~~~~~~~~~~~~~~~~~~
+- idstools-rulecat: handle zip archive files
+- rules: handle msg with escaped semicolons
+- rulecat: don't generate report summary if its not going to be logged
+  anyways (https://github.com/jasonish/py-idstools/issues/49)
+- rulecat: Python 3 fixes
+- rules: speed up parsing
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.0...0.6.1>`_
+
+0.6.0 - 2017-03-29
+~~~~~~~~~~~~~~~~~~
 - idstools-u2eve - output packet records
 - idstools-rulecat: allow --local to be specified multiple times
 - idstools-rulecat: --ignore option to ignore filenames
 - More python 3 fixups.
-- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.6...HEAD>`_
+- unified2 - deprecate event readers, use record readers instead
+  (https://github.com/jasonish/py-idstools/issues/14)
+- u2json: --packet-hex and --printable to print raw buffers as printable
+  chars and hex in addition to base64.
+- u2eve: --packet-printable to include a "packet_printable" field
+- u2eve: include Snort extra-data with printable data.
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.5.6...0.6.0>`_
 
 0.5.6
 ~~~~~

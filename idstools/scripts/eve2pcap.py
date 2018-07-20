@@ -69,6 +69,8 @@ else:
     has_libpcap = True
     libpcap = ctypes.cdll.LoadLibrary(libpcap_filename)
     libpcap.pcap_geterr.restype = ctypes.c_char_p
+    libpcap.pcap_open_dead.restype = ctypes.POINTER(ctypes.c_void_p)
+    libpcap.pcap_dump_open.restype = ctypes.POINTER(ctypes.c_void_p)
     pcap_errbuf = ctypes.create_string_buffer(PCAP_ERRBUF_SIZE)
     libc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("c"))
 
@@ -102,16 +104,16 @@ class Pcap:
     def open_dead(cls, linktype, snaplen):
         pcap_t = libpcap.pcap_open_dead(linktype, snaplen)
         if not pcap_t:
-            raise Exception(pcap_errbuf.value)
+            raise Exception(self.get_err().decode())
         return cls(pcap_t)
 
     def dump_open(self, filename):
         if filename == "-":
             return self.dump_fopen(sys.stdout.fileno())
-        pcap_dumper_t = libpcap.pcap_dump_open(self._pcap_t, filename)
+        pcap_dumper_t = libpcap.pcap_dump_open(
+            self._pcap_t, ctypes.c_char_p(filename.encode()))
         if not pcap_dumper_t:
-            print(pcap_errbuf.value)
-            raise Exception(pcap_errbuf.value)
+            raise Exception(self.get_err().decode())
         return PcapDumper(pcap_dumper_t)
 
     def dump_fopen(self, fileno):
@@ -121,8 +123,11 @@ class Pcap:
         fp = libc.fdopen(fileno, "w")
         pcap_dumper_t = libpcap.pcap_dump_fopen(self._pcap_t, fp)
         if not pcap_dumper_t:
-            raise Exception(self.pcap_errbuf.value)
+            raise Exception(self.get_err())
         return PcapDumper(pcap_dumper_t)
+
+    def get_err(self):
+        return libpcap.pcap_geterr(self._pcap_t)
 
 class PcapDumper:
     """ Minimal wrapper around pcap_dumper_t. """
@@ -224,6 +229,7 @@ def main():
     pcap = Pcap.open_dead(dlt, 65535)
     dumper = pcap.dump_open(args.output)
 
+    count = 0
     for filename in args.filenames:
         with open(filename) as fileobj:
             for line in fileobj:
@@ -235,9 +241,12 @@ def main():
                     hdr, packet = eve2pcap(event)
                 if hdr and packet:
                     dumper.dump(hdr, ctypes.c_char_p(packet))
+                    count +=1
 
     dumper.close()
-    
+
+    print("%d eve records converted to pcap." % (count), file=sys.stderr)
+
     return 0
 
 if __name__ == "__main__":

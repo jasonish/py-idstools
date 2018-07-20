@@ -42,8 +42,12 @@ class SignatureMapTestCase(unittest.TestCase):
 
         # This signature has multiple refs.
         sig = sigmap.get(1, 2000373)
-        print(sig)
         self.assertEquals(3, len(sig["ref"]))
+
+        sig = sigmap.get(1, 71918985)
+        self.assertEquals(
+            "SN: Inbound TCP traffic from suspect network (AS29073 - NL)",
+            sig["msg"])
 
     def test_load_signature_v2_map(self):
 

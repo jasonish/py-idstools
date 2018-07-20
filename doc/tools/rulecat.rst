@@ -28,9 +28,9 @@ Options
 
 .. option:: -t <directory>, --temp-dir=<directory>
 
-   Temporary working directory (default:
-   /var/tmp/idstools-rulecat). This is where downloaded files will be
-   stored.
+   Temporary working directory (default: /var/tmp/idstools-rulecat).
+
+   This is where downloaded files will be stored.
 
 .. option:: --suricata=<path>
 
@@ -57,7 +57,7 @@ Options
 .. option:: --merged=<filename>
 
    Write a single file containing all rules. This can be used in
-   addition to ``-o`` or instead of ``-o``.
+   addition to ``--output`` or instead of ``--output``.
 
 .. option:: --yaml-fragment=<filename.yaml>
 
@@ -75,6 +75,14 @@ Options
    A path to a filename or directory of local rule files to
    include. May be specified multiple times and should not include
    files in the output path.
+
+   If the path is a directory all files ending in *.rules* will be
+   loaded.
+
+   Wildcards are accepted but to avoid shell expansion the argument
+   must be quoted, for example::
+
+     --local '/etc/suricata/custom-*.rules'
 
 .. option:: --sid-msg-map=<filename>
 
@@ -102,14 +110,20 @@ Options
 
 .. option:: --ignore=<filename>
 
-   Filenames to ignore. This only deals with the base filename for now
-   such as ``emering-deleted.rules``, NOT
-   ``rules/emerging-deleted.rules``.
+   Filenames to ignore. This is a pattern that will be matched against
+   the basename of a rule files.
 
    This argument may be specified multiple times.
 
+   Default: *deleted.rules
+
    Alternatively the **group** matcher may be used in the file passed
    to ``--disable``.
+
+.. option:: --no-ignore
+
+   Disable the --ignore option. Most useful to disable the default
+   ignore pattern without adding others.
 
 .. option:: --etopen
 

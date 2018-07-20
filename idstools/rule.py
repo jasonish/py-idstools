@@ -40,42 +40,20 @@ from __future__ import print_function
 import sys
 import re
 import logging
+import io
 
 logger = logging.getLogger(__name__)
+
+# Compile an re pattern for basic rule matching.
+rule_pattern = re.compile(r"^(?P<enabled>#)*[\s#]*"
+                r"(?P<raw>"
+                r"(?P<header>[^()]+)"
+                r"\((?P<options>.*)\)"
+                r"$)")
 
 # Rule actions we expect to see.
 actions = (
     "alert", "log", "pass", "activate", "dynamic", "drop", "reject", "sdrop")
-
-# Compiled regular expression to detect a rule and break out some of
-# its parts.
-rule_pattern = re.compile(
-    r"^(?P<enabled>#)*\s*"      # Enabled/disabled
-    r"(?P<raw>"
-    r"(?P<header>"
-    r"(?P<action>%s)\s*"        # Action
-    r"[^\s]*\s*"                # Protocol
-    r"[^\s]*\s*"                # Source address(es)
-    r"[^\s]*\s*"                # Source port
-    r"(?P<direction>[-><]+)\s*"	# Direction
-    r"[^\s]*\s*"		        # Destination address(es)
-    r"[^\s]*"                   # Destination port
-    r")"                        # End of header.
-    r"\s*"                      # Trailing spaces after header.
-    r"\((?P<options>.*)\)\s*" 	# Options
-    r")"
-    % "|".join(actions))
-
-# Another compiled pattern to detect preprocessor rules.  We could
-# construct the general rule re to pick this up, but its much faster
-# this way.
-decoder_rule_pattern = re.compile(
-    r"^(?P<enabled>#)*\s*"	# Enabled/disabled
-    r"(?P<raw>"
-    r"(?P<action>%s)\s*"	# Action
-    r"\((?P<options>.*)\)\s*" 	# Options
-    r")"
-    % "|".join(actions))
 
 class Rule(dict):
     """Class representing a rule.
@@ -162,7 +140,10 @@ class Rule(dict):
 
         If the rule is disabled it will be returned as commented out.
         """
-        return "%s%s" % ("" if self.enabled else "# ", self.raw)
+        return self.format()
+
+    def format(self):
+        return u"%s%s" % (u"" if self.enabled else u"# ", self.raw)
 
     def rebuild_options(self):
         """ Rebuild the rule options from the list of options."""
@@ -198,6 +179,17 @@ def add_option(rule, name, value, index=None):
         rule.rebuild_options())
     return parse(new_rule_string, rule["group"])
 
+def find_opt_end(options):
+    """ Find the end of an option (;) handling escapes. """
+    offset = 0
+
+    while True:
+        i = options[offset:].find(";")
+        if options[offset + i - 1] == "\\":
+            offset += 2
+        else:
+            return offset + i
+
 def parse(buf, group=None):
     """ Parse a single rule for a string buffer.
 
@@ -205,23 +197,89 @@ def parse(buf, group=None):
 
     :returns: An instance of of :py:class:`.Rule` representing the parsed rule
     """
-    m = rule_pattern.match(buf) or decoder_rule_pattern.match(buf)
+
+    if type(buf) == type(b""):
+        buf = buf.decode("utf-8")
+    buf = buf.strip()
+
+    m = rule_pattern.match(buf)
     if not m:
-        return
+        return None
 
-    rule = Rule(enabled=True if m.group("enabled") is None else False,
-                action=m.group("action"),
-                group=group)
+    if m.group("enabled") == "#":
+        enabled = False
+    else:
+        enabled = True
 
-    rule["direction"] = m.groupdict().get("direction", None)
-    rule["header"] = m.groupdict().get("header", None)
+    header = m.group("header").strip()
+
+    # If a decoder rule, the header will be one word.
+    if len(header.split(" ")) == 1:
+        action = header
+        direction = None
+    else:
+        states = ["action",
+                  "proto",
+                  "source_addr",
+                  "source_port",
+                  "direction",
+                  "dest_addr",
+                  "dest_port",
+                  ]
+        state = 0
+
+        rem = header
+        while state < len(states):
+            if not rem:
+                return None
+            if rem[0] == "[":
+                end = rem.find("]")
+                if end < 0:
+                    return
+                end += 1
+                token = rem[:end].strip()
+                rem = rem[end:].strip()
+            else:
+                end = rem.find(" ")
+                if end < 0:
+                    token = rem
+                    rem = ""
+                else:
+                    token = rem[:end].strip()
+                    rem = rem[end:].strip()
+
+            if states[state] == "action":
+                action = token
+            elif states[state] == "proto":
+                proto = token
+            elif states[state] == "source_addr":
+                source_addr = token
+            elif states[state] == "source_port":
+                source_port = token
+            elif states[state] == "direction":
+                direction = token
+            elif states[state] == "dest_addr":
+                dest_addr = token
+            elif states[state] == "dest_port":
+                dest_port = token
+
+            state += 1
+
+    if action not in actions:
+        return None
+
+    rule = Rule(enabled=enabled, action=action, group=group)
+    rule["direction"] = direction
+    rule["header"] = header
 
     options = m.group("options")
 
     while True:
         if not options:
             break
-        index = options.find(";")
+        index = find_opt_end(options)
+        if index < 0:
+            raise Exception("end of option not found: %s" % (buf))
         option = options[:index].strip()
         options = options[index + 1:].strip()
 
@@ -239,7 +297,9 @@ def parse(buf, group=None):
         if name in ["gid", "sid", "rev"]:
             rule[name] = int(val)
         elif name == "metadata":
-            rule[name] = [v.strip() for v in val.split(",")]
+            if not name in rule:
+                rule[name] = []
+            rule[name] += [v.strip() for v in val.split(",")]
         elif name == "flowbits":
             rule.flowbits.append(val)
         elif name == "reference":
@@ -252,7 +312,6 @@ def parse(buf, group=None):
             rule[name] = val
 
     if rule["msg"] is None:
-        logger.warn("Rule has no \"msg\": %s" % (buf.strip()))
         rule["msg"] = ""
 
     rule["raw"] = m.group("raw").strip()
@@ -296,7 +355,7 @@ def parse_file(filename, group=None):
 
     :returns: A list of :py:class:`.Rule` instances, one for each rule parsed
     """
-    with open(filename) as fileobj:
+    with io.open(filename, encoding="utf-8") as fileobj:
         return parse_fileobj(fileobj, group)
 
 class FlowbitResolver(object):
@@ -332,6 +391,8 @@ class FlowbitResolver(object):
         required = []
 
         for rule in [rule for rule in rulemap.values()]:
+            if not rule:
+                continue
             for option, value in map(self.parse_flowbit, rule.flowbits):
                 if option in self.setters and value in flowbits:
                     if rule.enabled and not include_enabled:
@@ -342,7 +403,7 @@ class FlowbitResolver(object):
 
     def get_required_flowbits(self, rules):
         required_flowbits = set()
-        for rule in [rule for rule in rules.values() if rule.enabled]:
+        for rule in [rule for rule in rules.values() if rule and rule.enabled]:
             for option, value in map(self.parse_flowbit, rule.flowbits):
                 if option in self.getters:
                     required_flowbits.add(value)

@@ -37,12 +37,8 @@ import fnmatch
 import subprocess
 import types
 import shutil
-
-try:
-    from io import BytesIO
-    from io import StringIO
-except:
-    from StringIO import StringIO as BytesIO
+import glob
+import io
 
 if sys.argv[0] == __file__:
     sys.path.insert(
@@ -52,8 +48,8 @@ import idstools.rule
 import idstools.suricata
 import idstools.net
 from idstools.rulecat import configs
-from idstools.util import archive_to_dict
 from idstools.rulecat.loghandler import SuriColourLogHandler
+from idstools.rulecat import extract
 
 # Initialize logging, use colour if on a tty.
 if len(logging.root.handlers) == 0 and os.isatty(sys.stderr.fileno()):
@@ -66,16 +62,31 @@ else:
         format="%(asctime)s - <%(levelname)s> - %(message)s")
     logger = logging.getLogger()
 
+# If Suricata is not found, default to this version.
+DEFAULT_SURICATA_VERSION = "4.0"
+
 # Template URL for Emerging Threats Pro rules.
 ET_PRO_URL = ("https://rules.emergingthreatspro.com/"
               "%(code)s/"
-              "suricata%(version)s%(enhanced)s/"
+              "suricata%(version)s/"
               "etpro.rules.tar.gz")
 
 # Template URL for Emerging Threats Open rules.
 ET_OPEN_URL = ("https://rules.emergingthreats.net/open/"
-               "suricata%(version)s%(enhanced)s/"
+               "suricata%(version)s/"
                "emerging.rules.tar.gz")
+
+class AllRuleMatcher(object):
+    """Matcher object to match all rules. """
+
+    def match(self, rule):
+        return True
+
+    @classmethod
+    def parse(cls, buf):
+        if buf.strip() == "*":
+            return cls()
+        return None
 
 class IdRuleMatcher(object):
     """Matcher object to match an idstools rule object by its signature
@@ -103,6 +114,26 @@ class IdRuleMatcher(object):
             return cls(generatorId, signatureId)
         except:
             pass
+        return None
+
+class FilenameMatcher(object):
+    """Matcher object to match a rule by its filename. This is similar to
+    a group but has no specifier prefix.
+    """
+
+    def __init__(self, filename):
+        self.filename = filename
+
+    def match(self, rule):
+        if hasattr(rule, "group") and \
+           os.path.basename(rule.group) == self.filename:
+            return True
+        return False
+
+    @classmethod
+    def parse(cls, buf):
+        if buf.strip().endswith(".rules"):
+            return cls(buf.strip())
         return None
 
 class GroupMatcher(object):
@@ -168,19 +199,32 @@ class ModifyRuleFilter(object):
         return self.matcher.match(rule)
 
     def filter(self, rule):
-        return idstools.rule.parse(
-            self.pattern.sub(self.repl, str(rule)), rule.group)
+        modified_rule = self.pattern.sub(self.repl, rule.format())
+        parsed = idstools.rule.parse(modified_rule, rule.group)
+        if parsed is None:
+            logger.error("Modification of rule %s results in invalid rule: %s",
+                         rule.idstr, modified_rule)
+            return rule
+        return parsed
 
     @classmethod
     def parse(cls, buf):
         tokens = shlex.split(buf)
-        if len(tokens) != 3:
+        if len(tokens) == 3:
+            matchstring, a, b = tokens
+        elif len(tokens) > 3 and tokens[0] == "modifysid":
+            matchstring, a, b = tokens[1], tokens[2], tokens[4]
+        else:
             raise Exception("Bad number of arguments.")
-        matcher = parse_rule_match(tokens[0])
+        matcher = parse_rule_match(matchstring)
         if not matcher:
             raise Exception("Bad match string: %s" % (tokens[0]))
-        pattern = re.compile(tokens[1])
-        return cls(matcher, pattern, tokens[2])
+        pattern = re.compile(a)
+
+        # Convert Oinkmaster backticks to Python.
+        b = re.sub("\$\{(\d+)\}", "\\\\\\1", b)
+
+        return cls(matcher, pattern, b)
 
 class DropRuleFilter(object):
     """ Filter to modify an idstools rule object to a drop rule. """
@@ -214,7 +258,7 @@ class Fetch(object):
             checksum_url = url + ".md5"
             local_checksum = hashlib.md5(
                 open(tmp_filename, "rb").read()).hexdigest().strip()
-            remote_checksum_buf = BytesIO()
+            remote_checksum_buf = io.BytesIO()
             logger.info("Checking %s." % (checksum_url))
             idstools.net.get(checksum_url, remote_checksum_buf)
             remote_checksum = remote_checksum_buf.getvalue().decode().strip()
@@ -242,13 +286,19 @@ class Fetch(object):
         sys.stdout.write("\n")
         sys.stdout.flush()
 
-    def basename(self, url):
+    def url_basename(self, url):
         """ Return the base filename of the URL. """
         filename = os.path.basename(url).split("?", 1)[0]
         return filename
 
+    def get_tmp_filename(self, url):
+        url_hash = hashlib.md5(url.encode("utf-8")).hexdigest()
+        return os.path.join(
+            self.args.temp_dir,
+            "%s-%s" % (url_hash, self.url_basename(url)))
+
     def fetch(self, url):
-        tmp_filename = os.path.join(self.args.temp_dir, self.basename(url))
+        tmp_filename = self.get_tmp_filename(url)
         if not self.args.force and os.path.exists(tmp_filename):
             if time.time() - os.stat(tmp_filename).st_mtime < (60 * 15):
                 logger.info(
@@ -262,8 +312,11 @@ class Fetch(object):
             os.makedirs(self.args.temp_dir)
         logger.info("Fetching %s." % (url))
         idstools.net.get(
-            url, open(tmp_filename, "wb"), progress_hook=self.progress_hook)
-        self.progress_hook_finish()
+            url,
+            open(tmp_filename, "wb"),
+            progress_hook=self.progress_hook if not self.args.quiet else None)
+        if not self.args.quiet:
+            self.progress_hook_finish()
         logger.info("Done.")
         return self.extract_files(tmp_filename)
 
@@ -274,26 +327,37 @@ class Fetch(object):
         return files
 
     def extract_files(self, filename):
+        files = extract.try_extract(filename)
+        if files:
+            return files
+
+        # The file is not an archive, treat it as an individual file.
+        basename = os.path.basename(filename).split("-", 1)[1]
         files = {}
-
-        if filename.endswith(".tar.gz"):
-            for (name, content) in archive_to_dict(filename).items():
-                files[os.path.basename(name)] = content
-        else:
-            files[os.path.basename(filename)] = open(filename, "rb").read()
-
+        files[basename] = open(filename, "rb").read()
         return files
 
 def parse_rule_match(match):
+    matcher = AllRuleMatcher.parse(match)
+    if matcher:
+        return matcher
+
     matcher = IdRuleMatcher.parse(match)
     if matcher:
         return matcher
+
     matcher = ReRuleMatcher.parse(match)
     if matcher:
         return matcher
+
     matcher = GroupMatcher.parse(match)
     if matcher:
         return matcher
+
+    matcher = FilenameMatcher.parse(match)
+    if matcher:
+        return matcher
+
     return None
 
 def load_filters(filename):
@@ -308,6 +372,8 @@ def load_filters(filename):
             filter = ModifyRuleFilter.parse(line)
             if filter:
                 filters.append(filter)
+            else:
+                log.error("Failed to parse modify filter: %s" % (line))
 
     return filters
 
@@ -347,31 +413,17 @@ def load_local(local, files):
                     path = os.path.join(local, filename)
                     load_local(path, files)
     else:
-        logger.info("Loading local file %s" % (local))
-        filename = os.path.basename(local)
-        if filename in files:
-            logger.warn(
-                "Local file %s overrides existing file of same name." % (
-                    local))
-        files[filename] = open(local).read()
-
-def write_to_directory(directory, files, rulemap):
-    logger.info("Writing rule files to %s." % (directory))
-    for filename in sorted(files):
-        outpath = os.path.join(
-            directory, os.path.basename(filename))
-        logger.debug("Writing %s." % outpath)
-        if not filename.endswith(".rules"):
-            open(outpath, "wb").write(files[filename])
-        else:
-            content = []
-            for line in BytesIO(files[filename]):
-                rule = idstools.rule.parse(line)
-                if not rule:
-                    content.append(line.strip())
-                else:
-                    content.append(str(rulemap[rule.id]))
-            open(outpath, "wb").write("\n".join(content))
+        local_files = glob.glob(local)
+        if len(local_files) == 0:
+            local_files.append(local)
+        for filename in local_files:
+            logger.info("Loading local file %s" % (filename))
+            basename = os.path.basename(filename)
+            if basename in files:
+                logger.warn(
+                    "Local file %s overrides existing file of same name." % (
+                        filename))
+            files[basename] = open(filename, "rb").read()
 
 def build_report(prev_rulemap, rulemap):
     """Build a report of changes between 2 rulemaps.
@@ -388,12 +440,14 @@ def build_report(prev_rulemap, rulemap):
         "modified": []
     }
 
-    for rule in rulemap.itervalues():
+    for key in rulemap:
+        rule = rulemap[key]
         if not rule.id in prev_rulemap:
             report["added"].append(rule)
-        elif str(rule) != str(prev_rulemap[rule.id]):
+        elif rule.format() != prev_rulemap[rule.id].format():
             report["modified"].append(rule)
-    for rule in prev_rulemap.itervalues():
+    for key in prev_rulemap:
+        rule = prev_rulemap[key]
         if not rule.id in rulemap:
             report["removed"].append(rule)
 
@@ -401,18 +455,62 @@ def build_report(prev_rulemap, rulemap):
 
 def write_merged(filename, rulemap):
 
-    prev_rulemap = {}
-    if os.path.exists(filename):
-        prev_rulemap = build_rule_map(
-            idstools.rule.parse_fileobj(open(filename)))
-    report = build_report(prev_rulemap, rulemap)
-
-    logger.info("Writing %s: added: %d; removed %d; modified: %d" % (
-        filename, len(report["added"]), len(report["removed"]),
-        len(report["modified"])))
-    with open(filename, "w") as fileobj:
+    if not args.quiet:
+        prev_rulemap = {}
+        if os.path.exists(filename):
+            prev_rulemap = build_rule_map(
+                idstools.rule.parse_file(filename))
+        report = build_report(prev_rulemap, rulemap)
+        enabled = len([rule for rule in rulemap.values() if rule.enabled])
+        logger.info("Writing rules to %s: total: %d; enabled: %d; "
+                    "added: %d; removed %d; modified: %d" % (
+                        filename,
+                        len(rulemap),
+                        enabled,
+                        len(report["added"]),
+                        len(report["removed"]),
+                        len(report["modified"])))
+    
+    with io.open(filename, encoding="utf-8", mode="w") as fileobj:
         for rule in rulemap:
-            print(str(rulemap[rule]), file=fileobj)
+            print(rulemap[rule].format(), file=fileobj)
+
+def write_to_directory(directory, files, rulemap):
+    if not args.quiet:
+        previous_rulemap = {}
+        for filename in files:
+            outpath = os.path.join(
+                directory, os.path.basename(filename))
+            if os.path.exists(outpath):
+                previous_rulemap.update(build_rule_map(
+                    idstools.rule.parse_file(outpath)))
+        report = build_report(previous_rulemap, rulemap)
+        enabled = len([rule for rule in rulemap.values() if rule.enabled])
+        logger.info("Writing rule files to directory %s: total: %d; "
+                    "enabled: %d; added: %d; removed %d; modified: %d" % (
+                        directory,
+                        len(rulemap),
+                        enabled,
+                        len(report["added"]),
+                        len(report["removed"]),
+                        len(report["modified"])))
+
+    for filename in sorted(files):
+        outpath = os.path.join(
+            directory, os.path.basename(filename))
+        logger.debug("Writing %s." % outpath)
+        if not filename.endswith(".rules"):
+            open(outpath, "wb").write(files[filename])
+        else:
+            content = []
+            for line in io.StringIO(files[filename].decode("utf-8")):
+                rule = idstools.rule.parse(line)
+                if not rule:
+                    content.append(line.strip())
+                else:
+                    content.append(rulemap[rule.id].format())
+            io.open(outpath, encoding="utf-8", mode="w").write(
+                u"\n".join(content))
 
 def write_yaml_fragment(filename, files):
     logger.info(
@@ -427,8 +525,9 @@ def write_yaml_fragment(filename, files):
 
 def write_sid_msg_map(filename, rulemap, version=1):
     logger.info("Writing %s." % (filename))
-    with open(filename, "w") as fileobj:
-        for rule in rulemap.itervalues():
+    with io.open(filename, encoding="utf-8", mode="w") as fileobj:
+        for key in rulemap:
+            rule = rulemap[key]
             if version == 2:
                 formatted = idstools.rule.format_sidmsgmap_v2(rule)
                 if formatted:
@@ -472,7 +571,7 @@ def resolve_flowbits(rulemap, disabled_rules):
         logger.debug("Found %d required flowbits.", len(flowbits))
         required_rules = flowbit_resolver.get_required_rules(rulemap, flowbits)
         logger.debug(
-            "Found %d rules to enable to fullfull flowbit requirements",
+            "Found %d rules to enable to for flowbit requirements",
             len(required_rules))
         if not required_rules:
             logger.debug("All required rules enabled.")
@@ -527,7 +626,7 @@ class ThresholdProcessor:
             else:
                 for rule in rulemap.values():
                     if rule.enabled:
-                        if pattern.search(str(rule)):
+                        if pattern.search(rule.format()):
                             count += 1
                             print("# %s" % (rule.brief()), file=fileout)
                             print(self.replace(line, rule), file=fileout)
@@ -567,42 +666,33 @@ def resolve_etpro_url(etpro, suricata_version):
     mappings = {
         "code": etpro,
         "version": "",
-        "enhanced": "",
     }
 
-    if not suricata_version:
-        mappings["version"] = "-1.3"
-    elif suricata_version.major < 2 and suricata_version.minor < 3:
-        mappings["version"] = "-1.0"
-    else:
-        mappings["version"] = "-1.3"
-        mappings["enhanced"] = "-enhanced"
+    mappings["version"] = "-%d.%d.%d" % (suricata_version.major,
+                                      suricata_version.minor,
+                                      suricata_version.patch)
 
     return ET_PRO_URL % mappings
 
 def resolve_etopen_url(suricata_version):
     mappings = {
         "version": "",
-        "enhanced": "",
     }
 
-    if not suricata_version:
-        mappings["version"] = "-1.3"
-    elif suricata_version.major < 2 and suricata_version.minor < 3:
-        mappings["version"] = "-1.0"
-    else:
-        mappings["version"] = "-1.3"
-        mappings["enhanced"] = "-enhanced"
+    mappings["version"] = "-%d.%d.%d" % (suricata_version.major,
+                                         suricata_version.minor,
+                                         suricata_version.patch)
 
     return ET_OPEN_URL % mappings
 
 def ignore_file(ignore_files, filename):
-    for name in ignore_files:
-        if name == filename:
+    for pattern in ignore_files:
+        if fnmatch.fnmatch(os.path.basename(filename), pattern):
             return True
     return False
 
 def main():
+    global args
 
     conf_filenames = [arg for arg in sys.argv if arg.startswith("@")]
     if not conf_filenames:
@@ -656,7 +746,9 @@ def main():
 
     parser.add_argument("--ignore", metavar="<filename>", action="append",
                         default=[],
-                        help="Filenames to ignore")
+                        help="Filenames to ignore (default: *deleted.rules)")
+    parser.add_argument("--no-ignore", action="store_true", default=False,
+                        help="Disables the ignore option.")
 
     parser.add_argument("--threshold-in", metavar="<filename>",
                         help="Filename of rule thresholding configuration")
@@ -690,8 +782,21 @@ def main():
     if args.quiet:
         logger.setLevel(logging.WARNING)
 
+    logger.debug("This is idstools-rulecat version %s; Python: %s" % (
+        idstools.version,
+        sys.version.replace("\n", "- ")))
+
     if args.dump_sample_configs:
         return dump_sample_configs()
+
+    # If --no-ignore was provided, make sure args.ignore is
+    # empty. Otherwise if no ignores are provided, set a sane default.
+    if args.no_ignore:
+        args.ignore = []
+    elif len(args.ignore) == 0:
+        args.ignore.append("*deleted.rules")
+
+    suricata_version = None
 
     if args.suricata_version:
         suricata_version = idstools.suricata.parse_version(args.suricata_version)
@@ -706,10 +811,11 @@ def main():
             logger.info("Found Suricata version %s at %s." % (
                 str(suricata_version.full), args.suricata))
         else:
-            logger.warn("Failed to get Suricata version.")
-            suricata_version = None
-    else:
-        suricata_version = None
+            logger.warn("Failed to get Suricata version, using %s",
+                        DEFAULT_SURICATA_VERSION)
+    if suricata_version is None:
+        suricata_version = idstools.suricata.parse_version(
+            DEFAULT_SURICATA_VERSION)
 
     if args.etpro:
         args.url.append(resolve_etpro_url(args.etpro, suricata_version))
@@ -735,6 +841,12 @@ def main():
 
     files = Fetch(args).run()
 
+    # Remove ignored files.
+    for filename in list(files.keys()):
+        if ignore_file(args.ignore, filename):
+            logger.info("Ignoring file %s" % (filename))
+            del(files[filename])
+
     for path in args.local:
         load_local(path, files)
 
@@ -742,12 +854,9 @@ def main():
     for filename in files:
         if not filename.endswith(".rules"):
             continue
-        if ignore_file(args.ignore, filename):
-            logger.info("Ignoring file %s" % (filename))
-            continue
         logger.debug("Parsing %s." % (filename))
         rules += idstools.rule.parse_fileobj(
-            BytesIO(files[filename]), filename)
+            io.BytesIO(files[filename]), filename)
 
     rulemap = build_rule_map(rules)
     logger.info("Loaded %d rules." % (len(rules)))
@@ -775,17 +884,19 @@ def main():
                 rule.enabled = True
                 enable_count += 1
 
-        # Unlike enable and disable, modify returns a new instance of
-        # the rule.
-        for filter in modify_filters:
-            if filter.match(rule):
-                rulemap[rule.id] = filter.filter(rule)
-                modify_count += 1
-
         for filter in drop_filters:
             if filter.match(rule):
                 rulemap[rule.id] = filter.filter(rule)
                 drop_count += 1
+
+    # Apply modify filters.
+    for fltr in modify_filters:
+        for key, rule in rulemap.items():
+            if fltr.match(rule):
+                new_rule = fltr.filter(rule)
+                if new_rule and new_rule.format() != rule.format():
+                    rulemap[rule.id] = new_rule
+                    modify_count += 1
 
     logger.info("Disabled %d rules." % (len(disabled_rules)))
     logger.info("Enabled %d rules." % (enable_count))
@@ -800,7 +911,8 @@ def main():
             logger.info("Making directory %s.", args.output)
             os.makedirs(args.output)
         for filename in files:
-            file_tracker.add(os.path.join(args.output, filename))
+            file_tracker.add(
+                os.path.join(args.output, os.path.basename(filename)))
         write_to_directory(args.output, files, rulemap)
 
     if args.merged:

@@ -25,13 +25,79 @@
 
 from __future__ import print_function
 
+import sys
 import os
 import unittest
 import shlex
 import re
+import subprocess
+import shutil
 
 import idstools.rule
 from idstools.scripts import rulecat
+import idstools.rulecat.extract
+
+class TestRulecat(unittest.TestCase):
+
+    def test_extract_tar(self):
+        files = idstools.rulecat.extract.extract_tar(
+            "tests/emerging.rules.tar.gz")
+        self.assertTrue(len(files) > 0)
+
+    def test_extract_zip(self):
+        files = idstools.rulecat.extract.extract_zip(
+            "tests/emerging.rules.zip")
+        self.assertTrue(len(files) > 0)
+
+    def test_try_extract(self):
+        files = idstools.rulecat.extract.try_extract(
+            "tests/emerging.rules.zip")
+        self.assertTrue(len(files) > 0)
+
+        files = idstools.rulecat.extract.try_extract(
+            "tests/emerging.rules.tar.gz")
+        self.assertTrue(len(files) > 0)
+
+        files = idstools.rulecat.extract.try_extract(
+            "tests/emerging-current_events.rules")
+        self.assertIsNone(files)
+
+    def test_run(self):
+        old_path = os.getcwd()
+        try:
+            os.chdir(os.path.dirname(os.path.realpath(__file__)))
+            if os.path.exists("./tmp"):
+                shutil.rmtree("tmp")
+            os.makedirs("./tmp")
+            subprocess.check_call(
+                [sys.executable,
+                 "../bin/idstools-rulecat",
+                 "--url",
+                 "file://%s/emerging.rules.tar.gz" % (
+                     os.getcwd()),
+                 "--local", "./rule-with-unicode.rules",
+                 "--temp-dir", "./tmp",
+                 "--force",
+                 "--merged", "./tmp/merged.rules",
+                 "--output", "./tmp/rules/",
+                 "--yaml-fragment", "./tmp/suricata-rules.yaml",
+                 "--sid-msg-map", "./tmp/sid-msg.map",
+                 "--sid-msg-map-2", "./tmp/sid-msg-v2.map",
+                ],
+                stdout=open("./tmp/stdout", "wb"),
+                stderr=open("./tmp/stderr", "wb"),
+            )
+            shutil.rmtree("tmp")
+        except:
+            if os.path.exists("./tmp/stdout"):
+                print("STDOUT")
+                print(open("./tmp/stdout").read())
+            if os.path.exists("./tmp/stderr"):
+                print("STDERR")
+                print(open("./tmp/stderr").read())
+            raise
+        finally:
+            os.chdir(old_path)
 
 class TestFetch(unittest.TestCase):
 
@@ -138,13 +204,51 @@ class ModifyRuleFilterTestCase(unittest.TestCase):
         expected = """drop http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,to_client; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
         self.assertEqual(str(rule1), expected)
 
+    def test_drop_to_alert(self):
+        rule_in = idstools.rule.parse(self.rule_string)
+        self.assertIsNotNone(rule_in)
+
+        f = rulecat.ModifyRuleFilter.parse(
+            'emerging-trojan.rules "^alert" "drop"')
+        self.assertIsNotNone(f)
+
+        rule_out = f.filter(rule_in)
+        self.assertTrue(rule_out.format().startswith("drop"))
+
+    def test_oinkmaster_backticks(self):
+        f = rulecat.ModifyRuleFilter.parse(
+            '* "^drop(.*)noalert(.*)" "alert${1}noalert${2}"')
+        rule_in ="""drop http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,to_client; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; noalert; classtype:trojan-activity; sid:2020757; rev:2;)"""
+        rule_out = f.filter(idstools.rule.parse(rule_in))
+        self.assertEqual("""alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,to_client; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; noalert; classtype:trojan-activity; sid:2020757; rev:2;)""", rule_out.format())
+
+    def test_oinkmaster_backticks_not_noalert(self):
+        f = rulecat.ModifyRuleFilter.parse(
+            'modifysid * "^drop(.*)noalert(.*)" | "alert${1}noalert${2}"')
+        rule_in ="""drop http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,to_client; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
+        rule_out = f.filter(idstools.rule.parse(rule_in))
+        self.assertEqual(rule_in, rule_out.format())
+
 class GroupMatcherTestCase(unittest.TestCase):
 
     rule_string = """alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,from_server; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
 
     def test_match(self):
         rule = idstools.rule.parse(self.rule_string, "rules/malware.rules")
-        matcher = rulecat.GroupMatcher.parse("group: */malware.rules")
+        matcher = rulecat.parse_rule_match("group: */malware.rules")
+        self.assertEquals(
+            matcher.__class__, idstools.scripts.rulecat.GroupMatcher)
+        self.assertTrue(matcher.match(rule))
+
+class FilenameMatcherTestCase(unittest.TestCase):
+
+    rule_string = """alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET MALWARE Windows executable sent when remote host claims to send an image 2"; flow: established,from_server; content:"|0d 0a|Content-Type|3a| image/jpeg|0d 0a 0d 0a|MZ"; fast_pattern:12,20; classtype:trojan-activity; sid:2020757; rev:2;)"""
+
+    def test_match(self):
+        rule = idstools.rule.parse(self.rule_string, "rules/trojan.rules")
+        matcher = rulecat.parse_rule_match("trojan.rules")
+        self.assertEquals(
+            matcher.__class__, idstools.scripts.rulecat.FilenameMatcher)
         self.assertTrue(matcher.match(rule))
 
 class DropRuleFilterTestCase(unittest.TestCase):

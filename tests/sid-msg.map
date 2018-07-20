@@ -119,3 +119,4 @@
 2000514 || ET MALWARE IE homepage hijacking || url,doc.emergingthreats.net/bin/view/Main/2000514 || url,www.geek.com/news/geeknews/2004Jun/gee20040610025522.htm
 2000519 || ET MALWARE shell browser vulnerability W9x/XP || url,doc.emergingthreats.net/bin/view/Main/2000519 || url,www.packetfocus.com/shell_exploit.htm
 2000520 || ET MALWARE shell browser vulnerability NT/2K || url,doc.emergingthreats.net/bin/view/Main/2000520 || url,www.packetfocus.com/shell_exploit.htm
+71918985 || SN: Inbound TCP traffic from suspect network (AS29073 - NL) || url,https://suspect-networks.io/networks/cidr/13/

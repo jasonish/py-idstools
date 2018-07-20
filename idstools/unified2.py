@@ -82,9 +82,9 @@ RECORD_TYPES = [
 ]
 
 EXTRA_DATA_TYPE = {
-    "ORIG_CLIENT_IP4": 1,
-    "ORIG_CLIENT_IP6": 2,
-    "UNUSED0": 3,
+    "XFF_IP4": 1,
+    "XFF_IP6": 2,
+    "REVIEWED_BY": 3,
     "GZIP_DATA": 4,
     "SMTP_FILENAME": 5,
     "SMTP_MAIL_FROM": 6,
@@ -95,6 +95,22 @@ EXTRA_DATA_TYPE = {
     "IP6_SRC_ADDR": 11,
     "IP6_DST_ADDR": 12,
     "NORMALIZED_JS": 13,
+}
+
+EXTRA_DATA_TYPE_MAP = {
+    1: "XFF_IP4",
+    2: "XFF_IP6",
+    3: "REVIEWED_BY",
+    4: "GZIP_DATA",
+    5: "SMTP_FILENAME",
+    6: "SMTP_MAIL_FROM",
+    7: "SMTP_RCPT_TO",
+    8: "SMTP_HEADERS",
+    9: "HTTP_URI",
+    10: "HTTP_HOSTNAME",
+    11: "IP6_SRC_ADDR",
+    12: "IP6_DST_ADDR",
+    13: "NORMALIZED_JS",
 }
 
 class UnknownRecordType(Exception):
@@ -187,16 +203,12 @@ EVENT_V2_FIELDS = EVENT_FIELDS + (
     Field("pad2", 2),
 )
 
-EVENT_APPID_FIELDS = EVENT_V2_FIELDS
-
 # Fields for an IPv6 v2 event.
-EVENT_IP6_V2_FIELDS = EVENT_IP6_FIELDS + (
+EVENT_V2_IP6_FIELDS = EVENT_IP6_FIELDS + (
     Field("mpls-label", 4),
     Field("vlan-id", 2),
     Field("pad2", 2),
 )
-
-EVENT_APPID_IP6_FIELDS = EVENT_IP6_FIELDS
 
 # Fields in a UNIFIED_EXTRA_DATA record.
 EXTRA_DATA_FIELDS = (
@@ -213,7 +225,8 @@ EXTRA_DATA_FIELDS = (
 
 class Event(dict):
     """Event represents a unified2 event record with a dict-like
-    interface.
+    interface. The unified2 file format specifies multiple types of
+    event records, idstools normalizes them into a single type.
 
     Fields:
 
@@ -237,28 +250,46 @@ class Event(dict):
     * mpls-label
     * vlan-id
 
-    Methods that return events rather than single records will also
-    populate the fields *packets* and *extra-data*.  These fields are
-    lists of the :class:`.Packet` and :class:`.ExtraData` records
-    associated with the event.
+    **Deprecated**: Methods that return events rather than single
+    records will also populate the fields *packets* and *extra-data*.
+    These fields are lists of the :class:`.Packet` and
+    :class:`.ExtraData` records associated with the event.
 
     """
 
+    _template = {
+        "sensor-id": None,
+        "event-id": None,
+        "event-second": None,
+        "event-microsecond": None,
+        "signature-id": None,
+        "generator-id": None,
+        "signature-revision": None,
+        "classification-id": None,
+        "priority": None,
+        "source-ip.raw": b"",
+        "destination-ip.raw": b"",
+        "sport-itype": None,
+        "dport-icode": None,
+        "protocol": None,
+        "impact-flag": None,
+        "impact": None,
+        "blocked": None,
+        "mpls-label": None,
+        "vlan-id": None,
+        "pad2": None,
+        "appid": None,
+    }
+
     def __init__(self, event):
+
+        self.update(self._template)
+        self.update(event)
 
         # Create fields to hold extra data and packets associated with
         # this event.
         self["packets"] = []
         self["extra-data"] = []
-
-        # Only v2 events have MPLS and VLAN ids.
-        self["mpls-label"] = None
-        self["vlan-id"] = None
-
-        # Only v3/appid events have an appid.
-        self["appid"] = None
-
-        self.update(event)
 
 class Packet(dict):
     """Packet represents a unified2 packet record with a dict-like interface.
@@ -381,20 +412,25 @@ DECODERS = {
     EVENT:           EventDecoder(EVENT_FIELDS),
     EVENT_IP6:       EventDecoder(EVENT_IP6_FIELDS),
     EVENT_V2:        EventDecoder(EVENT_V2_FIELDS),
-    EVENT_IP6_V2:    EventDecoder(EVENT_IP6_V2_FIELDS),
-    EVENT_APPID:     EventDecoder(EVENT_APPID_FIELDS),
-    EVENT_APPID_IP6: EventDecoder(EVENT_APPID_IP6_FIELDS),
+    EVENT_IP6_V2:    EventDecoder(EVENT_V2_IP6_FIELDS),
+    EVENT_APPID:     EventDecoder(EVENT_V2_FIELDS),
+    EVENT_APPID_IP6: EventDecoder(EVENT_V2_IP6_FIELDS),
     PACKET:          PacketDecoder(PACKET_FIELDS),
     EXTRA_DATA:      ExtraDataDecoder(EXTRA_DATA_FIELDS),
 }
 
 class Aggregator(object):
-    """A class implementing something like the aggregator pattern to
+    """**Deprecated: Applications requiring the aggregation of packets
+    and extra data with an event should implement their own aggregation
+    logic.**
+
+    A class implementing something like the aggregator pattern to
     aggregate records until an event can be built.
 
     """
 
     def __init__(self):
+        LOG.warn("idstools.unified2.Aggregator has been deprecated")
         self.queue = collections.deque()
 
     def add(self, record):
@@ -625,7 +661,10 @@ class FileRecordReader(object):
         return iter(self.next, None)
 
 class FileEventReader(object):
-    """FileEventReader reads records from one or more filenames and
+    """**Deprecated: Event readers have been deprecated due to the
+    deprecation of the Aggregator.**
+
+    FileEventReader reads records from one or more filenames and
     aggregates them into events.
 
     :param files...: One or more files to read events from.
@@ -640,6 +679,7 @@ class FileEventReader(object):
     """
 
     def __init__(self, *files):
+        LOG.warn("idstools.unified2.FileEventReader has been deprecated")
         self.reader = FileRecordReader(*files)
         self.aggregator = Aggregator()
 
@@ -760,7 +800,7 @@ class SpoolRecordReader(object):
             return (self.fileobj.name, self.fileobj.tell())
         return None, None
 
-    def _next(self):
+    def next(self):
         """Return the next decoded unified2 record from the spool
         directory.
         """
@@ -791,7 +831,7 @@ class SpoolRecordReader(object):
                 else:
                     return None
 
-    def next(self):
+    def iter_next(self):
         """Return the next record or None if EOF.
 
         If in follow mode and EOF, this method will sleep and
@@ -803,7 +843,7 @@ class SpoolRecordReader(object):
 
         """
         while True:
-            record = self._next()
+            record = self.next()
             if record:
                 return record
             if not self.follow:
@@ -813,10 +853,13 @@ class SpoolRecordReader(object):
                 time.sleep(0.01)
 
     def __iter__(self):
-        return iter(self.next, None)
+        return iter(self.iter_next, None)
 
 class SpoolEventReader(object):
-    """SpoolEventReader reads records from a unified2 spool directory
+    """**Deprecated: Event readers have been deprecated due to the
+    deprecation of the Aggregator.**
+
+    SpoolEventReader reads records from a unified2 spool directory
     and aggregates them into events.
 
     Required parameters:
@@ -843,6 +886,7 @@ class SpoolEventReader(object):
 
     def __init__(self, directory, prefix, follow=False, delete=False,
                  bookmark=False):
+        LOG.warn("idstools.unified2.SpoolEventReader has been deprecated")
 
         self.follow = follow
         self.delete = delete

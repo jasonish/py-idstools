@@ -59,6 +59,18 @@ class RuleTestCase(unittest.TestCase):
         self.assertEquals(rule.raw, """alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)""")
         self.assertEquals(str(rule), rule_buf)
 
+    def test_parse_rule_double_commented(self):
+        rule_buf = """## alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)"""
+        rule = idstools.rule.parse(rule_buf)
+        self.assertFalse(rule.enabled)
+        self.assertEquals(rule.raw, """alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)""")
+
+    def test_parse_rule_comments_and_spaces(self):
+        rule_buf = """## #alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)"""
+        rule = idstools.rule.parse(rule_buf)
+        self.assertFalse(rule.enabled)
+        self.assertEquals(rule.raw, """alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)""")
+
     def test_toggle_rule(self):
         rule_buf = """# alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"some message";)"""
         rule = idstools.rule.parse(rule_buf)
@@ -85,6 +97,9 @@ class RuleTestCase(unittest.TestCase):
         tmp.flush()
         rules = idstools.rule.parse_file(tmp.name)
         self.assertEquals(2, len(rules))
+
+    def test_parse_file_with_unicode(self):
+        rules = idstools.rule.parse_file("./tests/rule-with-unicode.rules")
 
     def test_parse_decoder_rule(self):
         rule_string = """alert ( msg:"DECODE_NOT_IPV4_DGRAM"; sid:1; gid:116; rev:1; metadata:rule-type decode; classtype:protocol-command-decode;)"""
@@ -148,3 +163,42 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
 
         self.assertEquals(rule_string, reassembled)
         
+    def test_parse_message_with_semicolon(self):
+        rule_string = u"""alert ip any any -> any any (msg:"TEST RULE\; and some"; content:"uid=0|28|root|29|"; tag:session,5,packets; classtype:bad-unknown; sid:10000000; rev:1;)"""
+        rule = idstools.rule.parse(rule_string)
+        self.assertIsNotNone(rule)
+        self.assertEquals(rule.msg, "TEST RULE\; and some")
+
+        # Look for the expected content.
+        found=False
+        for o in rule.options:
+            if o["name"] == "content" and o["value"] == '"uid=0|28|root|29|"':
+                found=True
+                break
+        self.assertTrue(found)
+
+    def test_parse_message_with_colon(self):
+        rule_string = u"""alert tcp 93.174.88.0/21 any -> $HOME_NET any (msg:"SN: Inbound TCP traffic from suspect network (AS29073 - NL)"; flags:S; reference:url,https://suspect-networks.io/networks/cidr/13/; threshold: type limit, track by_dst, seconds 30, count 1; classtype:misc-attack; sid:71918985; rev:1;)"""
+        rule = idstools.rule.parse(rule_string)
+        self.assertIsNotNone(rule)
+        self.assertEquals(
+            rule.msg,
+            "SN: Inbound TCP traffic from suspect network (AS29073 - NL)")
+
+    def test_parse_multiple_metadata(self):
+        # metadata: former_category TROJAN;
+        # metadata:affected_product Windows_XP_Vista_7_8_10_Server_32_64_Bit, attack_target Client_Endpoint, deployment Perimeter, tag Ransomware_Onion_Domain, tag Ransomware, signature_severity Major, created_at 2017_08_08, malware_family Crypton, malware_family Nemesis, performance_impact Low, updated_at 2017_08_08;
+        rule_string = u"""alert udp $HOME_NET any -> any 53 (msg:"ET TROJAN CryptON/Nemesis/X3M Ransomware Onion Domain"; content:"|01 00 00 01 00 00 00 00 00 00|"; depth:10; offset:2; content:"|10|yvvu3fqglfceuzfu"; fast_pattern; distance:0; nocase; metadata: former_category TROJAN; reference:url,blog.emsisoft.com/2017/05/01/remove-cry128-ransomware-with-emsisofts-free-decrypter/; reference:url,www.cyber.nj.gov/threat-profiles/ransomware-variants/crypt-on; classtype:trojan-activity; sid:2024525; rev:2; metadata:affected_product Windows_XP_Vista_7_8_10_Server_32_64_Bit, attack_target Client_Endpoint, deployment Perimeter, tag Ransomware_Onion_Domain, tag Ransomware, signature_severity Major, created_at 2017_08_08, malware_family Crypton, malware_family Nemesis, performance_impact Low, updated_at 2017_08_08;)"""
+        rule = idstools.rule.parse(rule_string)
+        self.assertIsNotNone(rule)
+        self.assertTrue("former_category TROJAN" in rule.metadata)
+        self.assertTrue("updated_at 2017_08_08" in rule.metadata)
+
+    def test_metadata_missing_semicolon(self):
+        rule_buf = u""" alert icmp any any -> $HOME_NET any (msg:"ICMP test detected"; gid:0; sid:10000001; rev:1; classtype: icmp-event; metadata:policy balanced-ips drop, policy connectivity-ips drop, policy security-ips drop)"""
+        self.assertRaises(Exception, idstools.rule.parse, rule_buf)
+
+    def test_parse(self):
+        rs = u"""alert any [1.1.1.1, !2.2.2.2] any -> any [1,2,3] (msg:"TEST"; sid:1; rev:1;)"""
+        rule = idstools.rule.parse(rs)
+        self.assertIsNotNone(rule)
