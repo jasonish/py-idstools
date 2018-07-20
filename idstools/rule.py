@@ -73,6 +73,8 @@ class Rule(dict):
     - **rev**: The revision of the rule as an integer
     - **msg**: The rule message as a string
     - **flowbits**: List of flowbit options in the rule
+    - **xbits**: List of xbit options in the rule
+    - **flowints**: List of flowint options in the rule
     - **metadata**: Metadata values as a list
     - **references**: References as a list
     - **classtype**: The classification type
@@ -96,6 +98,8 @@ class Rule(dict):
         self["rev"] = None
         self["msg"] = None
         self["flowbits"] = []
+        self["xbits"] = []
+        self["flowints"] = []
         self["metadata"] = []
         self["references"] = []
         self["classtype"] = None
@@ -302,6 +306,10 @@ def parse(buf, group=None):
             rule[name] += [v.strip() for v in val.split(",")]
         elif name == "flowbits":
             rule.flowbits.append(val)
+        elif name == "xbits":
+            rule.xbits.append(val)
+        elif name == "flowint":
+            rule.flowints.append(val)
         elif name == "reference":
             rule.references.append(val)
         elif name == "msg":
