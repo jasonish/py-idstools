@@ -179,6 +179,29 @@ def add_option(rule, name, value, index=None):
         rule.rebuild_options())
     return parse(new_rule_string, rule["group"])
 
+def change_header(rule, index, value):
+    header = rule["header"].split(' ')
+    header[index] = value
+    new_rule_string = "%s%s (%s)" % (
+        "" if rule.enabled else "# ",
+        " ".join(header),
+        rule.rebuild_options())
+    return parse(new_rule_string, rule["group"])
+
+def change_option(rule, name, value):
+    for index, option in enumerate(rule.options):
+        if option["name"] == name:
+            rule = remove_option(rule, name)
+            rule = add_option(rule, name, value, index)
+            break
+    return rule
+
+def get_option(rule, name):
+    for option in rule.options:
+        if option["name"] == name:
+            return option
+    return None
+
 def find_opt_end(options):
     """ Find the end of an option (;) handling escapes. """
     offset = 0
