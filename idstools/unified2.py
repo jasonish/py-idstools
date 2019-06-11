@@ -68,6 +68,7 @@ EXTRA_DATA      = 110
 EVENT_APPID     = 111
 EVENT_APPID_IP6 = 112
 APPSTAT         = 113
+EVENT_V3        = 114
 
 RECORD_TYPES = [
     PACKET,
@@ -79,6 +80,7 @@ RECORD_TYPES = [
     EVENT_APPID,
     EVENT_APPID_IP6,
     APPSTAT,
+    EVENT_V3,
 ]
 
 EXTRA_DATA_TYPE = {
@@ -201,6 +203,33 @@ EVENT_V2_FIELDS = EVENT_FIELDS + (
     Field("mpls-label", 4),
     Field("vlan-id", 2),
     Field("pad2", 2),
+)
+
+EVENT_V3_FIELDS = (
+    Field("sensor-id", 4),
+    Field("event-id", 4),
+    Field("event-second", 4),
+    Field("event-microsecond", 4),
+    Field("generator-id", 4),
+    Field("signature-id", 4),
+    Field("signature-revision", 4),
+    Field("classification-id", 4),
+    Field("priority", 4),
+    Field("pid-context", 4),
+    Field("pid-inspect", 4),
+    Field("pid-detect", 4),
+    Field("source-ip.raw", 16, "16s"),
+    Field("destination-ip.raw", 16, "16s"),
+    Field("mpls-label", 4),
+    Field("sport-itype", 2),
+    Field("dport-itype", 2),
+    Field("vlan-id", 2),
+    Field("unused", 2),
+    Field("ip-version", 1),
+    Field("ip-protocol", 1),
+    Field("status", 1),
+    Field("action", 1),
+    Field("appid", None),
 )
 
 # Fields for an IPv6 v2 event.
@@ -374,8 +403,12 @@ class EventDecoder(AbstractDecoder):
         values = struct.unpack(self.format, buf[0:self.fixed_len])
         keys = [field.name for field in self.fields]
         event = dict(zip(keys, values))
-        event["source-ip"] = self.decode_ip(event["source-ip.raw"])
-        event["destination-ip"] = self.decode_ip(event["destination-ip.raw"])
+        if self.fields == EVENT_V3_FIELDS:
+            event["source-ip"] = self.decode_ip_v3(event["source-ip.raw"], event["ip-version"] >> 4)
+            event["destination-ip"] = self.decode_ip_v3(event["destination-ip.raw"], event["ip-version"] & 15)
+        else:
+            event["source-ip"] = self.decode_ip(event["source-ip.raw"])
+            event["destination-ip"] = self.decode_ip(event["destination-ip.raw"])
 
         # Check for remaining data, the appid.
         remainder = buf[self.fixed_len:]
@@ -387,6 +420,13 @@ class EventDecoder(AbstractDecoder):
     def decode_ip(self, addr):
         if len(addr) == 4:
             return socket.inet_ntoa(addr)
+        else:
+            parts = struct.unpack(">" + "H" * int((len(addr) / 2)), addr)
+            return ":".join("%04x" % p for p in parts)
+
+    def decode_ip_v3(self, addr, vers):
+        if vers == 4:
+            return socket.inet_ntop(socket.AF_INET, addr[12:])
         else:
             parts = struct.unpack(">" + "H" * int((len(addr) / 2)), addr)
             return ":".join("%04x" % p for p in parts)
@@ -417,6 +457,7 @@ DECODERS = {
     EVENT_APPID_IP6: EventDecoder(EVENT_V2_IP6_FIELDS),
     PACKET:          PacketDecoder(PACKET_FIELDS),
     EXTRA_DATA:      ExtraDataDecoder(EXTRA_DATA_FIELDS),
+    EVENT_V3:        EventDecoder(EVENT_V3_FIELDS),
 }
 
 class Aggregator(object):
