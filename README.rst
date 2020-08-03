@@ -126,13 +126,13 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-unreleased
-~~~~~~~~~~
+0.6.4 - 2020-08-02
+~~~~~~~~~~~~~~~~~~
 - eve2pcap: fix displaying of errors from libpcap
 - eve2pcap: python3 fixes
 - eve2pcap: print number of packets converted on exit
 - rules: fix parsing of rules where the address or port list has a space
-- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.3...HEAD>`_
+- `Commit log <https://github.com/jasonish/py-idstools/compare/0.6.3...0.6.4>`_
 
 0.6.3 - 2017-11-20
 ~~~~~~~~~~~~~~~~~~
