@@ -256,6 +256,9 @@ class Fetch(object):
     def check_checksum(self, tmp_filename, url):
         try:
             checksum_url = url + ".md5"
+            url_parts = url.split("?")
+            if len(url_parts) == 2:
+                checksum_url = ".md5?".join(url_parts)
             local_checksum = hashlib.md5(
                 open(tmp_filename, "rb").read()).hexdigest().strip()
             remote_checksum_buf = io.BytesIO()
