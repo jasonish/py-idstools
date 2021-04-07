@@ -160,7 +160,10 @@ def payload2packet(event):
     if not "payload" in event:
         return None, None
     payload = base64.b64decode(event["payload"])
-    packet = IP(src=event["src_ip"], dst=event["dest_ip"])
+    if ':' in event["src_ip"]:
+        packet = IPv6(src=event["src_ip"], dst=event["dest_ip"])
+    else:
+        packet = IP(src=event["src_ip"], dst=event["dest_ip"])
     if event["proto"] == "TCP":
         packet = packet / TCP(sport=event["src_port"], dport=event["dest_port"])
     elif event["proto"] == "UDP":
