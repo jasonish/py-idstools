@@ -67,7 +67,12 @@ class Rule(dict):
       disabled (commented)
     - **action**: The action of the rule (alert, pass, etc) as a
       string
+    - **proto**: The protocol string of the rule.
+    - **source_addr**: The source address string of the rule.
+    - **source_port**: The source ports string of the rule.
     - **direction**: The direction string of the rule.
+    - **dest_addr**: The destination address string of the rule.
+    - **dest_port**: The destination ports string of the rule.
     - **gid**: The gid of the rule as an integer
     - **sid**: The sid of the rule as an integer
     - **rev**: The revision of the rule as an integer
@@ -84,12 +89,16 @@ class Rule(dict):
     :param group: Optional parameter to set the group (filename) of the rule
 
     """
-
     def __init__(self, enabled=None, action=None, group=None):
         dict.__init__(self)
         self["enabled"] = enabled
         self["action"] = action
+        self["proto"] = None
+        self["source_addr"] = None
+        self["source_port"] = None
         self["direction"] = None
+        self["dest_addr"] = None
+        self["dest_port"] = None
         self["group"] = group
         self["gid"] = 1
         self["sid"] = None
@@ -216,7 +225,12 @@ def parse(buf, group=None):
     # If a decoder rule, the header will be one word.
     if len(header.split(" ")) == 1:
         action = header
+        proto = None
+        source_addr = None
+        source_port = None
         direction = None
+        dest_addr = None
+        dest_port = None
     else:
         states = ["action",
                   "proto",
@@ -269,8 +283,13 @@ def parse(buf, group=None):
         return None
 
     rule = Rule(enabled=enabled, action=action, group=group)
-    rule["direction"] = direction
     rule["header"] = header
+    rule["proto"] = proto
+    rule["source_addr"] = source_addr
+    rule["source_port"] = source_port
+    rule["direction"] = direction
+    rule["dest_addr"] = dest_addr
+    rule["dest_port"] = dest_port
 
     options = m.group("options")
 
