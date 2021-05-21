@@ -53,7 +53,7 @@ rule_pattern = re.compile(r"^(?P<enabled>#)*[\s#]*"
 
 # Rule actions we expect to see.
 actions = (
-    "alert", "log", "pass", "activate", "dynamic", "drop", "reject", "sdrop")
+    "alert", "config", "log", "pass", "activate", "dynamic", "drop", "reject", "sdrop")
 
 class Rule(dict):
     """Class representing a rule.
