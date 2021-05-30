@@ -55,6 +55,8 @@ class RuleTestCase(unittest.TestCase):
         self.assertEqual(len(rule.flowbits), 2)
         self.assertEquals(rule.flowbits[0], "isset,somebit")
         self.assertEquals(rule.flowbits[1], "unset,otherbit")
+        self.assertEqual(len(rule.xbits), 0)
+        self.assertEqual(len(rule.flowints), 0)
         self.assertEquals(rule.classtype, "trojan-activity")
 
     def test_disable_rule(self):
@@ -167,7 +169,7 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
         print("%s" % reassembled)
 
         self.assertEquals(rule_string, reassembled)
-        
+
     def test_parse_message_with_semicolon(self):
         rule_string = u"""alert ip any any -> any any (msg:"TEST RULE\; and some"; content:"uid=0|28|root|29|"; tag:session,5,packets; classtype:bad-unknown; sid:10000000; rev:1;)"""
         rule = idstools.rule.parse(rule_string)
@@ -207,3 +209,34 @@ alert dnp3 any any -> any any (msg:"SURICATA DNP3 Request flood detected"; \
         rs = u"""alert any [1.1.1.1, !2.2.2.2] any -> any [1,2,3] (msg:"TEST"; sid:1; rev:1;)"""
         rule = idstools.rule.parse(rs)
         self.assertIsNotNone(rule)
+
+    def test_parse_flowint_rule(self):
+        rs = u"""alert tcp any any -> any any (msg:"Counting Usernames"; content:"jonkman"; flowint: usernamecount, +, 1; noalert;)"""
+        rule = idstools.rule.parse(rs)
+        self.assertEqual(len(rule.flowints), 1)
+        self.assertEqual(rule.flowints[0], "usernamecount, +, 1")
+
+        rs = """alert tcp any any -> any any (msg:"More than Five Usernames!"; content:"jonkman"; flowint: usernamecount, +, 1; flowint:usernamecount, >, 5;)"""
+        rule = idstools.rule.parse(rs)
+        self.assertEqual(len(rule.flowints), 2)
+        self.assertEqual(rule.flowints[0], "usernamecount, +, 1")
+        self.assertEqual(rule.flowints[1], "usernamecount, >, 5")
+
+        rs = """alert tcp any any -> any any (msg:"Setting a flowint counter"; content:"GET"; flowint:myvar, notset; flowint:maxvar,notset; flowint:myvar,=,1; flowint: maxvar,=,6;)"""
+        rule = idstools.rule.parse(rs)
+        self.assertEqual(len(rule.flowints), 4)
+        self.assertEqual(rule.flowints[0], "myvar, notset")
+        self.assertEqual(rule.flowints[1], "maxvar,notset")
+        self.assertEqual(rule.flowints[2], "myvar,=,1")
+        self.assertEqual(rule.flowints[3], "maxvar,=,6")
+
+    def test_parse_xbits_rule(self):
+        rs = u"""drop ssh any any -> $MYSERVER 22 (msg:"DROP libssh incoming"; flow:to_server,established; ssh.softwareversion:"libssh"; xbits:set, badssh, track ip_src, expire 3600; sid:4000000005;)"""
+        rule = idstools.rule.parse(rs)
+        self.assertEqual(len(rule.xbits), 1)
+        self.assertEqual(rule.xbits[0], "set, badssh, track ip_src, expire 3600")
+
+        rs = """drop ssh any any -> $MYSERVER 22 (msg:"DROP BLACKLISTED"; xbits:isset, badssh, track ip_src; sid:4000000006;)"""
+        rule = idstools.rule.parse(rs)
+        self.assertEqual(len(rule.xbits), 1)
+        self.assertEqual(rule.xbits[0], "isset, badssh, track ip_src")
