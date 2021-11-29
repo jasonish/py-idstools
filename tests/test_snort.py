@@ -43,6 +43,6 @@ class SnortAppTestCase(unittest.TestCase):
         "file not installed")
     def test_guess_dynamic_engine_lib(self):
         app = snort.SnortApp(path = "/opt/nsm/bin/snort")
-        self.assertEquals(app.dynamic_engine_lib,
+        self.assertEqual(app.dynamic_engine_lib,
                           "/opt/nsm/lib/snort_dynamicengine/libsf_engine.so")
 

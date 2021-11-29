@@ -121,21 +121,21 @@ class ThresholdProcessorTestCase(unittest.TestCase):
         processor = rulecat.ThresholdProcessor()
 
         line = "suppress re:java"
-        self.assertEquals("java", processor.extract_regex(line))
+        self.assertEqual("java", processor.extract_regex(line))
         
         line = 'suppress re:"vulnerable java version"'
-        self.assertEquals(
+        self.assertEqual(
             "vulnerable java version", processor.extract_regex(line))
 
         line = "suppress re:java, track <by_src|by_dst>, ip <ip|subnet>"
-        self.assertEquals("java", processor.extract_regex(line))
+        self.assertEqual("java", processor.extract_regex(line))
     
         line = 'suppress re:"vulnerable java version", track <by_src|by_dst>, ip <ip|subnet>'
-        self.assertEquals(
+        self.assertEqual(
             "vulnerable java version", processor.extract_regex(line))
 
         line = 'threshold re:"vulnerable java version", type threshold, track by_dst, count 1, seconds 10'
-        self.assertEquals(
+        self.assertEqual(
             "vulnerable java version", processor.extract_regex(line))
 
     def test_replace(self):
@@ -143,17 +143,17 @@ class ThresholdProcessorTestCase(unittest.TestCase):
         rule = idstools.rule.parse(rule_string)
 
         line = "suppress re:windows"
-        self.assertEquals(
+        self.assertEqual(
             "suppress gen_id 1, sig_id 2020757",
             self.processor.replace(line, rule))
 
         line = 'threshold re:"ET MALWARE Windows", type threshold, ' \
                'track by_dst, count 1, seconds 10'
-        self.assertEquals("threshold gen_id 1, sig_id 2020757, type threshold, track by_dst, count 1, seconds 10", self.processor.replace(line, rule))
+        self.assertEqual("threshold gen_id 1, sig_id 2020757, type threshold, track by_dst, count 1, seconds 10", self.processor.replace(line, rule))
 
         line = 'threshold re:malware, type threshold, track by_dst, count 1, ' \
                'seconds 10'
-        self.assertEquals(
+        self.assertEqual(
             "threshold gen_id 1, sig_id 2020757, type threshold, "
             "track by_dst, count 1, seconds 10",
             self.processor.replace(line, rule))
@@ -236,7 +236,7 @@ class GroupMatcherTestCase(unittest.TestCase):
     def test_match(self):
         rule = idstools.rule.parse(self.rule_string, "rules/malware.rules")
         matcher = rulecat.parse_rule_match("group: */malware.rules")
-        self.assertEquals(
+        self.assertEqual(
             matcher.__class__, idstools.scripts.rulecat.GroupMatcher)
         self.assertTrue(matcher.match(rule))
 
@@ -247,7 +247,7 @@ class FilenameMatcherTestCase(unittest.TestCase):
     def test_match(self):
         rule = idstools.rule.parse(self.rule_string, "rules/trojan.rules")
         matcher = rulecat.parse_rule_match("trojan.rules")
-        self.assertEquals(
+        self.assertEqual(
             matcher.__class__, idstools.scripts.rulecat.FilenameMatcher)
         self.assertTrue(matcher.match(rule))
 
@@ -262,7 +262,7 @@ class DropRuleFilterTestCase(unittest.TestCase):
 
         drop_filter = rulecat.DropRuleFilter(id_matcher)
         rule1 = drop_filter.filter(rule0)
-        self.assertEquals("drop", rule1.action)
+        self.assertEqual("drop", rule1.action)
         self.assertTrue(rule1.enabled)
         self.assertTrue(str(rule1).startswith("drop"))
 
@@ -274,7 +274,7 @@ class DropRuleFilterTestCase(unittest.TestCase):
 
         drop_filter = rulecat.DropRuleFilter(id_matcher)
         rule1 = drop_filter.filter(rule0)
-        self.assertEquals("drop", rule1.action)
+        self.assertEqual("drop", rule1.action)
         self.assertFalse(rule1.enabled)
         self.assertTrue(str(rule1).startswith("# drop"))
         

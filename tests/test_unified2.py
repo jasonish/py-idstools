@@ -111,25 +111,25 @@ class TestRecordReader(unittest.TestCase):
 
         # Just read in 6 bytes of the header.
         buf = open(self.test_filename, "rb").read(6)
-        self.assertEquals(len(buf), 6)
+        self.assertEqual(len(buf), 6)
 
         fileobj = io.BytesIO(buf)
-        self.assertEquals(fileobj.tell(), 0)
+        self.assertEqual(fileobj.tell(), 0)
         reader = unified2.RecordReader(fileobj)
         self.assertRaises(EOFError, reader.next)
-        self.assertEquals(fileobj.tell(), 0)
+        self.assertEqual(fileobj.tell(), 0)
 
     def test_short_read_of_body(self):
 
         # Just read in 12, 8 for the header and some body.
         buf = open(self.test_filename, "rb").read(12)
-        self.assertEquals(len(buf), 12)
+        self.assertEqual(len(buf), 12)
 
         fileobj = io.BytesIO(buf)
-        self.assertEquals(fileobj.tell(), 0)
+        self.assertEqual(fileobj.tell(), 0)
         reader = unified2.RecordReader(fileobj)
         self.assertRaises(EOFError, reader.next)
-        self.assertEquals(fileobj.tell(), 0)
+        self.assertEqual(fileobj.tell(), 0)
 
     def test_eof(self):
         """Test that we get None on EOF."""
@@ -145,7 +145,7 @@ class TestRecordReader(unittest.TestCase):
         # Should get 17 records.
         reader = unified2.RecordReader(open(self.test_filename, "rb"))
         records = [r for r in reader]
-        self.assertEquals(len(records), 17)
+        self.assertEqual(len(records), 17)
 
 class FileRecordReaderTest(unittest.TestCase):
 
@@ -161,15 +161,15 @@ class FileRecordReaderTest(unittest.TestCase):
     def test_single_file_iteration(self):
         reader = unified2.FileRecordReader(self.test_filename)
         records = list(reader)
-        self.assertEquals(17, len(records))
-        self.assertEquals(None, reader.next())
+        self.assertEqual(17, len(records))
+        self.assertEqual(None, reader.next())
 
     def test_multi_file_iteration(self):
         reader = unified2.FileRecordReader(
             self.test_filename, self.test_filename)
         records = list(reader)
-        self.assertEquals(34, len(records))
-        self.assertEquals(None, reader.next())
+        self.assertEqual(34, len(records))
+        self.assertEqual(None, reader.next())
 
     def test_growing_file(self):
 
@@ -230,7 +230,7 @@ class AggregatorTestCase(unittest.TestCase):
         reader = unified2.RecordReader(open(self.test_filename, "rb"))
         for record in reader:
             records.append(record)
-        self.assertEquals(len(records), 17)
+        self.assertEqual(len(records), 17)
 
         # Modify the event ID of the last record.
         records[16]["event-id"] = records[16]["event-id"] - 1
@@ -241,7 +241,7 @@ class AggregatorTestCase(unittest.TestCase):
         aggregator = unified2.Aggregator()
         for record in records:
             aggregator.add(record)
-        self.assertEquals(len(aggregator.queue), 16)
+        self.assertEqual(len(aggregator.queue), 16)
 
 class FileEventReaderTestCase(unittest.TestCase):
 
@@ -267,7 +267,7 @@ class FileEventReaderTestCase(unittest.TestCase):
         """ Iteration test. """
         reader = unified2.FileEventReader(
             self.test_filename, self.test_filename)
-        self.assertEquals(len(list(reader)), 2)
+        self.assertEqual(len(list(reader)), 2)
 
 class SpoolRecordReaderTestCase(unittest.TestCase):
 
@@ -296,7 +296,7 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
     def test_open_next(self):
 
         reader = unified2.SpoolRecordReader(self.tmpdir, "unified2")
-        self.assertEquals(None, reader.open_next())
+        self.assertEqual(None, reader.open_next())
 
         shutil.copy("tests/merged.log", "%s/unified2.log.0001" % (self.tmpdir))
         shutil.copy("tests/merged.log", "%s/unified2.log.0002" % (self.tmpdir))
@@ -304,16 +304,16 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
         shutil.copy("tests/merged.log", "%s/unified2.log.0004" % (self.tmpdir))
 
         next_filename = reader.open_next()
-        self.assertEquals("unified2.log.0001", next_filename)
+        self.assertEqual("unified2.log.0001", next_filename)
         next_filename = reader.open_next()
-        self.assertEquals("unified2.log.0002", next_filename)
+        self.assertEqual("unified2.log.0002", next_filename)
         next_filename = reader.open_next()
-        self.assertEquals("unified2.log.0003", next_filename)
+        self.assertEqual("unified2.log.0003", next_filename)
         next_filename = reader.open_next()
-        self.assertEquals("unified2.log.0004", next_filename)
+        self.assertEqual("unified2.log.0004", next_filename)
 
         next_filename = reader.open_next()
-        self.assertEquals(None, next_filename)
+        self.assertEqual(None, next_filename)
         self.assertTrue(reader.fileobj is not None)
 
     def test_next(self):
@@ -385,7 +385,7 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
 
         reader = unified2.SpoolRecordReader(self.tmpdir, "unified2")
         shutil.copy(test_filename, "%s/unified2.log.1382627902" % self.tmpdir)
-        self.assertEquals(len(list(reader)), 17)
+        self.assertEqual(len(list(reader)), 17)
 
     def test_open_at_bookmark(self):
 
@@ -404,7 +404,7 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
             self.tmpdir, "unified2.log", "unified2.log.0003", 38950)
 
         # Now we should only read 17 records.
-        self.assertEquals(len(list(reader)), 17)
+        self.assertEqual(len(list(reader)), 17)
 
 class SpoolEventReaderTestCase(unittest.TestCase):
 
@@ -472,12 +472,12 @@ class SpoolEventReaderTestCase(unittest.TestCase):
         self.assertIsNotNone(event)
         print(reader.bookmark.get())
         bookmark_filename, bookmark_offset = reader.bookmark.get()
-        self.assertEquals(bookmark_filename, "unified2.log.0000")
+        self.assertEqual(bookmark_filename, "unified2.log.0000")
 
         # The offset should be the offset at end of the first event,
         # even though the offset of the underlying file has moved on.
-        self.assertEquals(bookmark_offset, 38950)
-        self.assertEquals(reader.reader.tell()[1], 68)
+        self.assertEqual(bookmark_offset, 38950)
+        self.assertEqual(reader.reader.tell()[1], 68)
 
         # Now create a new SpoolEventReader, the underlying offset
         # should be our bookmark locations.
@@ -486,24 +486,24 @@ class SpoolEventReaderTestCase(unittest.TestCase):
         bookmark_filename, bookmark_offset = reader.bookmark.get()
         underlying_filename, underlying_offset = reader.reader.tell()
 
-        self.assertEquals(bookmark_filename, "unified2.log.0000")
-        self.assertEquals(bookmark_offset, 38950)
+        self.assertEqual(bookmark_filename, "unified2.log.0000")
+        self.assertEqual(bookmark_offset, 38950)
 
-        self.assertEquals(
+        self.assertEqual(
             bookmark_filename, os.path.basename(underlying_filename))
-        self.assertEquals(bookmark_offset, underlying_offset)
+        self.assertEqual(bookmark_offset, underlying_offset)
 
         # Read the next and final event, and check bookmark location.
         self.assertIsNotNone(reader.next())
         self.assertIsNone(reader.next())
         bookmark_filename, bookmark_offset = reader.bookmark.get()
-        self.assertEquals(bookmark_filename, "unified2.log.0001")
-        self.assertEquals(bookmark_offset, 38950)
+        self.assertEqual(bookmark_filename, "unified2.log.0001")
+        self.assertEqual(bookmark_offset, 38950)
 
         # As this was the last event, the underlying location should
         # be the same as the bookmark.
         bookmark_filename, bookmark_offset = reader.bookmark.get()
         underlying_filename, underlying_offset = reader.reader.tell()
-        self.assertEquals(
+        self.assertEqual(
             bookmark_filename, os.path.basename(underlying_filename))
-        self.assertEquals(bookmark_offset, underlying_offset)
+        self.assertEqual(bookmark_offset, underlying_offset)
