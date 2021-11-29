@@ -57,7 +57,8 @@ class TestReadRecord(unittest.TestCase):
     def test_growing_file(self):
 
         write_fileobj = open("%s/unified2.log" % self.tmpdir, "ab")
-        write_fileobj.write(open(self.test_filename, "rb").read())
+        with open(self.test_filename, "rb") as test_file:
+            write_fileobj.write(test_file.read())
         write_fileobj.flush()
         write_fileobj.close()
 
@@ -70,7 +71,8 @@ class TestReadRecord(unittest.TestCase):
 
         # Grow the file by 17 more records.
         write_fileobj = open("%s/unified2.log" % self.tmpdir, "ab")
-        write_fileobj.write(open(self.test_filename, "rb").read())
+        with open(self.test_filename, "rb") as test_file:
+            write_fileobj.write(test_file.read())
         write_fileobj.flush()
         write_fileobj.close()
 
@@ -110,7 +112,8 @@ class TestRecordReader(unittest.TestCase):
     def test_short_read_of_header(self):
 
         # Just read in 6 bytes of the header.
-        buf = open(self.test_filename, "rb").read(6)
+        with open(self.test_filename, "rb") as f:
+            buf = f.read(6)
         self.assertEqual(len(buf), 6)
 
         fileobj = io.BytesIO(buf)
@@ -122,7 +125,8 @@ class TestRecordReader(unittest.TestCase):
     def test_short_read_of_body(self):
 
         # Just read in 12, 8 for the header and some body.
-        buf = open(self.test_filename, "rb").read(12)
+        with open(self.test_filename, "rb") as f:
+            buf = f.read(12)
         self.assertEqual(len(buf), 12)
 
         fileobj = io.BytesIO(buf)
@@ -174,7 +178,8 @@ class FileRecordReaderTest(unittest.TestCase):
     def test_growing_file(self):
 
         log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
-        log_file.write(open(self.test_filename, "rb").read())
+        with open(self.test_filename, "rb") as test_file:
+            log_file.write(test_file.read())
         log_file.close()
 
         reader = unified2.FileRecordReader("%s/unified2.log.0001" % self.tmpdir)
@@ -184,7 +189,8 @@ class FileRecordReaderTest(unittest.TestCase):
         self.assertTrue(reader.next() is None)
 
         log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
-        log_file.write(open(self.test_filename, "rb").read())
+        with open(self.test_filename, "rb") as test_file:
+            log_file.write(test_file.read())
         log_file.close()
 
         for i in range(17):
@@ -208,7 +214,8 @@ class AggregatorTestCase(unittest.TestCase):
             self.assertEqual(None, event)
 
         # On the first add of the next event we should get an event.
-        reader = unified2.RecordReader(open(self.test_filename, "rb"))
+        inner_file = open(self.test_filename, "rb")
+        reader = unified2.RecordReader(inner_file)
         event = aggregator.add(reader.next())
         self.assertTrue(event)
         self.assertTrue(isinstance(event, unified2.Event))
@@ -222,6 +229,9 @@ class AggregatorTestCase(unittest.TestCase):
         event = aggregator.flush()
         self.assertTrue(event)
         self.assertTrue(isinstance(event, unified2.Event))
+
+        # Cleanup.
+        inner_file.close()
 
     def test_interleaved(self):
 
@@ -349,16 +359,19 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
 
     def test_next_with_unpexted_eof(self):
 
-        buf = io.BytesIO(open("tests/multi-record-event.log", "rb").read())
+        with open("tests/multi-record-event.log", "rb") as infile:
+            buf = io.BytesIO(infile.read())
 
         reader = unified2.SpoolRecordReader(self.tmpdir, "unified2")
 
         # Write out a couple bytes and try to read.
-        open("%s/unified2.log.0001" % self.tmpdir, "wb").write(buf.read(6))
+        with open("%s/unified2.log.0001" % self.tmpdir, "wb") as outfile:
+            outfile.write(buf.read(6))
         assert reader.next() is None
 
         # Write out the rest of file.
-        open("%s/unified2.log.0001" % self.tmpdir, "ab").write(buf.read())
+        with open("%s/unified2.log.0001" % self.tmpdir, "ab") as outfile:
+            outfile.write(buf.read())
         assert reader.next() is not None
 
     def test_with_growing_file(self):
@@ -366,14 +379,16 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
         reader = unified2.SpoolRecordReader(self.tmpdir, "unified2")
 
         log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
-        log_file.write(open(self.test_filename, "rb").read())
+        with open(self.test_filename, "rb") as test_file:
+            log_file.write(test_file.read())
         log_file.close()
         for i in range(17):
             self.assertTrue(reader.next() is not None)
         self.assertTrue(reader.next() is None)
 
         log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
-        log_file.write(open(self.test_filename, "rb").read())
+        with open(self.test_filename, "rb") as test_file:
+            log_file.write(test_file.read())
         log_file.close()
         for i in range(17):
             self.assertTrue(reader.next() is not None)
@@ -394,10 +409,12 @@ class SpoolRecordReaderTestCase(unittest.TestCase):
         shutil.copy(self.test_filename, "%s/unified2.log.0002" % (self.tmpdir))
 
         # Make the 3rd one a concatenation of itself so we know a valid offset.
-        open("%s/unified2.log.0003" % self.tmpdir, "ab").write(
-            open(self.test_filename, "rb").read())
-        open("%s/unified2.log.0003" % self.tmpdir, "ab").write(
-            open(self.test_filename, "rb").read())
+        with open("%s/unified2.log.0003" % self.tmpdir, "ab") as out:
+            with open(self.test_filename, "rb") as infile:
+                out.write(infile.read())
+        with open("%s/unified2.log.0003" % self.tmpdir, "ab") as out:
+            with open(self.test_filename, "rb") as infile:
+                out.write(infile.read())
 
         # Now create the reader with a bookmark .
         reader = unified2.SpoolRecordReader(
@@ -433,13 +450,15 @@ class SpoolEventReaderTestCase(unittest.TestCase):
         reader = unified2.SpoolEventReader(self.tmpdir, "unified2")
 
         log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
-        log_file.write(open(self.test_filename, "rb").read())
+        with open(self.test_filename, "rb") as test_file:
+            log_file.write(test_file.read())
         log_file.close()
         self.assertTrue(isinstance(reader.next(), unified2.Event))
         self.assertTrue(reader.next() is None)
 
         log_file = open("%s/unified2.log.0001" % (self.tmpdir), "ab")
-        log_file.write(open(self.test_filename, "rb").read())
+        with open(self.test_filename, "rb") as test_file:
+            log_file.write(test_file.read())
         log_file.close()
         self.assertTrue(isinstance(reader.next(), unified2.Event))
         self.assertTrue(reader.next() is None)
@@ -449,8 +468,9 @@ class SpoolEventReaderTestCase(unittest.TestCase):
         reader = unified2.SpoolEventReader(self.tmpdir, "unified2")
 
         for i in range(2):
-            open("%s/unified2.log.%04d" % (self.tmpdir, i), "ab").write(
-                open(self.test_filename, "rb").read())
+            with open("%s/unified2.log.%04d" % (self.tmpdir, i), "ab") as outfile:
+                with open(self.test_filename, "rb") as test_file:
+                    outfile.write(test_file.read())
             self.assertTrue(isinstance(reader.next(), unified2.Event))
 
         self.assertTrue(reader.next() is None)
@@ -462,8 +482,9 @@ class SpoolEventReaderTestCase(unittest.TestCase):
         """
 
         for i in range(2):
-            open("%s/unified2.log.%04d" % (self.tmpdir, i), "ab").write(
-                open(self.test_filename, "rb").read())
+            with open("%s/unified2.log.%04d" % (self.tmpdir, i), "ab") as outfile:
+                with open(self.test_filename, "rb") as test_file:
+                    outfile.write(test_file.read())
 
         reader = unified2.SpoolEventReader(
             self.tmpdir, "unified2", bookmark=True)

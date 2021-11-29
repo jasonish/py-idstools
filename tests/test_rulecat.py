@@ -64,11 +64,13 @@ class TestRulecat(unittest.TestCase):
 
     def test_run(self):
         old_path = os.getcwd()
+        if os.path.exists("./tmp"):
+            shutil.rmtree("tmp")
+        os.makedirs("./tmp")
+        stdout = open("./tmp/stdout", "wb")
+        stderr = open("./tmp/stderr", "wb")
         try:
             os.chdir(os.path.dirname(os.path.realpath(__file__)))
-            if os.path.exists("./tmp"):
-                shutil.rmtree("tmp")
-            os.makedirs("./tmp")
             subprocess.check_call(
                 [sys.executable,
                  "../bin/idstools-rulecat",
@@ -84,20 +86,24 @@ class TestRulecat(unittest.TestCase):
                  "--sid-msg-map", "./tmp/sid-msg.map",
                  "--sid-msg-map-2", "./tmp/sid-msg-v2.map",
                 ],
-                stdout=open("./tmp/stdout", "wb"),
-                stderr=open("./tmp/stderr", "wb"),
+                stdout=stdout,
+                stderr=stderr,
             )
             shutil.rmtree("tmp")
         except:
             if os.path.exists("./tmp/stdout"):
                 print("STDOUT")
-                print(open("./tmp/stdout").read())
+                with open("./tmp/stdout") as stdout:
+                    print(stdout.read())
             if os.path.exists("./tmp/stderr"):
                 print("STDERR")
-                print(open("./tmp/stderr").read())
+                with open("./tmp/stderr") as stderr:
+                    print(stderr.read())
             raise
         finally:
             os.chdir(old_path)
+            stderr.close()
+            stdout.close()
 
 class TestFetch(unittest.TestCase):
 

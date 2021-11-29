@@ -7,7 +7,8 @@ class SignatureMapTestCase(unittest.TestCase):
     def test_load_generator_map(self):
 
         sigmap = maps.SignatureMap()
-        sigmap.load_generator_map(open("tests/gen-msg.map"))
+        with open("tests/gen-msg.map") as infile:
+            sigmap.load_generator_map(infile)
 
         sig = sigmap.get(1, 1)
         self.assertTrue(sig is not None)
@@ -26,7 +27,8 @@ class SignatureMapTestCase(unittest.TestCase):
     def test_load_signature_map(self):
 
         sigmap = maps.SignatureMap()
-        sigmap.load_signature_map(open("tests/sid-msg.map"))
+        with open("tests/sid-msg.map") as infile:
+            sigmap.load_signature_map(infile)
 
         # Get a basic signature.
         sig = sigmap.get(1, 2000356)
@@ -52,7 +54,8 @@ class SignatureMapTestCase(unittest.TestCase):
     def test_load_signature_v2_map(self):
 
         sigmap = maps.SignatureMap()
-        sigmap.load_signature_map(open("tests/sid-msg-v2.map"))
+        with open("tests/sid-msg-v2.map") as infile:
+            sigmap.load_signature_map(infile)
 
         sig = sigmap.get(1, 2495)
         self.assertEqual(1, sig["gid"])

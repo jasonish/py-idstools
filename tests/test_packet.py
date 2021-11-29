@@ -35,7 +35,8 @@ from idstools import packet
 class TestIPv6WithExtensionHeader(unittest.TestCase):
 
     def setUp(self):
-        self.packet = open("tests/NPD_2_1_2_1_Type_0.pcap", "rb").read()[40:]
+        with open("tests/NPD_2_1_2_1_Type_0.pcap", "rb") as file:
+            self.packet = file.read()[40:]
 
     def test_decode(self):
         decoded = packet.decode_ethernet(self.packet)

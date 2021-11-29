@@ -7,7 +7,8 @@ class ClassificationMapTestCase(unittest.TestCase):
     test_filename = "tests/classification.config"
 
     def test_load_from_file(self):
-        m = ClassificationMap(open(self.test_filename))
+        with open(self.test_filename) as test_file:
+            m = ClassificationMap(test_file)
 
         # Classifications are indexed at 1.
         self.assertEqual(None, m.get(0))
