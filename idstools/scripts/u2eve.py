@@ -362,12 +362,12 @@ def main():
         msgmap.load_signature_map(open(os.path.expanduser(args.sidmsgmap_path)))
 
     if msgmap.size() == 0:
-        LOG.warn("WARNING: No alert message map entries loaded.")
+        LOG.warning("WARNING: No alert message map entries loaded.")
     else:
         LOG.info("Loaded %s rule message map entries.", msgmap.size())
 
     if classmap.size() == 0:
-        LOG.warn("WARNING: No classifications loaded.")
+        LOG.warning("WARNING: No classifications loaded.")
     else:
         LOG.info("Loaded %s classifications.", classmap.size())
 

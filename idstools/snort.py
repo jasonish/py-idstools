@@ -119,7 +119,7 @@ class SnortApp(object):
     def dump_dynamic_rules(self, dynamic_detection_lib_dir, verbose=False):
 
         if not self.exists():
-            LOG.warn("Snort application not set or does not exist")
+            LOG.warning("Snort application not set or does not exist")
             return
 
         destination = idstools.util.mktempdir()

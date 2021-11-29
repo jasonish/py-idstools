@@ -430,7 +430,7 @@ class Aggregator(object):
     """
 
     def __init__(self):
-        LOG.warn("idstools.unified2.Aggregator has been deprecated")
+        LOG.warning("idstools.unified2.Aggregator has been deprecated")
         self.queue = collections.deque()
 
     def add(self, record):
@@ -452,9 +452,9 @@ class Aggregator(object):
             if record["event-id"] == self.queue[-1]["event-id"]:
                 self.queue.append(record)
             else:
-                LOG.warn("Record not associated with current event, discarding.")
+                LOG.warning("Record not associated with current event, discarding.")
         else:
-            LOG.warn("Discarding non-event type while not in event context.")
+            LOG.warning("Discarding non-event type while not in event context.")
         return event
 
     def flush(self):
@@ -679,7 +679,7 @@ class FileEventReader(object):
     """
 
     def __init__(self, *files):
-        LOG.warn("idstools.unified2.FileEventReader has been deprecated")
+        LOG.warning("idstools.unified2.FileEventReader has been deprecated")
         self.reader = FileRecordReader(*files)
         self.aggregator = Aggregator()
 
@@ -886,7 +886,7 @@ class SpoolEventReader(object):
 
     def __init__(self, directory, prefix, follow=False, delete=False,
                  bookmark=False):
-        LOG.warn("idstools.unified2.SpoolEventReader has been deprecated")
+        LOG.warning("idstools.unified2.SpoolEventReader has been deprecated")
 
         self.follow = follow
         self.delete = delete

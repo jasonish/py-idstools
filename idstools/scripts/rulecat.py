@@ -401,7 +401,7 @@ def load_matchers(filename):
                 continue
             matcher = parse_rule_match(line)
             if not matcher:
-                logger.warn("Failed to parse: \"%s\"" % (line))
+                logger.warning("Failed to parse: \"%s\"" % (line))
             else:
                 matchers.append(matcher)
 
@@ -423,7 +423,7 @@ def load_local(local, files):
             logger.info("Loading local file %s" % (filename))
             basename = os.path.basename(filename)
             if basename in files:
-                logger.warn(
+                logger.warning(
                     "Local file %s overrides existing file of same name." % (
                         filename))
             files[basename] = open(filename, "rb").read()
@@ -814,7 +814,7 @@ def main():
             logger.info("Found Suricata version %s at %s." % (
                 str(suricata_version.full), args.suricata))
         else:
-            logger.warn("Failed to get Suricata version, using %s",
+            logger.warning("Failed to get Suricata version, using %s",
                         DEFAULT_SURICATA_VERSION)
     if suricata_version is None:
         suricata_version = idstools.suricata.parse_version(
