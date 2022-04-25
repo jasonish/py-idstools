@@ -158,23 +158,23 @@ def main():
                 if stubs:
                     break
 
-        logger.info("Generated %d stubs.", len(stubs))
+    logger.info("Generated %d stubs.", len(stubs))
 
-        if stubs and args.out:
-            if not os.path.exists(args.out):
-                logger.info("Creating directory %s.", args.out)
-                os.makedirs(args.out)
-            for stub in stubs:
-                out_path = os.path.join(args.out, stub)
-                logger.info("Writing %s.", out_path)
-                with open(out_path, "w") as fileobj:
-                    fileobj.write(stubs[stub])
+    if stubs and args.out:
+        if not os.path.exists(args.out):
+            logger.info("Creating directory %s.", args.out)
+            os.makedirs(args.out)
+        for stub in stubs:
+            out_path = os.path.join(args.out, stub)
+            logger.info("Writing %s.", out_path)
+            with open(out_path, "w") as fileobj:
+                fileobj.write(stubs[stub])
 
-        if args.repack:
-            if not stubs:
-                logger.error("Error: No stubs generated, nothing to repace.")
-            repack(tempdir, stubs, args.path if args.repack == True
-                   else args.repack)
+    if args.repack:
+        if not stubs:
+            logger.error("Error: No stubs generated, nothing to repack.")
+        repack(tempdir, stubs, args.path if args.repack == True
+               else args.repack)
 
 if __name__ == "__main__":
     sys.exit(main())
