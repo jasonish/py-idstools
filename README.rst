@@ -4,6 +4,12 @@ py-idstools |build-status| |docs|
 py-idstools is a collection of Python libraries for working with IDS
 systems (typically Snort and Suricata).
 
+Note for `rulecat` Users
+------------------------
+Rulecat development has stalled. Future rule management work is now done in
+Suricata-Update which is bundled with Suricata. Please consider switching to
+Suricata-Update.
+
 Included Programs
 -----------------
 - rulecat - Basic Suricata rule management tool suitable as a
