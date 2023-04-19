@@ -57,8 +57,15 @@ class SnortApp(object):
         stdout, stderr = subprocess.Popen(
             [self.path, "-V"], stdout=subprocess.PIPE,
             stderr=subprocess.PIPE).communicate()
-        m = re.search("(Version (\d+\.\d+\.\d+\.\d+).*)$", stderr, re.M)
-        return m.group(2).strip(), m.group(1).strip(), stderr
+        m = re.search("(Version (\d+\.\d+\.\d+(\.\d+)?).*)$", stderr, re.M)
+        version = m.group(2).strip()
+        version_string = m.group(1).strip()
+        parts = len(version.split("."))
+        if parts == 2:
+            version = "%s.0.0" % (version)
+        elif parts == 3:
+            version = "%s.0" % (version)
+        return version, version_string, stderr
 
     def set_dynamic_engine_lib(self, dynamic_engine_lib, config):
         if dynamic_engine_lib:
