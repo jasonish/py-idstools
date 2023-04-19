@@ -171,10 +171,13 @@ def main():
                 fileobj.write(stubs[stub])
 
     if args.repack:
-        if not stubs:
-            logger.error("Error: No stubs generated, nothing to repack.")
-        repack(tempdir, stubs, args.path if args.repack == True
-               else args.repack)
+        if os.path.isdir(args.path):
+            logger.error("Error: Repacking not available when input is a directory")
+        else:
+            if not stubs:
+                logger.error("Error: No stubs generated, nothing to repack.")
+            repack(tempdir, stubs, args.path if args.repack == True
+                   else args.repack)
 
 if __name__ == "__main__":
     sys.exit(main())
