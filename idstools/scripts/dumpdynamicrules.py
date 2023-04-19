@@ -133,13 +133,15 @@ def main():
     if not args.version:
         args.version = snort_app.version()[0]
 
-    if os.path.isdir(args.path):
-        stubs = snort_app.dump_dynamic_rules(args.path, verbose=True)
+    path = os.path.realpath(args.path)
+
+    if os.path.isdir(path):
+        stubs = snort_app.dump_dynamic_rules(path, verbose=True)
     else:
         tempdir = mktempdir(delete_on_exit=False)
-        logger.info("Expanding %s to directory %s." % (args.path, tempdir))
+        logger.info("Expanding %s to directory %s." % (path, tempdir))
         subprocess.Popen(
-            "gunzip -c %s | tar xf -" % (args.path),
+            "gunzip -c %s | tar xf -" % (path),
             cwd=tempdir, shell=True).wait()
 
         precompiled_dir = "%s/so_rules/precompiled" % (tempdir)
@@ -171,12 +173,12 @@ def main():
                 fileobj.write(stubs[stub])
 
     if args.repack:
-        if os.path.isdir(args.path):
+        if os.path.isdir(path):
             logger.error("Error: Repacking not available when input is a directory")
         else:
             if not stubs:
                 logger.error("Error: No stubs generated, nothing to repack.")
-            repack(tempdir, stubs, args.path if args.repack == True
+            repack(tempdir, stubs, path if args.repack == True
                    else args.repack)
 
 if __name__ == "__main__":
