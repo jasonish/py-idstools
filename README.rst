@@ -48,7 +48,6 @@ or on Fedora and CentOS (with EPEL):
 
     yum install python-idstools
 
-
 Latest from Git
 ~~~~~~~~~~~~~~~
 
@@ -131,6 +130,11 @@ Further documentation is located at http://idstools.readthedocs.org.
 
 Changelog
 ---------
+
+unreleased
+~~~~~~~~~~
+- dumpdynamicrules: Python 3 fix, plus fix for handling directories:
+  https://github.com/jasonish/py-idstools/pull/91
 
 0.6.4 - 2020-08-02
 ~~~~~~~~~~~~~~~~~~
