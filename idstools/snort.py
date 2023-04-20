@@ -57,7 +57,7 @@ class SnortApp(object):
         stdout, stderr = subprocess.Popen(
             [self.path, "-V"], stdout=subprocess.PIPE,
             stderr=subprocess.PIPE).communicate()
-        m = re.search("(Version (\d+\.\d+\.\d+(\.\d+)?).*)$", stderr.decode("utf-8"), re.M)
+        m = re.search(r"(Version (\d+\.\d+\.\d+(\.\d+)?).*)$", stderr.decode("utf-8"), re.M)
         version = m.group(2).strip()
         version_string = m.group(1).strip()
         parts = len(version.split("."))
