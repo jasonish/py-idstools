@@ -222,7 +222,7 @@ class ModifyRuleFilter(object):
         pattern = re.compile(a)
 
         # Convert Oinkmaster backticks to Python.
-        b = re.sub("\$\{(\d+)\}", "\\\\\\1", b)
+        b = re.sub(r"\$\{(\d+)\}", "\\\\\\1", b)
 
         return cls(matcher, pattern, b)
 
@@ -244,7 +244,7 @@ class DropRuleFilter(object):
         return self.matcher.match(rule)
 
     def filter(self, rule):
-        drop_rule = idstools.rule.parse(re.sub("^\w+", "drop", rule.raw))
+        drop_rule = idstools.rule.parse(re.sub(r"^\w+", "drop", rule.raw))
         drop_rule.enabled = rule.enabled
         return drop_rule
 
@@ -592,9 +592,9 @@ def resolve_flowbits(rulemap, disabled_rules):
 class ThresholdProcessor:
 
     patterns = [
-        re.compile("\s+(re:\"(.*)\")"),
-        re.compile("\s+(re:(.*?)),.*"),
-        re.compile("\s+(re:(.*))"),
+        re.compile(r"\s+(re:\"(.*)\")"),
+        re.compile(r"\s+(re:(.*?)),.*"),
+        re.compile(r"\s+(re:(.*))"),
     ]
 
     def extract_regex(self, buf):
