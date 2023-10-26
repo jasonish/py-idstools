@@ -135,6 +135,18 @@ unreleased
 ~~~~~~~~~~
 - dumpdynamicrules: Python 3 fix, plus fix for handling directories:
   https://github.com/jasonish/py-idstools/pull/91
+- rulecat: Fix placement of .md5 extension:
+  https://github.com/jasonish/py-idstools/pull/82
+- rules: allow config action to be used in local.rules:
+  https://github.com/jasonish/py-idstools/pull/88
+- rules: add more header elements into Rule object:
+  https://github.com/jasonish/py-idstools/pull/87
+- eve2pcap: ipv6 fix: https://github.com/jasonish/py-idstools/pull/86
+- misc: replace warn with warning
+- unified2: support for event type 3:
+  https://github.com/jasonish/py-idstools/pull/74
+- dumpdynamicrules: repack fix for directories:
+  https://github.com/jasonish/py-idstools/pull/91
 
 0.6.4 - 2020-08-02
 ~~~~~~~~~~~~~~~~~~
