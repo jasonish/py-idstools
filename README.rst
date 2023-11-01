@@ -131,8 +131,8 @@ Further documentation is located at http://idstools.readthedocs.org.
 Changelog
 ---------
 
-unreleased
-~~~~~~~~~~
+0.6.5 - 2023-11-02
+~~~~~~~~~~~~~~~~~~
 - dumpdynamicrules: Python 3 fix, plus fix for handling directories:
   https://github.com/jasonish/py-idstools/pull/91
 - rulecat: Fix placement of .md5 extension:
