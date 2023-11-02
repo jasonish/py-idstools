@@ -39,6 +39,7 @@ import types
 import shutil
 import glob
 import io
+from pprint import pprint
 
 if sys.argv[0] == __file__:
     sys.path.insert(
@@ -549,6 +550,10 @@ def build_rule_map(rules):
     rulemap = {}
 
     for rule in rules:
+        if rule["sid"] is None:
+            print("error in parsing rule, id is missing")
+            pprint(vars(rule))
+            sys.exit(1)
         if rule.id not in rulemap:
             rulemap[rule.id] = rule
         else:
