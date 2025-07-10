@@ -1,3 +1,5 @@
+**⚠️ NOTE: This project is no longer maintained. ⚠️**
+
 py-idstools |docs|
 ==================
 
